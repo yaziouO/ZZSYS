@@ -397,22 +397,34 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   </details>
 
 
-  <div id="mmgSegCtl" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
-    <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
-      <input type="checkbox" id="mmgSegOn"> 视频过大时分割藏入多张照片
-    </label>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:7px;font-size:12px;color:var(--muted)">
-      每段约
-      <input type="number" id="mmgSegMin" value="0" min="0" max="59" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 分
-      <input type="number" id="mmgSegSec" value="10" min="1" max="59" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 秒
-      <span style="font-size:11px">（按时长比例切分，取图时全选会自动拼回完整视频）</span>
+  <details id="mmgSegCtl" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
+    <summary style="font-size:12px;cursor:pointer;color:var(--text);user-select:none">视频分割藏入多张（大容量分切）</summary>
+    <div style="margin-top:8px;font-size:12px;color:var(--text);display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="radio" name="mmgMode" value="bytes" id="mmgSegModeBytes" onchange="mmgSegModeVis()"> 按字节切（不可单独播放，但取图时全选即可获得完整视频）
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="radio" name="mmgMode" value="time" id="mmgSegModeTime" checked onchange="mmgSegModeVis()"> 按时间切成可单独播放的段（每段是完整视频，取图单张即可播放）
+      </label>
     </div>
-  </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)">
+      每段约
+      <input type="number" id="mmgSegMin" value="1" min="0" max="59" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 分
+      <input type="number" id="mmgSegSec" value="0" min="0" max="59" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 秒
+      <span style="font-size:11px" id="mmgSegModeNote">（按时间切成完整视频段落，每张图可单独播放；生成时也会生成播放列表选项）</span>
+    </div>
+  </details>
 
   <div class="hint" id="mmgHint" style="margin-top:8px"></div>
-  <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer;color:var(--text)">
-    <input type="checkbox" id="mmgCap30"> 单张成品 ≤ 30MB（超出自动分成多张，每张都≤30MB）
-  </label>
+  <details id="mmgCapCtl" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
+    <summary style="font-size:12px;cursor:pointer;color:var(--text);user-select:none">视频分割藏入多张（小容量分切频道用）</summary>
+    <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;color:var(--text)">
+      <input type="radio" name="mmgMode" value="cap30" id="mmgCap30" onchange="mmgSegModeVis()"> 单张成品 ≤ 30MB（活切需读取全部分段合成完整视频）
+    </label>
+    <label style="font-size:12px;display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;color:var(--text)">
+      <input type="radio" name="mmgMode" value="cap25" id="mmgCap25" onchange="mmgSegModeVis()"> 单张成品 ≤ 30MB（死切每张图可单独播放）
+    </label>
+  </details>
   <button type="button" class="mmg-btn mmg-btn-primary" id="mmgEmbedBtn" style="margin-top:10px;width:100%" disabled>生成成品</button>
   <div class="mmg-progress" id="mmgEmbedProg" style="display:none"><div class="bar"></div></div>
 
@@ -455,6 +467,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   </div>
   <div class="hint" id="extractHint"></div>
   <button class="btn btn-primary" id="btnExtract" disabled onclick="doExtract()">批量剥出原图</button>
+  <button class="btn btn-ghost" id="btnLowMem" onclick="toggleLowMem()" style="margin-top:6px;width:100%">闪退就点这里（流式省内存重取，较慢）</button>
   <div class="mmg-progress" id="mmgExtractProg" style="display:none"><div class="bar"></div></div>
 
   <div class="result" id="extractResult">
@@ -484,6 +497,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
       <button class="btn btn-ghost" style="padding:4px 8px" onclick="vsPreset(60)">1分钟</button>
       <button class="btn btn-ghost" style="padding:4px 8px" onclick="vsPreset(120)">2分钟</button>
       <button class="btn btn-primary" style="padding:4px 10px" onclick="vsCut()">切割并保存</button>
+      <button class="btn btn-ghost" style="padding:4px 10px" onclick="vsGenPlaylist()">生成播放列表(.m3u)</button>
     </div>
     <div id="vs_segments" style="margin-top:6px"></div>
     <div class="sub" style="margin-top:6px">每段填起止秒数（可用小数，如 0～12.5）。切割输出 mp4（H.264，保留音轨）。浏览器内切割需重新编码，耗时≈总时长。</div>
@@ -837,11 +851,21 @@ var mmgSt={cover:null,secrets:[],curPick:null,append:false,quality:'jpeg',scale:
 function mmgEl(id){ return document.getElementById(id); }
 function mmgShowProg(id){ var e=document.getElementById(id); if(e){ e.classList.remove('indet'); e.style.display='block'; var bar=e.querySelector('.bar'); if(bar) bar.style.width='2%'; } }
 function mmgSetProg(id,frac){ var e=document.getElementById(id); if(e){ e.classList.remove('indet'); var bar=e.querySelector('.bar'); if(bar){ var p=Math.max(2,Math.min(100,Math.round(frac*100))); bar.style.width=p+'%'; } } }
-function mmgWriteBits(px,bits,bpc,id,done){ var bi=0,total=bits.length,pxLen=px.length,j=0,step=3000; var fr=function(){ var cnt=0; while(j<pxLen&&cnt<step){ for(var c2=0;c2<3;c2++){ if(bi>=total)break; var low=0; for(var k=0;k<bpc;k++){ if(bi<total)low|=bits[bi++]<<k; } px[j+c2]=(px[j+c2]&(0xFF<<bpc))|low; } j+=4; cnt++; } mmgSetProg(id,total?bi/total:1); if(bi<total){ setTimeout(fr,0); } else { done(); } }; fr(); }
+function mmgWriteBits(px,bits,bpc,id,done){ var bi=0,total=bits.length,pxLen=px.length,j=0,budget=14; function fr(){ var t0=Date.now(); while(j<pxLen){ for(var c2=0;c2<3;c2++){ if(bi>=total)break; var low=0; for(var k=0;k<bpc;k++){ if(bi<total)low|=bits[bi++]<<k; } px[j+c2]=(px[j+c2]&(0xFF<<bpc))|low; } j+=4; if(Date.now()-t0>=budget)break; if(bi>=total)break; } mmgSetProg(id,total?bi/total:1); if(bi<total){ setTimeout(fr,0); } else { done(); } } fr(); }
 function mmgHideProg(id){ var e=document.getElementById(id); if(e){ e.style.display='none'; e.classList.remove('indet'); } }
 function mmgSetMode(m){
   if(mmgEl('mmgTabEmbed')) mmgEl('mmgTabEmbed').classList.add('active');
   if(mmgEl('mmgPaneEmbed')) mmgEl('mmgPaneEmbed').style.display='block';
+}
+function mmgMode(){ var e=document.querySelector('input[name="mmgMode"]:checked'); return e?e.value:''; }
+function mmgSegOpen(){ var d=mmgEl('mmgSegCtl'); return !!(d&&d.open); }
+// 时间切家族 = 按时间切(time) 和 死切(cap25)：每张是完整可单独播放的段；活切(cap30)和按字节切(bytes)走字节切（需全部分段拼回）
+function mmgSegModeIsTime(){ var m=mmgMode(); return m==='time'||m==='cap25'; }
+function mmgSegModeVis(){
+  var m=mmgMode();
+  var t=(m==='time'||m==='cap25');
+  var note=mmgEl('mmgSegModeNote');
+  if(note) note.textContent=t?'（按时间切成完整视频段，每张取图可单独播放；生成时也会生成播放列表连播）':'（按字节切：不可单独播放，但取图时全选即可获得完整视频）';
 }
 function mmgIsMobile(){
   return /Mobi|Android|iPhone|iPad|iPod|Phone|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints&&navigator.maxTouchPoints>1&&window.innerWidth<768);
@@ -885,8 +909,10 @@ function mmgHint(id,text,type){ var e=mmgEl(id); e.textContent=text; e.className
 function mmgUpd(){
   mmgEl('mmgEmbedBtn').disabled=!(mmgSt.cover&&mmgSt.secrets.length>0);
   var seg=mmgEl('mmgSegCtl');
+  var cap=mmgEl('mmgCapCtl');
   var show=(mmgSt.secrets.length===1 && isVideoSecret(mmgSt.secrets[0]));
   if(seg) seg.style.display=show?'block':'none';
+  if(cap) cap.style.display=show?'block':'none';
 }
 function mmgRenderDrop(id,img){
   var e=mmgEl(id); e.classList.add('has-img');
@@ -956,7 +982,8 @@ function mmgCapacityHint(){
     +'</svg>';
   return '<span style="display:inline-flex;align-items:center;gap:7px">'+batt+txt+'</span>';
 }
-function mmgCap30Enabled(){ return !!(mmgEl('mmgCap30')&&mmgEl('mmgCap30').checked); }
+function mmgCap30Enabled(){ return mmgMode()==='cap30'; }
+function mmgCap25Enabled(){ return mmgMode()==='cap25'; }
 // 保存所有成品：依次触发每张成品的下载
 function mmgSaveAll(){
   var arr=window._mmgAllUrls||[];
@@ -1042,7 +1069,7 @@ function mmgRebuildSegsFrom(fromIdx, imgs){
 // builder(cw,ch) 返回 Promise<Uint8Array(字节)> = 该表图尺寸下第0张要嵌入的 payload（用于算数据字节数）
 async function mmgFit30Scale(cw0,ch0,reloaded,builder){
   var cap30=30*1048576;
-  if(!mmgCap30Enabled()) return 1;
+  if(!mmgCap30Enabled() && !mmgCap25Enabled()) return 1;
   function probe(s){
     return new Promise(function(rs){
       var cw=Math.max(1,Math.round(cw0*s)), ch=Math.max(1,Math.round(ch0*s));
@@ -1216,6 +1243,7 @@ function mmgMediaRecorderTranscode(videoBlob, maxH, fps){
   });
 }
 async function mmgEmbedVideo(){
+  if(mmgSegModeIsTime()){ return mmgEmbedVideoTimeCut(); }
   mmgHint('mmgHint','正在嵌入视频…','');
   mmgShowProg('mmgEmbedProg');
   try{
@@ -1249,7 +1277,7 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     var data=ctx.getImageData(0,0,cw,ch); var px=data.data;
     var capBits=cw*ch*3*2, perAvail=Math.floor(capBits/8)-11; // 预留最长分片头 11 字节
     // 用户是否手动选择分段
-    var segOn=mmgEl('mmgSegOn')&&mmgEl('mmgSegOn').checked;
+    var segOn=mmgSegOpen();
     var manualSeg=false, segCountByTime=1;
     if(segOn){
       var mn=parseInt(mmgEl('mmgSegMin').value||'0',10); var sc=parseInt(mmgEl('mmgSegSec').value||'10',10);
@@ -1261,12 +1289,17 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       }
     }
     var capSegs=Math.max(1,Math.ceil(vBytes.length/perAvail));
-    // 视频过大、且未勾选"分割藏入多张"、也未勾选"单张≤30MB"时：不自动分割，提示放大表图或勾选分割
+    // 视频过大、且未手动分段、也未选"单张≤30MB"时：自动放大表图到能装下整段，再继续
     if(capSegs>1 && !manualSeg && !mmgCap30Enabled()){
       var needScale=Math.ceil(Math.sqrt((vBytes.length+9)*8/(cw0*ch0*6))*10)/10;
-      mmgHint('mmgHint','视频过大（需 '+vBytes.length+' 字节，当前 '+scale+'× 表图只能容纳 '+perAvail+' 字节）。请将表图放大到约 '+needScale+'× 后再生成，或在下方勾选"视频过大时分割藏入多张照片"后生成。','err');
-      mmgHideProg('mmgEmbedProg');
-      return;
+      scale=Math.max(scale,needScale); scale=Math.min(scale,10);
+      mmgSetScale(scale);
+      canvas.width=Math.max(1,Math.round(cw0*scale)); canvas.height=Math.max(1,Math.round(ch0*scale));
+      ctx.drawImage(reloaded,0,0,canvas.width,canvas.height);
+      cw=canvas.width; ch=canvas.height;
+      data=ctx.getImageData(0,0,cw,ch); px=data.data;
+      capBits=cw*ch*3*2; perAvail=Math.floor(capBits/8)-11;
+      capSegs=Math.max(1,Math.ceil(vBytes.length/perAvail));
     }
     var segCount=manualSeg?Math.max(segCountByTime,capSegs):capSegs;
     var segHdr=segCount>1?11:9; // 分片头 11 字节（含 segIdx/segTotal），普通视频头 9 字节
@@ -1323,6 +1356,243 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     }
     mmgHideProg('mmgEmbedProg');
   }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
+}
+async function mmgEmbedVideoTimeCut(){
+  mmgHint('mmgHint','正在按时间切成可单独播放的段…','');
+  mmgShowProg('mmgEmbedProg');
+  try{
+    var vsrc=mmgSt.secrets[0].src;
+    var vname=(mmgSt.secrets[0].name||'视频').replace(/\.[^.]+$/,'')||'视频';
+    var raw=drawToCanvas(mmgSt.cover); var cw0=raw.width,ch0=raw.height;
+    var scale=mmgSt.scale||1;
+    var reloaded=await new Promise(function(res){ raw.toBlob(function(b){var im=new Image();im.onload=function(){res(im);};im.src=URL.createObjectURL(b);},'image/png'); });
+    var segDur;
+    if(mmgCap25Enabled()){
+      var probeBps=await mmgProbeBitrate(vsrc);
+      segDur=Math.max(4,Math.round(14*1048576*8/probeBps*10)/10);
+      segDur=Math.min(segDur,90);
+    } else {
+      var mn=parseInt(mmgEl('mmgSegMin').value||'0',10); var sc=parseInt(mmgEl('mmgSegSec').value||'10',10);
+      if(isNaN(mn))mn=0; if(isNaN(sc))sc=10;
+      segDur=mn*60+sc; if(segDur<1) segDur=10;
+    }
+    var dur=await mmgProbeDuration(vsrc);
+    if(!(dur>0)){ mmgHint('mmgHint','无法读取视频时长，无法按时间分段','err'); mmgHideProg('mmgEmbedProg'); return; }
+    var segCount=Math.max(1,Math.ceil(dur/segDur));
+    if(mmgCap30Enabled()){
+      var estSeg=Math.ceil(segDur*2000000/8);
+      var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){ return Promise.resolve(new Uint8Array(estSeg)); });
+      scale=Math.min(f30,10); mmgSetScale(scale);
+    }
+    var cw=Math.max(1,Math.round(cw0*scale)), ch=Math.max(1,Math.round(ch0*scale));
+    var perAvail=Math.floor(cw*ch*3*2/8)-9;
+    var segs=await recVideoSegs(vsrc,segCount,dur,segDur);
+    var urls=[]; var padW=String(segCount).length;
+    function mmgPad(n,w){ n=''+n; while(n.length<w) n='0'+n; return n; }
+    // 死切(cap25)：迭代自适应 —— 录制→放大表图→装不下则缩短每段时长重切，保证每张成品≤30MB 且能装下
+    if(mmgCap25Enabled()){
+      var capByte=15*1048576, guard=0, fitOK=false, recFail=false;
+      while(!fitOK && guard<6){
+        guard++;
+        segCount=Math.max(1,Math.ceil(dur/segDur));
+        padW=String(segCount).length;
+        segs=await recVideoSegs(vsrc,segCount,dur,segDur);
+        segU8s=[]; maxLen=0;
+        var recFail=false;
+        for(var q=0;q<segCount;q++){
+          var bq=segs[q].blob;
+          if(!bq){ recFail=true; break; }
+          var uq=new Uint8Array(await bq.arrayBuffer());
+          segU8s.push(uq); if(uq.length>maxLen) maxLen=uq.length;
+        }
+        if(recFail){ segDur=Math.max(4,Math.round(segDur*0.8*10)/10); continue; }
+        // 表图放大到"纯表图PNG + 视频字节×1.7 ≤ 30MB"下的最大倍率
+        var f25=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){ return Promise.resolve(new Uint8Array(maxLen)); });
+        scale=Math.min(f25,10); mmgSetScale(scale);
+        cw=Math.max(1,Math.round(cw0*scale)); ch=Math.max(1,Math.round(ch0*scale));
+        perAvail=Math.floor(cw*ch*3*2/8)-9;
+        if(maxLen<=perAvail){ fitOK=true; }
+        else {
+          var shrink=Math.max(0.5,(perAvail/Math.max(1,maxLen))*0.85);
+          segDur=Math.max(4,Math.round(segDur*shrink*10)/10);
+        }
+      }
+      if(!fitOK){
+        if(recFail){ mmgHint('mmgHint','多次录制视频失败，请确认浏览器支持视频转码（Chrome/Edge 均可），换用其他段时长后重试。','err'); }
+        else { mmgHint('mmgHint','表图太小，无法在成品≤30MB内装下视频。请换更大的表图，或压缩视频后重试。','err'); }
+        mmgHideProg('mmgEmbedProg'); return;
+      }
+    } else {
+      // 非死切（普通按时间切/字节切）：录制全部段取最大字节
+      segU8s=[]; maxLen=0;
+      for(var t2=0;t2<segCount;t2++){
+        var segBlob0=segs[t2].blob;
+        if(!segBlob0){ mmgHint('mmgHint','第'+(t2+1)+'段录制失败，请重试','err'); mmgHideProg('mmgEmbedProg'); return; }
+        var u0=new Uint8Array(await segBlob0.arrayBuffer());
+        segU8s.push(u0);
+        if(u0.length>maxLen) maxLen=u0.length;
+      }
+      // 若最大段超出当前表图容量：自动放大表图到能装下
+      if(maxLen>perAvail){
+        var needS0=Math.ceil(Math.sqrt((maxLen+9)*8/(cw0*ch0*6))*10)/10;
+        scale=Math.max(scale,needS0); scale=Math.min(scale,10);
+        mmgSetScale(scale);
+        cw=Math.max(1,Math.round(cw0*scale)); ch=Math.max(1,Math.round(ch0*scale));
+        perAvail=Math.floor(cw*ch*3*2/8)-9;
+      }
+      // 放大后仍装不下（段本身过大）：提示
+      if(maxLen>perAvail){
+        mmgHint('mmgHint','视频单段（'+(maxLen/1048576).toFixed(1)+'MB）仍超过表图最大容量（'+(perAvail/1048576).toFixed(1)+'MB）。请缩短每段时长后重试。','err');
+        mmgHideProg('mmgEmbedProg'); return;
+      }
+    }
+    for(var s=0;s<segCount;s++){
+      var segU8=segU8s[s];
+      var header=new Uint8Array(9); header.set(MAGIC,0); header[4]=(1)|16;
+      header[5]=(segU8.length>>>24)&0xFF; header[6]=(segU8.length>>>16)&0xFF; header[7]=(segU8.length>>>8)&0xFF; header[8]=segU8.length&0xFF;
+      var payload=new Uint8Array(9+segU8.length); payload.set(header,0); payload.set(segU8,9);
+      var bits=bytesToBits(payload,2);
+      var c2=document.createElement('canvas'); c2.width=cw; c2.height=ch;
+      var cx2=c2.getContext('2d'); cx2.drawImage(reloaded,0,0,cw,ch);
+      var d2=cx2.getImageData(0,0,cw,ch); var px2=d2.data;
+      await new Promise(function(done){ mmgWriteBits(px2,bits,2,'mmgEmbedProg',done); });
+      cx2.putImageData(d2,0,0);
+      var url=await new Promise(function(res){ c2.toBlob(function(blob){ var fr=new FileReader(); fr.onload=function(){ res(fr.result); }; fr.readAsDataURL(blob); },'image/png'); });
+      urls.push({url:url,idx:s,mb:segU8.length/1048576});
+    }
+    window._mmgAllUrls=urls;
+    window._segMeta={cw:cw,ch:ch,segHdr:9,flags:(1)|16,segCount:segCount,segDur:segDur};
+    _rawResult=urls[0].url; _rawImg=null; _glowApplied=false;
+    var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化';
+    var resEl=mmgEl('mmgResult'); resEl.style.display='block';
+    var dlRow=document.getElementById('mmgDlRow'); if(dlRow) dlRow.style.display='none';
+    var segList=mmgEl('mmgSegList');
+    segList.style.display='flex';
+    segList.innerHTML='<div class="cap" style="width:100%">已按时间切成 '+segCount+' 段完整视频藏进成品，每张取图可单独播放该段；点下方「生成播放列表」可连播全部。请到取图页按顺序剥出各段，每张按默认名保存为「原图1.mp4、原图2.mp4…」。</div>'
+      +'<button type="button" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>'
+      +'<button type="button" class="mmg-btn" style="width:100%;padding:10px 0;font-size:14px;margin-top:6px" onclick="mmgGenM3U()">生成播放列表(.m3u)</button>';
+    urls.forEach(function(u){
+      var card=document.createElement('div'); card.className='box';
+      card.style.cssText='flex:1 1 46%;min-width:150px;max-width:240px;box-sizing:border-box';
+      card.innerHTML='<img src="'+u.url+'" alt="段'+(u.idx+1)+'" style="width:100%;border-radius:8px;display:block">'
+        +'<div class="cap">第 '+mmgPad(u.idx+1,padW)+' / '+segCount+' 段（'+(u.mb).toFixed(1)+'MB）</div>'
+        +'<div class="save-tip">长按图片保存</div>'
+        +'<a class="mmg-btn mmg-btn-primary" href="'+u.url+'" download="'+vname+'_段'+mmgPad(u.idx+1,padW)+'.png" style="display:flex;align-items:center;justify-content:center">保存第'+(u.idx+1)+'段</a>';
+      segList.appendChild(card);
+    });
+    mmgHint('mmgHint','完成！已按时间切成 '+segCount+' 段可单独播放的视频藏进成品；取图单张即可播放该段，点「生成播放列表」可连播全部。','ok');
+    mmgHideProg('mmgEmbedProg');
+  }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
+}
+function recVideoSegs(src,segCount,dur,segDur){
+  return new Promise(function(resolve){
+    var segs=[]; var idx=0; var useWebm=false;
+    function next(){
+      if(idx>=segCount){ resolve(segs); return; }
+      var st=idx*segDur, en=Math.min(dur,(idx+1)*segDur);
+      recordOne(st,en,4,function(ok,blob){
+        if(ok){ segs.push({blob:blob,st:st,en:en}); idx++; next(); return; }
+        // 某段反复失败：若用的是 mp4，整批切 webm 从头重录全部段（很多浏览器对 MediaRecorder 录 mp4 有兼容限制，webm 更稳）
+        if(!useWebm){ useWebm=true; segs=[]; idx=0; next(); return; }
+        segs.push({blob:null,st:st,en:en}); idx++; next();
+      });
+    }
+    // 单段录制：失败则重建 video + MediaRecorder 重录该段（最多 attempts 次）；同格式重试无效后由外层整批切 webm
+    function recordOne(st,en,attempts,done){
+      if(en-st<0.1){ done(true,new Blob([])); return; }
+      var v=document.createElement('video'); v.muted=true; v.playsInline=true; v.preload='auto'; v.src=src;
+      var finished=false;
+      function failStep(){
+        if(finished) return; finished=true;
+        try{ v.removeAttribute('src'); }catch(_){}
+        if(attempts>0){ setTimeout(function(){ recordOne(st,en,attempts-1,done); },200); }
+        else { done(false); }
+      }
+      function okStep(blob){
+        if(finished) return; finished=true;
+        try{ v.removeAttribute('src'); }catch(_){}
+        done(true,blob);
+      }
+      v.onloadedmetadata=function(){
+        var started=false,rec=null,iv=null,chunks=[];
+        function startRec(){
+          if(started) return;
+          if(!(v.currentTime>=st-0.08)) return;
+          started=true;
+          var stream;
+          try{ stream=v.captureStream(); }catch(err){ failStep(); return; }
+          var mime=null;
+          if(!useWebm&&window.MediaRecorder){ var c=['video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4']; for(var i=0;i<c.length;i++){ if(MediaRecorder.isTypeSupported(c[i])){ mime=c[i]; break; } } }
+          if(!mime){ mime='video/webm;codecs=vp8'; }
+          try{ rec=new MediaRecorder(stream,{videoBitsPerSecond:2000000,mimeType:mime}); }catch(err){ failStep(); return; }
+          rec.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+          rec.onstop=function(){ var nb=new Blob(chunks,{type:(rec.mimeType||'video/mp4')}); okStep(nb); };
+          rec.onerror=function(){ failStep(); };
+          try{ rec.start(); }catch(err){ failStep(); return; }
+          v.play().catch(function(){ setTimeout(function(){ if(rec&&rec.state!=='inactive') rec.stop(); },500); });
+          iv=setInterval(function(){ if(v.currentTime>=en||v.ended){ clearInterval(iv); try{v.pause();}catch(_){} setTimeout(function(){ if(rec&&rec.state!=='inactive') rec.stop(); },150); } },100);
+        }
+        v.addEventListener('seeked',startRec); v.addEventListener('timeupdate',startRec);
+        try{ v.currentTime=st; }catch(_){}
+        startRec();
+      };
+      v.onerror=failStep;
+      v.load();
+    }
+    next();
+  });
+}
+function mmgProbeBitrate(src){
+  return new Promise(function(resolve){
+    var v=document.createElement('video'); v.muted=true; v.playsInline=true; v.preload='auto'; v.src=src;
+    v.onloadedmetadata=function(){
+      var rec=null,chunks=[],iv=null,started=false;
+      function go(){
+        if(started) return; started=true;
+        var stream=v.captureStream();
+        var mime=null;
+        if(window.MediaRecorder){ var c=['video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4']; for(var i=0;i<c.length;i++){ if(MediaRecorder.isTypeSupported(c[i])){ mime=c[i]; break; } } }
+        if(!mime){ mime='video/webm;codecs=vp8'; }
+        rec=new MediaRecorder(stream,{videoBitsPerSecond:2000000,mimeType:mime});
+        rec.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+        rec.onstop=function(){ try{ v.removeAttribute('src'); }catch(_){} var b=new Blob(chunks,{type:(rec.mimeType||'video/mp4')}); var sec=Math.max(0.5,Math.min(3,v.currentTime||3)); resolve(b.size*8/sec); };
+        rec.onerror=function(){ resolve(2000000); };
+        rec.start();
+        v.play().catch(function(){});
+        iv=setInterval(function(){ if(v.currentTime>=3||v.ended){ clearInterval(iv); try{v.pause();}catch(_){} setTimeout(function(){ if(rec&&rec.state!=='inactive') rec.stop(); },150); } },100);
+      }
+      v.addEventListener('timeupdate',go);
+      try{ v.currentTime=0; }catch(_){}
+      go();
+    };
+    v.onerror=function(){ resolve(2000000); };
+    v.load();
+  });
+}
+function mmgGenM3U(){
+  var st=mmgEl('mmgHint');
+  var segCount=window._segMeta&&window._segMeta.segCount?window._segMeta.segCount:0;
+  if(!segCount){ if(st) st.textContent='请先按时间切生成可单独播放的成品，再生成播放列表'; return; }
+  var segDur=(window._segMeta&&window._segMeta.segDur)?window._segMeta.segDur:0;
+  if(!segDur){
+    if(mmgCap25Enabled()){
+      segDur=Math.max(5,Math.round(25*1048576*8/2000000*10)/10);
+    } else {
+      var mn=parseInt(mmgEl('mmgSegMin').value||'0',10); var sc=parseInt(mmgEl('mmgSegSec').value||'10',10);
+      if(isNaN(mn))mn=0; if(isNaN(sc))sc=10; segDur=mn*60+sc; if(segDur<1) segDur=10;
+    }
+  }
+  var lines=['#EXTM3U'];
+  var z=Math.max(2,String(segCount).length);
+  for(var i=0;i<segCount;i++){
+    var fn='原图'+String(i+1).padStart(z,'0');
+    lines.push('#EXTINF:'+segDur.toFixed(3)+', '+fn+'.mp4');
+    lines.push(fn+'.mp4');
+  }
+  var blob=new Blob([lines.join('\r\n')],{type:'audio/x-mpegurl'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download='作战实验室_播放列表.m3u'; a.click();
+  if(st) st.textContent='已生成播放列表(.m3u)。请到取图页按顺序剥出各段，每张按默认名保存（补零：原图01.mp4、原图02.mp4…），与 .m3u 放同一文件夹，用播放器打开 .m3u 即可连播；每段也可单独播放。';
 }
 async function mmgEmbedGif(){
   mmgHint('mmgHint','正在嵌入动图…','');
@@ -1844,6 +2114,7 @@ el('mrgSaveJpg').addEventListener('click',function(){
 </script>
 <div id="download-area">
   <button type="button" class="btn btn-ghost" style="margin-top:12px;padding:6px 14px;font-size:12px;text-decoration:none" onclick="mmgDownloadApk()">下载安卓APP（作战实验室2.2离线版）</button>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.5px">腾讯频道号 592962059Q</div>
 </div>
 
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
@@ -1924,7 +2195,9 @@ document.getElementById('fileInput').addEventListener('change',e=>{
   if(!files || !files.length) return;
   // 取图模式下清空之前的队列，重新选
   if(currentPickTarget==='stego'){ stegoQueue=[]; document.getElementById('extractList').innerHTML=''; }
-  for(const f of files){ loadFile(f,currentPickTarget); }
+  // 按文件名自然排序（数字段名如 原图1、原图2…原图10 按数字排，避免 1,10,11,2 乱序）
+  const arr=[].slice.call(files).sort(function(a,b){ return String(a.name).localeCompare(String(b.name),'zh-CN',{numeric:true}); });
+  for(const f of arr){ loadFile(f,currentPickTarget); }
 });
 
 // 给每个选图框绑拖放
@@ -1937,7 +2210,8 @@ function bindDrop(elId,target){
     const files=e.dataTransfer && e.dataTransfer.files;
     if(!files || !files.length) return;
     if(target==='stego'){ stegoQueue=[]; document.getElementById('extractList').innerHTML=''; }
-    for(const f of files){ loadFile(f,target); }
+    const arr=[].slice.call(files).sort(function(a,b){ return String(a.name).localeCompare(String(b.name),'zh-CN',{numeric:true}); });
+    for(const f of arr){ loadFile(f,target); }
   });
 }
 bindDrop('dropStego','stego');
@@ -2087,13 +2361,11 @@ function testReveal(){
 }
 
 /* ============ 取图 ============ */
-function extractFromBits(collect){
+async function extractFromBits(collect){
   const isMagic=h=>h[0]==MAGIC[0]&&h[1]==MAGIC[1]&&h[2]==MAGIC[2]&&h[3]==MAGIC[3];
-  let bpc=2, bits=collect(bpc), header=bitsToBytes(bits.slice(0,HEADER_LEN*8));
-  if(!isMagic(header)){
-    bpc=1; bits=collect(bpc); header=bitsToBytes(bits.slice(0,HEADER_LEN*8));
-    if(!isMagic(header)) return null; // 没有隐藏数据
-  }
+  let bpc=2;
+  let header=await collect(bpc,HEADER_LEN);
+  if(!isMagic(header)){ bpc=1; header=await collect(1,HEADER_LEN); if(!isMagic(header)) return null; }
   const flags=header[4];
   const useJpeg=(flags&2)===2;
   const multi=(flags&4)===4;
@@ -2102,20 +2374,13 @@ function extractFromBits(collect){
   const segmented=(flags&32)===32;
   const bundle=(flags&64)===64;
   let hlen=multi?12:(segmented?11:HEADER_LEN);
-  if(multi){
-    if(header.length<12) header=bitsToBytes(bits.slice(0,12*8));
-    hlen=12+2*header[11];
-  }
-  if(bundle&&!segmented){
-    if(header.length<10) header=bitsToBytes(bits.slice(0,10*8));
-    hlen=10+4*header[9];
-    if(header.length<hlen) header=bitsToBytes(bits.slice(0,hlen*8));
-  }
-  if(header.length<hlen) header=bitsToBytes(bits.slice(0,hlen*8));
+  if(multi) hlen=12+2*header[11];
+  if(bundle&&!segmented) hlen=10+4*header[9];
+  if(header.length<hlen) header=await collect(bpc,hlen);
   const dataLen=(header[5]<<24>>>0)+(header[6]<<16)+(header[7]<<8)+header[8];
-  const needBits=(hlen+dataLen)*8;
-  if(needBits>bits.length) return {error:'数据不完整，图被压缩或转成了 JPG'};
-  const all=bitsToBytes(bits.slice(0,needBits));
+  const need=hlen+dataLen;
+  const all=await collect(bpc,need);
+  if(all.length<need) return {error:'数据不完整，图被压缩或转成了 JPG'};
   const secretBytes=all.slice(hlen);
   // bundle 非分段：按 header 记录的各文件长度切分还原
   if(bundle&&!segmented){
@@ -2210,6 +2475,84 @@ function concatU8(parts){
 
 // 直接解析 PNG 文件字节，读出原始像素（绕过浏览器颜色管理，QQ 内置浏览器也能精确取图）
 // 返回 Promise<{W,H,channels,px}>；不是合法 8-bit PNG 则 reject
+/* ===== 流式省内存模式（闪退时点「闪退就点这里」启用）===== */
+/* 解压 PNG 返回原始滤波字节（不全量解码出像素数组），供流式逐行提取 */
+function inflatePngRaw(buf){
+  const b=new Uint8Array(buf);
+  const sig=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+  for(let i=0;i<8;i++) if(b[i]!==sig[i]) return Promise.reject(new Error('不是PNG文件'));
+  let off=8, W=0,H=0,bitDepth=0,colorType=0, idatParts=[];
+  while(off<b.length){
+    const len=(b[off]<<24)|(b[off+1]<<16)|(b[off+2]<<8)|b[off+3];
+    const type=String.fromCharCode(b[off+4],b[off+5],b[off+6],b[off+7]);
+    if(type==='IHDR'){ W=(b[off+8]<<24)|(b[off+9]<<16)|(b[off+10]<<8)|b[off+11]; H=(b[off+12]<<24)|(b[off+13]<<16)|(b[off+14]<<8)|b[off+15]; bitDepth=b[off+16]; colorType=b[off+17]; }
+    else if(type==='IDAT'){ idatParts.push(b.subarray(off+8,off+8+len)); }
+    else if(type==='IEND') break;
+    off+=12+len;
+  }
+  if(bitDepth!==8) return Promise.reject(new Error('仅支持8位PNG'));
+  const channels=colorType===6?4:(colorType===2?3:(colorType===0?1:0));
+  if(!channels) return Promise.reject(new Error('不支持的PNG颜色类型'));
+  const comp=concatU8(idatParts);
+  return inflateZlib(comp).then(raw=>({W,H,channels,raw}));
+}
+/* 流式逐行解码 + 提取位并打包字节：每行解码后立即提位，不保留整张像素数组 */
+function makeStreamCollect(raw,W,H,channels){
+  return function(bpc,maxBytes){
+    return new Promise(function(resolve){
+      var out=new Uint8Array(maxBytes);
+      var stride=W*channels;
+      var prev=new Uint8Array(stride);
+      var pos=0, y=0, oi=0, bitAcc=0, bitCnt=0;
+      function processLine(){
+        var ft=raw[pos++];
+        var cur=new Uint8Array(stride);
+        for(var i=0;i<stride;i++){
+          var a=i>=channels?cur[i-channels]:0;
+          var bb=prev[i];
+          var c=i>=channels?prev[i-channels]:0;
+          var x=raw[pos+i];
+          if(ft===1) x=(x+a)&255;
+          else if(ft===2) x=(x+bb)&255;
+          else if(ft===3) x=(x+((a+bb)>>1))&255;
+          else if(ft===4){ var p=a+bb-c, pa=Math.abs(p-a), pb=Math.abs(p-bb), pc=Math.abs(p-c); x=(x+(pa<=pb&&pa<=pc?a:(pb<=pc?bb:c)))&255; }
+          cur[i]=x;
+        }
+        pos+=stride;
+        for(var pxI=0;pxI<stride && oi<maxBytes;pxI+=channels){
+          for(var ch=0;ch<3;ch++){
+            var v=cur[pxI+ch];
+            for(var k=0;k<bpc;k++){ bitAcc=(bitAcc<<1)|((v>>k)&1); bitCnt++; if(bitCnt===8){ out[oi++]=(bitAcc&255); bitAcc=0; bitCnt=0; if(oi>=maxBytes) break; } }
+            if(oi>=maxBytes) break;
+          }
+          if(oi>=maxBytes) break;
+        }
+        prev.set(cur);
+      }
+      function step(){
+        var t0=Date.now();
+        while(y<H && oi<maxBytes){ processLine(); y++; if(Date.now()-t0>=16) break; }
+        if(y<H && oi<maxBytes){ setTimeout(step,0); } else { resolve(out.slice(0,oi)); }
+      }
+      step();
+    });
+  };
+}
+/* 流式模式取 stgo：复用提取逻辑，但解码走逐行流式 */
+async function extractStreamStgo(buf){
+  const {W,H,channels,raw}=await inflatePngRaw(buf);
+  const collect=makeStreamCollect(raw,W,H,channels);
+  return stgoFromPx(collect);
+}
+/* 闪退兜底按键：切换流式省内存模式并自动重新剥出 */
+function toggleLowMem(){
+  window.mmgLowMemStream=true;
+  var b=document.getElementById('btnLowMem');
+  if(b){ b.textContent='已开启流式省内存（较慢），正在重新剥出…'; b.disabled=true; }
+  if(stegoQueue&&stegoQueue.length){ setHint('extractHint','已切换流式省内存模式（逐行解码，慢但稳）。正在重新剥出…',''); doExtract(); }
+  else { setHint('extractHint','已切换流式省内存模式，请重新选成品图后点「批量剥出原图」','ok'); }
+}
+
 function parsePngBytes(buf){
   const b=new Uint8Array(buf);
   const sig=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
@@ -2382,6 +2725,59 @@ function collectBitsFromPx(px,channels,bpc){
   }
   return bits;
 }
+/* 分片异步版：按时间预算逐帧读位，大图剥离时不冻结界面 */
+/* 流式提取位并打包成字节：只取前 maxBytes 字节（边取边每 8 位合成 1 字节）。
+   旧版 collectBitsFromPxAsync 返回"每元素一位"的全量位数组，30MB 数据会膨胀成 240MB，
+   安卓低内存设备在取图剥出时会因此闪退——此函数内存仅为数据本身大小。 */
+function collectBytesFromPx(px,channels,bpc,maxBytes,onProg){
+  return new Promise(function(resolve){
+    var out=new Uint8Array(maxBytes);
+    var pxLen=px.length, oi=0, i=0, budget=16, bitAcc=0, bitCnt=0;
+    function step(){
+      var t0=Date.now();
+      while(oi<maxBytes && i<pxLen){
+        var end=Math.min(i+channels*2500,pxLen);
+        for(; i<end; i+=channels){
+          for(var ch=0;ch<3;ch++){
+            var v=px[i+ch];
+            for(var k=0;k<bpc;k++){
+              bitAcc=(bitAcc<<1)|((v>>k)&1); bitCnt++;
+              if(bitCnt===8){ out[oi++]=(bitAcc&255); bitAcc=0; bitCnt=0; if(oi>=maxBytes) break; }
+            }
+            if(oi>=maxBytes) break;
+          }
+          if(oi>=maxBytes) break;
+        }
+        if(Date.now()-t0>=budget) break;
+      }
+      if(onProg) onProg(maxBytes?oi/maxBytes:1);
+      if(oi<maxBytes && i<pxLen){ setTimeout(step,0); } else { resolve(out.slice(0,oi)); }
+    }
+    step();
+  });
+}
+function collectBitsFromPxAsync(px,channels,bpc,onProg){
+  return new Promise(function(resolve){
+    var total=Math.floor(px.length/channels)*3*bpc, bi=0, i=0, budget=16;
+    var bits=new Uint8Array(total);
+    function step(){
+      var t0=Date.now();
+      while(i<px.length){
+        var end=Math.min(i+channels*2500,px.length);
+        for(;i<end;i+=channels){
+          for(var ch=0;ch<3;ch++){
+            var v=px[i+ch];
+            for(var k=0;k<bpc;k++) bits[bi++]=(v>>k)&1;
+          }
+        }
+        if(Date.now()-t0>=budget) break;
+      }
+      if(onProg) onProg(total?bi/total:1);
+      if(i<px.length){ setTimeout(step,0); } else { resolve(bits); }
+    }
+    step();
+  });
+}
 
 // 兜底：用 canvas 读像素（无原始文件 / 非标准PNG时）
 /* ===== 取图：解码 主隐写(STGO) 成品 ===== */
@@ -2481,8 +2877,8 @@ function deconfuseRGBA(rgba,W,H){
   return new Uint8ClampedArray(out.buffer);
 }
 /* 尝试 STGO：成功返回 {blob,type,useJpeg}；无数据返回 null；有数据但损坏返回 {error} */
-function stgoFromPx(collect){
-  const res=extractFromBits(collect);
+async function stgoFromPx(collect){
+  const res=await extractFromBits(collect);
   if(!res) return null;
   if(res.error) return {error:res.error};
   return {blob:res.blob,type:res.type,useJpeg:res.useJpeg,isGif:res.isGif,isWebp:res.isWebp,isVideo:res.isVideo,isBundle:res.isBundle,isSeg:res.isSeg,segIdx:res.segIdx,segTotal:res.segTotal,bundleFiles:res.bundleFiles||null,meta:res.meta};
@@ -2490,20 +2886,18 @@ function stgoFromPx(collect){
 function stgoCanvasSoft(img){
   return new Promise(resolve=>{
     try{
-      const c=drawToCanvas(img), cw=c.width, ch=c.height;
-      const ctx=c.getContext('2d'), px=ctx.getImageData(0,0,cw,ch).data;
-      const r=stgoFromPx(bpc=>{
-        const bits=new Uint8Array(cw*ch*3*bpc); let bi=0;
-        for(let i=0;i<px.length;i+=4) for(let c2=0;c2<3;c2++){ const v=px[i+c2]; for(let k=0;k<bpc;k++) bits[bi++]=(v>>k)&1; }
-        return bits;
-      });
-      if(!r) return resolve(null);
-      if(r.error) return resolve({error:r.error});
-      if(r.meta) resolve({blob:r.blob,type:r.type,useJpeg:r.useJpeg,kind:'主隐写',meta:r.meta});
-      else if(r.isBundle&&!r.isSeg) resolve({isBundle:true,bundleFiles:r.bundleFiles,kind:'多文件混合'});
-      else if(r.isVideo){ if(r.isSeg) return resolve({segBytes:r.blob,segIdx:r.segIdx,segTotal:r.segTotal,isSeg:true,kind:'视频分片'}); var vu=URL.createObjectURL(r.blob); resolve({videoUrl:vu,type:r.type,useJpeg:r.useJpeg,isVideo:true,kind:'视频'}); }
-      else if(r.isBundle&&r.isSeg) resolve({segBytes:r.blob,segIdx:r.segIdx,segTotal:r.segTotal,isSeg:true,isBundle:true,kind:'多文件分片'});
-      else blobToDataURL(r.blob).then(url=>resolve({url,type:r.type,useJpeg:r.useJpeg,isGif:r.isGif,isWebp:r.isWebp,kind:r.isGif?'GIF':(r.isWebp?'WebP 动图':'主隐写')})).catch(()=>resolve(null));
+      (async()=>{
+        const c=drawToCanvas(img), cw=c.width, ch=c.height;
+        const ctx=c.getContext('2d'), px=ctx.getImageData(0,0,cw,ch).data;
+        const r=await stgoFromPx(function(bpc,maxBytes){ return collectBytesFromPx(px,4,bpc,maxBytes); });
+        if(!r) return resolve(null);
+        if(r.error) return resolve({error:r.error});
+        if(r.meta) resolve({blob:r.blob,type:r.type,useJpeg:r.useJpeg,kind:'主隐写',meta:r.meta});
+        else if(r.isBundle&&!r.isSeg) resolve({isBundle:true,bundleFiles:r.bundleFiles,kind:'多文件混合'});
+        else if(r.isVideo){ if(r.isSeg) return resolve({segBytes:r.blob,segIdx:r.segIdx,segTotal:r.segTotal,isSeg:true,kind:'视频分片'}); var vu=URL.createObjectURL(r.blob); resolve({videoUrl:vu,type:r.type,useJpeg:r.useJpeg,isVideo:true,kind:'视频'}); }
+        else if(r.isBundle&&r.isSeg) resolve({segBytes:r.blob,segIdx:r.segIdx,segTotal:r.segTotal,isSeg:true,isBundle:true,kind:'多文件分片'});
+        else blobToDataURL(r.blob).then(url=>resolve({url,type:r.type,useJpeg:r.useJpeg,isGif:r.isGif,isWebp:r.isWebp,kind:r.isGif?'GIF':(r.isWebp?'WebP 动图':'主隐写')})).catch(()=>resolve(null));
+      })();
     }catch(e){ resolve(null); }
   });
 }
@@ -2532,9 +2926,10 @@ function extractOne(item){
   const bytesPromise=(file && file.arrayBuffer) ? file.arrayBuffer() : Promise.resolve(imgToCanvasBytes(item.img));
   // PNG：直读字节解主隐写（STGO）
   return bytesPromise.then(buf=>{
-    return Promise.resolve().then(()=>parsePngBytes(buf)).then(parsed=>{
-      const W=parsed.W, H=parsed.H, channels=parsed.channels, px=parsed.px;
-      const stgo=stgoFromPx(bpc=>collectBitsFromPx(px,channels,bpc));
+    const stgoPromise = window.mmgLowMemStream
+      ? extractStreamStgo(buf)
+      : parsePngBytes(buf).then(parsed=>stgoFromPx(function(bpc,maxBytes){ return collectBytesFromPx(parsed.px,parsed.channels,bpc,maxBytes); }));
+    return stgoPromise.then(async stgo=>{
       if(stgo){
         if(stgo.error) throw new Error(stgo.error);
         if(stgo.meta) return mmgSliceMosaic(stgo.blob,stgo.meta)
@@ -2605,6 +3000,7 @@ async function doExtract(){
   mmgShowProg('mmgExtractProg');
   let ok=0, fail=0;
   const segParts=[];
+  const digits=Math.max(2,String(list.length).length);
   for(let i=0;i<list.length;i++){
     const item=document.createElement('div');
     item.className='box';
@@ -2641,12 +3037,12 @@ async function doExtract(){
       } else if(r.isVideo){
         item.innerHTML='<video src="'+r.videoUrl+'" controls style="max-width:100%;max-height:60vh;border-radius:8px"></video>'
           +'<div class="cap">第 '+(i+1)+' 张 ✓ 已剥出（视频）</div>'
-          +'<a class="btn btn-primary" href="'+r.videoUrl+'" download="原图'+(i+1)+(mmgExtFor(r.type).indexOf('bin')>=0?'.mp4':mmgExtFor(r.type))+'">保存视频'+(i+1)+'</a>';
+          +'<a class="btn btn-primary" href="'+r.videoUrl+'" download="原图'+String(i+1).padStart(digits,'0')+(mmgExtFor(r.type).indexOf('bin')>=0?'.mp4':mmgExtFor(r.type))+'">保存视频'+(i+1)+'</a>';
       } else {
         item.innerHTML='<img src="'+r.url+'" alt="还原'+(i+1)+'" onclick="zoomOpen(this.src)" style="cursor:zoom-in">'
           +'<div class="cap">第 '+(i+1)+' 张 ✓ 已剥出'+(r.kind?'（'+r.kind+'）':'')+'</div>'
           +'<div class="save-tip">长按图片保存</div>'
-          +'<a class="btn btn-primary" href="'+r.url+'" download="原图'+(i+1)+(r.type==='image/gif'?'.gif':(r.type==='image/webp'?'.webp':(r.useJpeg?'.jpg':'.png')))+'">保存第'+(i+1)+'张</a>';
+          +'<a class="btn btn-primary" href="'+r.url+'" download="原图'+String(i+1).padStart(digits,'0')+(r.type==='image/gif'?'.gif':(r.type==='image/webp'?'.webp':(r.useJpeg?'.jpg':'.png')))+'">保存第'+(i+1)+'张</a>';
       }
     }catch(err){
       fail++;
@@ -2694,6 +3090,23 @@ async function doExtract(){
     setHint('extractHint','完成：成功 '+ok+' 张'+(fail?'，失败 '+fail+' 张':''),'ok');
   }
   mmgHideProg('mmgExtractProg');
+  // 视频自动连播：一个播完自动播下一个（含分片拼接的完整视频）
+  const vids=document.querySelectorAll('#extractList video');
+  if(vids.length){
+    vids.forEach(function(v,i){
+      v.onended=function(){
+        const nxt=vids[i+1];
+        if(!nxt) return;
+        const wasFull=document.fullscreenElement===v;
+        if(wasFull&&document.exitFullscreen){ document.exitFullscreen().catch(function(){}); }
+        nxt.scrollIntoView({behavior:'smooth',block:'center'});
+        const p=nxt.play(); if(p&&p.catch) p.catch(function(){});
+        if(wasFull&&nxt.requestFullscreen){ setTimeout(function(){ nxt.requestFullscreen().catch(function(){}); },120); }
+      };
+    });
+    // 第一个不自动播放：需用户手动点播放开始；播完第一个后，onended 自动接播下一个
+    // （不主动 play vids[0]，避免剥出后未点开始就自动放）
+  }
 }
 
 /* 保存为 JPG：主藏图靠 LSB 存数据，必须无损；故保存当前成品（PNG 内容）命名 .jpg，像素不动、LSB 完好，主取图照常剥出 */
@@ -2794,12 +3207,13 @@ function hxRestore(){
 }
 
 /* ===== 视频分割转换工具（独立切割，按自定义时段保存，自带选视频入口） ===== */
-var vsSegCount=0, vsSrcUrl=null, vsDur=0, vsSegMeta=[];
+var vsSegCount=0, vsSrcUrl=null, vsDur=0, vsSegMeta=[], vsSrcName='视频', vsSegFiles=[];
 function vsFileSel(files){
   var f=files&&files[0]; if(!f) return;
   if(vsSrcUrl) URL.revokeObjectURL(vsSrcUrl);
   vsSrcUrl=URL.createObjectURL(f);
-  vsSegCount=0; vsSegMeta=[];
+  vsSegCount=0; vsSegMeta=[]; vsSegFiles=[];
+  vsSrcName=(f.name||'视频').replace(/\.[^.]+$/,'')||'视频';
   document.getElementById('vs_segments').innerHTML='';
   document.getElementById('vs_out').innerHTML='';
   var r=document.getElementById('vs_result'); if(r) r.style.display='none';
@@ -2854,7 +3268,7 @@ function vsCut(){
   function doCut(segs2){
     var valid=segs2.filter(function(s){ return s.en>s.st && s.en<=vsDur; });
     if(!valid.length){ var st=document.getElementById('vs_status'); if(st) st.textContent='没有有效的切割时段（结束需>开始且≤总时长）'; return; }
-    vsSegMeta=valid;
+    vsSegMeta=valid; vsSegFiles=[];
     var r=document.getElementById('vs_result'); if(r) r.style.display='block';
     document.getElementById('vs_out').innerHTML='';
     var st=document.getElementById('vs_status'); if(st) st.textContent='正在切割 '+valid.length+' 段…';
@@ -2890,10 +3304,13 @@ function vsCutOne(i){
         var ext = mp4Mode ? 'mp4' : 'webm';
         var nb=new Blob(chunks,{type:mp4Mode?'video/mp4':'video/webm'});
         var url=URL.createObjectURL(nb);
+        var padW=String(vsSegMeta.length).length;
+        var segName=vsSrcName+'_'+vsPad(i+1,padW)+'.'+ext;
+        vsSegFiles.push({name:segName, dur:(seg.en-seg.st)});
         var box=document.createElement('div');
         box.style.cssText='display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card2)';
-        box.innerHTML='<span style="font-size:12px;color:var(--text)">第'+(i+1)+'段（'+seg.st+'~'+seg.en+'秒，'+(nb.size/1048576).toFixed(2)+'MB'+(!mp4Mode?'，当前浏览器不支持mp4，已回退webm':'')+'）</span>'
-          +'<a class="btn btn-primary" href="'+url+'" download="视频段'+(i+1)+'.'+ext+'" style="text-decoration:none">保存第'+(i+1)+'段</a>';
+        box.innerHTML='<span style="font-size:12px;color:var(--text)">'+segName+'（'+seg.st+'~'+seg.en+'秒，'+(nb.size/1048576).toFixed(2)+'MB'+(!mp4Mode?'，当前浏览器不支持mp4，已回退webm':'')+'）</span>'
+          +'<a class="btn btn-primary" href="'+url+'" download="'+segName+'" style="text-decoration:none">保存</a>';
         document.getElementById('vs_out').appendChild(box);
         var st=document.getElementById('vs_status'); if(st) st.textContent='已切割 '+(i+1)+'/'+vsSegMeta.length+' 段';
         try{ v.removeAttribute('src'); }catch(_){}
@@ -2916,6 +3333,21 @@ function vsCutOne(i){
     startRec();
   };
   v.load();
+}
+function vsPad(n,w){ n=''+n; while(n.length<w) n='0'+n; return n; }
+function vsGenPlaylist(){
+  var st=document.getElementById('vs_status');
+  if(!vsSegFiles.length){ if(st) st.textContent='请先点「切割并保存」，切出各段后再生成播放列表'; return; }
+  var list=vsSegFiles.slice().sort(function(a,b){ return a.name<b.name?-1:(a.name>b.name?1:0); });
+  var lines=['#EXTM3U'];
+  list.forEach(function(f){
+    lines.push('#EXTINF:'+(isFinite(f.dur)?f.dur.toFixed(3):'0')+', '+f.name);
+    lines.push(f.name);
+  });
+  var blob=new Blob([lines.join('\r\n')],{type:'audio/x-mpegurl'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=(vsSrcName||'视频')+'_播放列表.m3u'; a.click();
+  if(st) st.textContent='已生成播放列表(.m3u)。请把各段和 .m3u 放到同一文件夹，用播放器打开 .m3u 即可按顺序连播；每段也可单独播放。';
 }
 
 function hxShow(u32,label){
