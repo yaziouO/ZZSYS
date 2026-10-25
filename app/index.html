@@ -377,16 +377,10 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
     </div>
   </details>
 
-  <details style="margin-top:10px">
+  <details id="mmgScaleCtl" style="margin-top:10px">
     <summary style="cursor:pointer;font-size:13px;color:var(--muted)">表图放大（容量不够时手动加大）</summary>
     <div class="opt" style="margin-top:6px">
-      <div class="row">
-        <button id="mmgS1" class="active" onclick="mmgSetScale(1)">1×</button>
-        <button id="mmgS2" onclick="mmgSetScale(2)">2×</button>
-        <button id="mmgS3" onclick="mmgSetScale(3)">3×</button>
-        <button id="mmgS5" onclick="mmgSetScale(5)">5×</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:7px;font-size:12px;color:var(--muted)">
+      <div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)">
         自定义
         <input id="mmgScaleInput" type="number" min="1" step="0.1" value="1" style="width:70px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)">
         <span>×</span>
@@ -397,20 +391,32 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   </details>
 
 
+  <div id="mmgStrategyCtl" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">视频嵌入方式</div>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+      <input type="radio" name="mmgStrategy" value="orig" id="mmgStrOrig" checked onchange="mmgStrategyChg()"> 原图嵌入（无损，取图剥出即原视频）
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text);margin-top:6px">
+      <input type="radio" name="mmgStrategy" value="low" id="mmgStrLow" onchange="mmgStrategyChg()"> 降码率2M（时间切重编码，成品小、每张可单独播放）
+    </label>
+  </div>
+  <div id="mmgPredict" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2);font-size:12px;line-height:1.7;color:var(--text)"></div>
+
+
   <details id="mmgSegCtl" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
     <summary style="font-size:12px;cursor:pointer;color:var(--text);user-select:none">视频分割藏入多张（大容量分切）</summary>
     <div style="margin-top:8px;font-size:12px;color:var(--text);display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="radio" name="mmgMode" value="bytes" id="mmgSegModeBytes" onchange="mmgSegModeVis()"> 按字节切（不可单独播放，但取图时全选即可获得完整视频）
+        <input type="radio" name="mmgMode" value="bytes" id="mmgSegModeBytes" checked onchange="mmgSegModeVis()"> 按字节切（不可单独播放，但取图时全选即可获得完整视频）
       </label>
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="radio" name="mmgMode" value="time" id="mmgSegModeTime" checked onchange="mmgSegModeVis()"> 按时间切成可单独播放的段（每段是完整视频，取图单张即可播放）
+        <input type="radio" name="mmgMode" value="time" id="mmgSegModeTime" onchange="mmgSegModeVis()"> 按时间切成可单独播放的段（每段是完整视频，取图单张即可播放）
       </label>
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)">
       每段约
-      <input type="number" id="mmgSegMin" value="1" min="0" max="59" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 分
-      <input type="number" id="mmgSegSec" value="0" min="0" max="59" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 秒
+      <input type="number" id="mmgSegMin" value="1" min="0" max="59" onchange="mmgPredict()" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 分
+      <input type="number" id="mmgSegSec" value="0" min="0" max="59" onchange="mmgPredict()" style="width:54px;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)"> 秒
       <span style="font-size:11px" id="mmgSegModeNote">（按时间切成完整视频段落，每张图可单独播放；生成时也会生成播放列表选项）</span>
     </div>
   </details>
@@ -858,6 +864,114 @@ function mmgSetMode(m){
   if(mmgEl('mmgPaneEmbed')) mmgEl('mmgPaneEmbed').style.display='block';
 }
 function mmgMode(){ var e=document.querySelector('input[name="mmgMode"]:checked'); return e?e.value:''; }
+function mmgStrategy(){ var e=document.querySelector('input[name="mmgStrategy"]:checked'); return e?e.value:'orig'; }
+function mmgStrategyChg(){
+  // 联动：原图嵌入→无损字节细分；降码率2M→时间切细分（避免策略与细分冲突）
+  var st=mmgStrategy();
+  if(st==='orig'){
+    var m=mmgMode();
+    if(m==='time'||m==='cap25'){ var b=document.getElementById('mmgSegModeBytes'); if(b) b.checked=true; }
+  } else {
+    var m=mmgMode();
+    if(m==='bytes'||m==='cap30'){ var t=document.getElementById('mmgSegModeTime'); if(t) t.checked=true; }
+  }
+  mmgSegModeVis(); mmgUpd();
+  mmgPredict();
+}
+var mmgPredictBusy=false;
+async function mmgPredict(){
+  var el=mmgEl('mmgPredict');
+  var strat=mmgStrategy();
+  var hasVideo=(mmgSt.cover&&mmgSt.secrets.length===1&&isVideoSecret(mmgSt.secrets[0]));
+  if(!hasVideo){ if(el) el.style.display='none'; return; }
+  var cw0=mmgSt.cover.naturalWidth||mmgSt.cover.width||0;
+  var ch0=mmgSt.cover.naturalHeight||mmgSt.cover.height||0;
+  if(!cw0||!ch0){ if(el) el.style.display='none'; return; }
+  var baseCap=0.75*cw0*ch0;              // 每像素约存 0.75 字节
+  var bytesToFit, label, segNote='';
+  if(strat==='low'){
+    var mn=parseInt(mmgEl('mmgSegMin').value||'0',10); if(isNaN(mn)) mn=0;
+    var sc=parseInt(mmgEl('mmgSegSec').value||'10',10); if(isNaN(sc)) sc=10;
+    var segDur=mn*60+sc; if(segDur<1) segDur=10;
+    // 读视频实际时长，按真实段数估算
+    var dur=await mmgProbeDuration(mmgSt.secrets[0].src);
+    if(!(dur>0)) dur=segDur;
+    var segCount=Math.max(1,Math.ceil(dur/segDur));
+    var realSegDur = segCount>1 ? segDur : dur; // 实际每段时长（只有一段则整段时长）
+    bytesToFit=0.25*realSegDur*1048576;
+    window._lowFit={segMB:bytesToFit/1048576, segDurTxt:(segCount>1?('共'+segCount+'段'):('整段'+realSegDur.toFixed(0)+'秒'))};
+    label='预计每段约 <b>'+(bytesToFit/1048576).toFixed(1)+' MB</b>（2M码率 × '+realSegDur.toFixed(0)+' 秒'+(segCount>1?('，共 '+segCount+' 段'):'，整段')+'）';
+  } else {
+    try{
+      var vlen=await fetch(mmgSt.secrets[0].src).then(function(r){return r.arrayBuffer();}).then(function(a){return a.byteLength;});
+      bytesToFit=vlen;
+      label='整份视频约 <b>'+(vlen/1048576).toFixed(1)+' MB</b>（无损原视频）';
+      segNote='（若需 >10× 仍装不下，将自动分段多张）';
+    }catch(e){ if(el) el.style.display='none'; return; }
+  }
+  var needScale=Math.sqrt(bytesToFit/Math.max(1,baseCap));
+  var applyScale=Math.max(1,Math.min(needScale,10));
+  var effScale=Math.max(applyScale, mmgSt.scale||1);
+  // 基础表图PNG实测（降码率虚测用：按放大倍数×面积比例推算）
+  if(window._coverPngKey!==(cw0+'x'+ch0)){
+    try{
+      var cb=document.createElement('canvas'); cb.width=cw0; cb.height=ch0;
+      var cbx=cb.getContext('2d');
+      if(mmgSt.cover&&mmgSt.cover.complete) cbx.drawImage(mmgSt.cover,0,0,cw0,ch0);
+      window._coverPngBytes=await new Promise(function(r){ cb.toBlob(function(b){ r(b?b.size:0); },'image/png'); });
+      window._coverPngKey=cw0+'x'+ch0;
+    }catch(e){ window._coverPngBytes=0; }
+  }
+  // 干跑测"单张成品"真实大小：按实际放大倍数渲染表图→写入数据→测写位后PNG字节，最贴近保存成品且只偏大不偏小
+  var effScale2=Math.max(applyScale, mmgSt.scale||1);
+  var dryKey=strat+'|'+cw0+'x'+ch0+'|'+effScale2+'|'+bytesToFit;
+  if(window._dryKey!==dryKey){
+    window._dryMB=null;
+    try{
+      var raw0=drawToCanvas(mmgSt.cover);
+      var reload0=await new Promise(function(res){ raw0.toBlob(function(b){var im=new Image();im.onload=function(){res(im);};im.src=URL.createObjectURL(b);},'image/png'); });
+      var cf=document.createElement('canvas'); cf.width=Math.max(1,Math.round(cw0*effScale2)); cf.height=Math.max(1,Math.round(ch0*effScale2));
+      var cxf=cf.getContext('2d'); cxf.drawImage(reload0,0,0,cf.width,cf.height);
+      var df=cxf.getImageData(0,0,cf.width,cf.height); var pxf=df.data;
+      var capB=cf.width*cf.height*3*2, perAv=Math.floor(capB/8)-11;
+      var capS=Math.max(1,Math.ceil(bytesToFit/perAv));
+      var segH=capS>1?11:9; var fl=(1)|16|(capS>1?32:0);
+      if(!window._dryVB || window._dryVBSrc!==mmgSt.secrets[0].src){
+        try{ window._dryVB=new Uint8Array(await fetch(mmgSt.secrets[0].src).then(function(r){return r.arrayBuffer();})); window._dryVBSrc=mmgSt.secrets[0].src; }
+        catch(e){ window._dryVB=null; }
+      }
+      var vArr=window._dryVB;
+      var segL=Math.max(1,Math.round(bytesToFit/Math.max(1,capS)));
+      var seg;
+      if(vArr && vArr.length){ seg=vArr.subarray(0,Math.min(segL,vArr.length)); }
+      else { seg=new Uint8Array(segL); for(var rk=0;rk<segL;rk++)seg[rk]=(Math.random()*256)|0; }
+      var header=new Uint8Array(segH); header.set(MAGIC,0); header[4]=fl;
+      header[5]=(seg.length>>>24)&0xFF; header[6]=(seg.length>>>16)&0xFF; header[7]=(seg.length>>>8)&0xFF; header[8]=seg.length&0xFF;
+      if(capS>1){ header[9]=0; header[10]=capS; }
+      var payload=new Uint8Array(segH+seg.length); payload.set(header,0); payload.set(seg,segH);
+      var bits=bytesToBits(payload,2);
+      await new Promise(function(done){ mmgWriteBits(pxf,bits,2,'mmgEmbedProg',done); });
+      cxf.putImageData(df,0,0);
+      window._dryMB=await new Promise(function(res){ cf.toBlob(function(b){ res((b?b.size:0)/1048576); },'image/png'); });
+    }catch(e){ window._dryMB=null; }
+    window._dryKey=dryKey;
+  }
+  var totalMB=window._dryMB>0 ? window._dryMB : (((window._coverPngBytes>0?window._coverPngBytes*effScale2*effScale2*1.4:(cw0*effScale2*ch0*effScale2)*0.05)/1048576)+bytesToFit/1048576)*1.1;
+  if(el){
+    el.style.display='block';
+    el.innerHTML=label
+      +'<br>需放大表图至 <b>'+(effScale.toFixed(1))+'×</b>（基础 '+cw0+'×'+ch0+'，基础容量约 '+(baseCap/1048576).toFixed(1)+' MB）'
+      +'<br>单张成品约 <b>'+totalMB.toFixed(1)+' MB</b>（表图 + 藏入数据）'+segNote;
+  }
+  // 自动打开放大功能并应用推荐倍数
+  if(!mmgPredictBusy && Math.abs((mmgSt.scale||1)-applyScale)>0.01){
+    mmgPredictBusy=true;
+    var sc=mmgEl('mmgScaleCtl'); if(sc) sc.open=true;
+    var inp=mmgEl('mmgScaleInput'); if(inp) inp.value=applyScale.toFixed(1);
+    mmgSetScale(Math.max(1,Math.ceil(applyScale*10)/10));
+    mmgPredictBusy=false;
+  }
+}
 function mmgSegOpen(){ var d=mmgEl('mmgSegCtl'); return !!(d&&d.open); }
 // 时间切家族 = 按时间切(time) 和 死切(cap25)：每张是完整可单独播放的段；活切(cap30)和按字节切(bytes)走字节切（需全部分段拼回）
 function mmgSegModeIsTime(){ var m=mmgMode(); return m==='time'||m==='cap25'; }
@@ -910,9 +1024,11 @@ function mmgUpd(){
   mmgEl('mmgEmbedBtn').disabled=!(mmgSt.cover&&mmgSt.secrets.length>0);
   var seg=mmgEl('mmgSegCtl');
   var cap=mmgEl('mmgCapCtl');
+  var strat=mmgEl('mmgStrategyCtl');
   var show=(mmgSt.secrets.length===1 && isVideoSecret(mmgSt.secrets[0]));
   if(seg) seg.style.display=show?'block':'none';
   if(cap) cap.style.display=show?'block':'none';
+  if(strat) strat.style.display=show?'block':'none';
 }
 function mmgRenderDrop(id,img){
   var e=mmgEl(id); e.classList.add('has-img');
@@ -945,7 +1061,7 @@ function mmgCapacityHint(){
   if(!cv||!cn) return '';
   if(cn===1 && isGifSecret(mmgSt.secrets[0])) return mmgSingleFileHint(cv,mmgSt.secrets[0],'GIF');
   if(cn===1 && isWebpSecret(mmgSt.secrets[0])) return mmgSingleFileHint(cv,mmgSt.secrets[0],'WebP 动图');
-  if(cn===1 && isVideoSecret(mmgSt.secrets[0])) return mmgSingleFileHint(cv,mmgSt.secrets[0],'视频');
+  if(cn===1 && isVideoSecret(mmgSt.secrets[0])) return mmgStrategy()==='low' ? mmgLowCapacityHint(cv,mmgSt.secrets[0]) : mmgSingleFileHint(cv,mmgSt.secrets[0],'视频');
   var cw=cv.naturalWidth||cv.width, ch=cv.naturalHeight||cv.height;
   if(!cw||!ch) return '请先选好表图，才能实时估算容量';
   var scale=mmgSt.scale||1;
@@ -980,6 +1096,37 @@ function mmgCapacityHint(){
     +'<rect x="5.4" y="0" width="4.2" height="2.2" rx="1" fill="'+col+'"/>'
     +'<rect x="4" y="'+(22-fh)+'" width="7" height="'+fh+'" rx="1" fill="'+col+'" opacity="0.9"/>'
     +'</svg>';
+  return '<span style="display:inline-flex;align-items:center;gap:7px">'+batt+txt+'</span>';
+}
+// 降码率2M 模式下的容量提示：按降码率段大小估算，而非整份原视频
+function mmgLowCapacityHint(cv,sec){
+  var cw=cv.naturalWidth||cv.width, ch=cv.naturalHeight||cv.height;
+  if(!cw||!ch) return '请先选好表图，才能实时估算容量';
+  var scale=mmgSt.scale||1;
+  cw=Math.round(cw*scale); ch=Math.round(ch*scale);
+  var availBytes=Math.floor(cw*ch*3*2/8)-11;
+  if(availBytes<=0) return '表图容量不足，请换更大的表图';
+  var fit=window._lowFit;
+  var segMB, segTxt;
+  if(fit && fit.segMB>0){ segMB=fit.segMB; segTxt=fit.segDurTxt||(Math.round(segMB/0.25)+' 秒段'); }
+  else {
+    var mn=parseInt(mmgEl('mmgSegMin').value||'0',10)||0;
+    var sc=parseInt(mmgEl('mmgSegSec').value||'10',10)||10;
+    var segDur=mn*60+sc; if(segDur<1) segDur=10;
+    segMB=0.25*segDur; segTxt=segDur+' 秒段';
+  }
+  var segBytes=segMB*1048576;
+  var needScale=Math.max(1, scale*Math.sqrt(segBytes/Math.max(1,availBytes)));
+  var ok=segBytes<=availBytes;
+  var col=ok?'#5bd08a':'#e8a34a';
+  var fh=Math.round(Math.min(1,segBytes/availBytes)*18); if(fh<2&&segBytes>0) fh=2;
+  var batt='<svg width="16" height="26" viewBox="0 0 16 26" style="flex:none">'
+    +'<rect x="2" y="1.5" width="11" height="22" rx="2.5" fill="none" stroke="'+col+'" stroke-width="1.3"/>'
+    +'<rect x="5.4" y="0" width="4.2" height="2.2" rx="1" fill="'+col+'"/>'
+    +'<rect x="4" y="'+(22-fh)+'" width="7" height="'+fh+'" rx="1" fill="'+col+'" opacity="0.9"/>'
+    +'</svg>';
+  var txt=ok?('降码率2M：每段约 '+segMB.toFixed(1)+' MB（'+segTxt+'），当前表图即可容纳，无需放大')
+            :('降码率2M：每段约 '+segMB.toFixed(1)+' MB（'+segTxt+'），需放大表图至 '+(Math.ceil(needScale*10)/10).toFixed(1)+'×');
   return '<span style="display:inline-flex;align-items:center;gap:7px">'+batt+txt+'</span>';
 }
 function mmgCap30Enabled(){ return mmgMode()==='cap30'; }
@@ -1107,13 +1254,13 @@ function mmgLoad(file){
     if(mmgSt.curPick==='secrets'&&mmgSt.secrets.some(function(s){return s._isVideo;})){ mmgHint('mmgHint','里图只能放入一个视频，不能多个视频一起放入','err'); return; }
     var uv=URL.createObjectURL(file);
     var vo={src:uv,_isVideo:true,_name:file.name,_size:file.size};
-    if(mmgSt.curPick==='secrets'){ mmgSt.secrets.push(vo); mmgRenderSecrets(); mmgUpd(); }
+    if(mmgSt.curPick==='secrets'){ mmgSt.secrets.push(vo); mmgRenderSecrets(); mmgUpd(); mmgPredict(); }
     else { mmgHint('mmgHint','视频只能作为里图（②选里图）使用','err'); }
     return;
   }
   var u=URL.createObjectURL(file); var img=new Image();
   img.onload=function(){
-    if(mmgSt.curPick==='cover'){ mmgSt.cover=img; mmgRenderDrop('mmgDropCover',img); mmgUpd(); }
+    if(mmgSt.curPick==='cover'){ mmgSt.cover=img; mmgRenderDrop('mmgDropCover',img); mmgUpd(); mmgPredict(); }
     else if(mmgSt.curPick==='secrets'){ img._isGif=(file.type==='image/gif'||/\.gif$/i.test(file.name)); img._isWebp=(file.type==='image/webp'||/\.webp$/i.test(file.name)); img._size=file.size; mmgSt.secrets.push(img); mmgRenderSecrets(); mmgUpd(); }
   };
   img.onerror=function(){ mmgHint('mmgHint','不是有效的图片文件','err'); };
@@ -1243,7 +1390,8 @@ function mmgMediaRecorderTranscode(videoBlob, maxH, fps){
   });
 }
 async function mmgEmbedVideo(){
-  if(mmgSegModeIsTime()){ return mmgEmbedVideoTimeCut(); }
+  if(mmgStrategy()==='low'){ return mmgEmbedVideoTimeCut(); }
+  // 原图嵌入(orig)：无损字节嵌入（整份/字节分段），忽略 time/cap25 细分
   mmgHint('mmgHint','正在嵌入视频…','');
   mmgShowProg('mmgEmbedProg');
   try{
@@ -1301,7 +1449,8 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       capBits=cw*ch*3*2; perAvail=Math.floor(capBits/8)-11;
       capSegs=Math.max(1,Math.ceil(vBytes.length/perAvail));
     }
-    var segCount=manualSeg?Math.max(segCountByTime,capSegs):capSegs;
+    // 用户手动放大表图后，若单张已能直接装下整份视频，则不再走"分割嵌入多张"，直接整份嵌入
+    var segCount=(capSegs<=1)?1:(manualSeg?Math.max(segCountByTime,capSegs):capSegs);
     var segHdr=segCount>1?11:9; // 分片头 11 字节（含 segIdx/segTotal），普通视频头 9 字节
     var flags=(1)|16|(segCount>1?32:0); // bpc2 + 视频 + 分段标记
     var urls=[];
@@ -1702,6 +1851,35 @@ function glowProcess(img,mode,amt){
   mmgEl('mmgDownload').href=url;
   mmgHint('mmgHint','已叠加纹理伪装（强度'+amt+'）：看着像藏了图；藏的数据不受影响，仍可正常剥出。','ok');
 }
+/* 对一张 dataURL 应用当前光棱化（返回光棱化后的 dataURL）；保留像素低2位，不影响藏入数据 */
+function glowUrl(url,mode,amt){
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.onload=function(){
+      var c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
+      var ctx=c.getContext('2d'); ctx.drawImage(img,0,0);
+      var id=ctx.getImageData(0,0,c.width,c.height), d=id.data, w=c.width, h=c.height;
+      var strength=1-amt/100*0.65;
+      var stepDot=9, rDot=3.2, stepScan=6, lineH=2, stepGrid=7, lineW=1, stepPat=13, patW=4;
+      for(var y=0;y<h;y++){
+        for(var x=0;x<w;x++){
+          var on=false;
+          if(mode==='dot'){ var cx=(x%stepDot)-stepDot/2, cy=(y%stepDot)-stepDot/2; if(cx*cx+cy*cy<=rDot*rDot) on=true; }
+          else if(mode==='scan'){ if(y%stepScan<lineH) on=true; }
+          else if(mode==='grid'){ if((x%stepGrid<lineW)||(y%stepGrid<lineW)) on=true; }
+          else if(mode==='pattern'){ var px=x%stepPat, py=y%stepPat, half=stepPat/2; if(Math.abs(px-half)+Math.abs(py-half)<patW) on=true; }
+          if(on){ var p=(y*w+x)*4; for(var j=0;j<3;j++){ var o=d[p+j]; var v=o*strength; if(v<0)v=0; d[p+j]=(v&~3)|(o&3); } }
+        }
+      }
+      ctx.putImageData(id,0,0);
+      resolve(c.toDataURL('image/png'));
+    };
+    img.onerror=function(){ resolve(url); };
+    img.src=url;
+  });
+}
+/* 取当前光棱效果与强度 */
+function glowModeAmt(){ return { mode:document.getElementById('glowMode')?document.getElementById('glowMode').value:'scan', amt:parseInt((document.getElementById('glowAmt')||{value:45}).value,10)||45 }; }
 /* 伪装效果已改由 applyGlow 实时处理 */
 function glowTable(){ applyGlow(); }
 /* 嗅探文件类型（按魔数）：mp4/gif/webp/png/jpeg/webm */
@@ -3216,23 +3394,62 @@ async function doExtract(){
     setHint('extractHint','完成：成功 '+ok+' 张'+(fail?'，失败 '+fail+' 张':''),'ok');
   }
   mmgHideProg('mmgExtractProg');
-  // 视频自动连播：一个播完自动播下一个（含分片拼接的完整视频）
-  const vids=document.querySelectorAll('#extractList video');
-  if(vids.length){
-    vids.forEach(function(v,i){
-      v.onended=function(){
-        const nxt=vids[i+1];
-        if(!nxt) return;
-        const wasFull=document.fullscreenElement===v;
-        if(wasFull&&document.exitFullscreen){ document.exitFullscreen().catch(function(){}); }
-        nxt.scrollIntoView({behavior:'smooth',block:'center'});
-        const p=nxt.play(); if(p&&p.catch) p.catch(function(){});
-        if(wasFull&&nxt.requestFullscreen){ setTimeout(function(){ nxt.requestFullscreen().catch(function(){}); },120); }
-      };
+  // 视频自动连播 + 播放顺序管理：给每个剥出视频卡片加"上移/下移"，用户可自选连播顺序
+  const vidsAll=document.querySelectorAll('#extractList video');
+  if(vidsAll.length){
+    vidsAll.forEach(function(v,i){
+      const card=v.closest('.box');
+      if(!card) return;
+      const total=vidsAll.length;
+      const bar=document.createElement('div');
+      bar.style.cssText='display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap';
+      bar.innerHTML='<span style="font-size:12px;color:var(--muted)">播放序 <b class="po-idx">'+(i+1)+'</b>/<span class="po-total">'+total+'</span></span>'
+        +'<button class="btn btn-ghost po-up" style="padding:3px 10px;font-size:12px" onclick="mmgMoveVideo(this,-1)">↑ 上移</button>'
+        +'<button class="btn btn-ghost po-down" style="padding:3px 10px;font-size:12px" onclick="mmgMoveVideo(this,1)">↓ 下移</button>';
+      card.appendChild(bar);
     });
+    mmgRebindPlayback();
     // 第一个不自动播放：需用户手动点播放开始；播完第一个后，onended 自动接播下一个
     // （不主动 play vids[0]，避免剥出后未点开始就自动放）
   }
+}
+
+/* 重新绑定连播顺序：按当前 DOM 顺序绑定 onended，并刷新每张的播放序号与上移/下移可用性 */
+function mmgRebindPlayback(){
+  const vids=document.querySelectorAll('#extractList video');
+  const total=vids.length;
+  vids.forEach(function(v,i){
+    const card=v.closest('.box');
+    if(!card) return;
+    const idx=card.querySelector('.po-idx'); if(idx) idx.textContent=i+1;
+    const tot=card.querySelector('.po-total'); if(tot) tot.textContent=total;
+    const up=card.querySelector('.po-up'), down=card.querySelector('.po-down');
+    if(up) up.style.display=i===0?'none':'';
+    if(down) down.style.display=i===total-1?'none':'';
+    v.onended=function(){
+      const nxt=vids[i+1];
+      if(!nxt) return;
+      const wasFull=document.fullscreenElement===v;
+      if(wasFull&&document.exitFullscreen){ document.exitFullscreen().catch(function(){}); }
+      nxt.scrollIntoView({behavior:'smooth',block:'center'});
+      const p=nxt.play(); if(p&&p.catch) p.catch(function(){});
+      if(wasFull&&nxt.requestFullscreen){ setTimeout(function(){ nxt.requestFullscreen().catch(function(){}); },120); }
+    };
+  });
+}
+
+/* 播放顺序上移/下移：调整剥出视频卡片的 DOM 位置，连播顺序跟随 */
+function mmgMoveVideo(btn,dir){
+  const card=btn.closest('.box');
+  if(!card) return;
+  const list=document.getElementById('extractList');
+  const cards=Array.from(list.children).filter(function(c){return c.classList.contains('box');});
+  const idx=cards.indexOf(card);
+  const nxt=idx+dir;
+  if(nxt<0||nxt>=cards.length) return;
+  if(dir<0) list.insertBefore(card,cards[nxt]);
+  else list.insertBefore(card,cards[nxt].nextSibling);
+  mmgRebindPlayback();
 }
 
 /* 保存为 JPG：主藏图靠 LSB 存数据，必须无损；故保存当前成品（PNG 内容）命名 .jpg，像素不动、LSB 完好，主取图照常剥出 */
