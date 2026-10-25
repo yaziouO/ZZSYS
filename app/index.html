@@ -467,7 +467,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   </div>
   <div class="hint" id="extractHint"></div>
   <button class="btn btn-primary" id="btnExtract" disabled onclick="doExtract()">批量剥出原图</button>
-  <button class="btn btn-ghost" id="btnLowMem" onclick="toggleLowMem()" style="margin-top:6px;width:100%">闪退就点这里（流式省内存重取，较慢）</button>
+  <button class="btn btn-ghost" id="btnLowMem" onclick="toggleLowMem()" style="margin-top:6px;font-size:12px;padding:3px 10px">闪退就点这里（流式省内存重取）</button>
   <div class="mmg-progress" id="mmgExtractProg" style="display:none"><div class="bar"></div></div>
 
   <div class="result" id="extractResult">
@@ -2115,6 +2115,7 @@ el('mrgSaveJpg').addEventListener('click',function(){
 <div id="download-area">
   <button type="button" class="btn btn-ghost" style="margin-top:12px;padding:6px 14px;font-size:12px;text-decoration:none" onclick="mmgDownloadApk()">下载安卓APP（作战实验室2.2离线版）</button>
   <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.5px">腾讯频道号 592962059Q</div>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;letter-spacing:.5px">BUG反馈Q群：592941563</div>
 </div>
 
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
@@ -2180,11 +2181,18 @@ function loadFile(file, target){
     if(target==='cover'){ coverImg=img; renderDrop('dropCover',img); updateEmbedBtn(); }
     else if(target==='secret'){ secretImg=img; renderDrop('dropSecret',img); updateEmbedBtn(); }
     else if(target==='stego'){
-      stegoQueue.push({img, file});
+      const item={img, file};
+      // 关键：选文件瞬间立即把字节预读进内存，规避安卓 content:// 临时授权在剥出时才失效的问题
+      if(file && file.arrayBuffer){
+        item.bytesPromise=file.arrayBuffer()
+          .then(function(b){ item.bytes=new Uint8Array(b); return item.bytes; })
+          .catch(function(){ item.bytes=null; item.bytesFailed=true; return null; });
+      }
+      stegoQueue.push(item);
       stegoImg=img; // 兼容单张逻辑
       renderDrop('dropStego',img);
       document.getElementById('btnExtract').disabled=false;
-      setHint('extractHint','已选 '+stegoQueue.length+' 张成品图，点「批量剥出原图」','ok');
+      setHint('extractHint','已选 '+stegoQueue.length+' 张成品图（字节已预读，防安卓权限过期），点「批量剥出原图」','ok');
     }
   };
   img.onerror=()=>setHint(target==='stego'?'extractHint':'embedHint','这不是有效的图片文件','err');
@@ -2198,6 +2206,10 @@ document.getElementById('fileInput').addEventListener('change',e=>{
   // 按文件名自然排序（数字段名如 原图1、原图2…原图10 按数字排，避免 1,10,11,2 乱序）
   const arr=[].slice.call(files).sort(function(a,b){ return String(a.name).localeCompare(String(b.name),'zh-CN',{numeric:true}); });
   for(const f of arr){ loadFile(f,currentPickTarget); }
+  // 已开启流式省内存且是取图时：等文件读入后自动开始剥出，省去再点一次
+  if(currentPickTarget==='stego' && window.mmgLowMemStream){
+    setTimeout(function(){ if(stegoQueue.length) doExtract(); },800);
+  }
 });
 
 // 给每个选图框绑拖放
@@ -2374,8 +2386,12 @@ async function extractFromBits(collect){
   const segmented=(flags&32)===32;
   const bundle=(flags&64)===64;
   let hlen=multi?12:(segmented?11:HEADER_LEN);
-  if(multi) hlen=12+2*header[11];
-  if(bundle&&!segmented) hlen=10+4*header[9];
+  if(multi){ if(header.length<12) header=await collect(bpc,12); hlen=12+2*header[11]; }
+  if(bundle&&!segmented){
+    if(header.length<10) header=await collect(bpc,10);
+    hlen=10+4*header[9];
+    if(header.length<hlen) header=await collect(bpc,hlen);
+  }
   if(header.length<hlen) header=await collect(bpc,hlen);
   const dataLen=(header[5]<<24>>>0)+(header[6]<<16)+(header[7]<<8)+header[8];
   const need=hlen+dataLen;
@@ -2477,6 +2493,26 @@ function concatU8(parts){
 // 返回 Promise<{W,H,channels,px}>；不是合法 8-bit PNG 则 reject
 /* ===== 流式省内存模式（闪退时点「闪退就点这里」启用）===== */
 /* 解压 PNG 返回原始滤波字节（不全量解码出像素数组），供流式逐行提取 */
+/* 只解析 PNG 头并收集 IDAT 压缩字节（不 inflate 全量），供流式解压使用 */
+function parsePngInfo(buf){
+  const b=new Uint8Array(buf);
+  const sig=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+  for(let i=0;i<8;i++) if(b[i]!==sig[i]) return Promise.reject(new Error('不是PNG文件'));
+  let off=8, W=0,H=0,bitDepth=0,colorType=0, idatParts=[];
+  while(off<b.length){
+    const len=(b[off]<<24)|(b[off+1]<<16)|(b[off+2]<<8)|b[off+3];
+    const type=String.fromCharCode(b[off+4],b[off+5],b[off+6],b[off+7]);
+    if(type==='IHDR'){ W=(b[off+8]<<24)|(b[off+9]<<16)|(b[off+10]<<8)|b[off+11]; H=(b[off+12]<<24)|(b[off+13]<<16)|(b[off+14]<<8)|b[off+15]; bitDepth=b[off+16]; colorType=b[off+17]; }
+    else if(type==='IDAT'){ idatParts.push(b.subarray(off+8,off+8+len)); }
+    else if(type==='IEND') break;
+    off+=12+len;
+  }
+  if(bitDepth!==8) return Promise.reject(new Error('仅支持8位PNG'));
+  const channels=colorType===6?4:(colorType===2?3:(colorType===0?1:0));
+  if(!channels) return Promise.reject(new Error('不支持的PNG颜色类型'));
+  const comp=concatU8(idatParts);
+  return Promise.resolve({W,H,channels,comp});
+}
 function inflatePngRaw(buf){
   const b=new Uint8Array(buf);
   const sig=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
@@ -2538,8 +2574,94 @@ function makeStreamCollect(raw,W,H,channels){
     });
   };
 }
-/* 流式模式取 stgo：复用提取逻辑，但解码走逐行流式 */
+/* 真流式解压：用 DecompressionStream 边解压边逐行解码+提位，不保留整张解压数据（内存最小，防安卓闪退） */
+function streamDecodeCollect(idat,W,H,channels,bpc,maxBytes){
+  return new Promise(function(resolve){
+    var stride=W*channels;
+    var out=new Uint8Array(maxBytes);
+    var prev=new Uint8Array(stride);
+    var oi=0, bitAcc=0, bitCnt=0, y=0, need=1, ft=0;
+    var pending=[]; var pendingLen=0;
+    function take(n){
+      if(pendingLen<n) return null;
+      var buf=new Uint8Array(n); var got=0;
+      for(var i=0;i<pending.length && got<n;i++){
+        var c=pending[i];
+        var tc=Math.min(c.length,n-got);
+        buf.set(c.subarray(0,tc),got); got+=tc;
+        if(tc===c.length){ pending.splice(i,1); i--; }
+        else { pending[i]=c.subarray(tc); }
+      }
+      pendingLen-=got;
+      return buf;
+    }
+    function decodeLine(line){
+      var cur=new Uint8Array(stride);
+      for(var i=0;i<stride;i++){
+        var a=i>=channels?cur[i-channels]:0;
+        var bb=prev[i]; var c=i>=channels?prev[i-channels]:0;
+        var x=line[i];
+        if(ft===1) x=(x+a)&255;
+        else if(ft===2) x=(x+bb)&255;
+        else if(ft===3) x=(x+((a+bb)>>1))&255;
+        else if(ft===4){ var p=a+bb-c, pa=Math.abs(p-a), pb=Math.abs(p-bb), pc=Math.abs(p-c); x=(x+(pa<=pb&&pa<=pc?a:(pb<=pc?bb:c)))&255; }
+        cur[i]=x;
+      }
+      prev.set(cur);
+      for(var pxI=0;pxI<stride && oi<maxBytes;pxI+=channels){
+        for(var cc=0;cc<3;cc++){
+          var v=cur[pxI+cc];
+          for(var k=0;k<bpc;k++){ bitAcc=(bitAcc<<1)|((v>>k)&1); bitCnt++; if(bitCnt===8){ out[oi++]=(bitAcc&255); bitAcc=0; bitCnt=0; if(oi>=maxBytes) break; } }
+          if(oi>=maxBytes) break;
+        }
+        if(oi>=maxBytes) break;
+      }
+    }
+    /* 分批处理解压到的数据：每批至多 limit 行，避免大 chunk 一次性同步解码拖死主线程 */
+    function processAvailable(limit){
+      var n=0;
+      while(oi<maxBytes && y<H && n<limit){
+        if(need===1){ var f=take(1); if(!f) break; ft=f[0]; need=stride; }
+        else { var line=take(stride); if(!line) break; decodeLine(line); y++; need=1; n++; }
+      }
+      return n; // 返回本批处理行数（0=数据不足或已结束）
+    }
+    var ds;
+    try{ ds=new DecompressionStream('deflate'); }
+    catch(e){ resolve(new Uint8Array(0)); return; }
+    var reader=new Blob([idat]).stream().pipeThrough(ds).getReader();
+    var settled=false;
+    function finish(){ if(settled) return; settled=true; resolve(out.slice(0,oi)); }
+    /* 流结束：所有解压数据已到，分段处理到收尾，同样小批让出，稳为主 */
+    function drain(){
+      var guard=0;
+      while(processAvailable(128)>0){ guard++; if(guard>2000000) break; }
+      finish();
+    }
+    function pump(){
+      if(oi>=maxBytes || y>=H){ try{ reader.cancel(); }catch(e){} finish(); return; }
+      reader.read().then(function(r){
+        if(settled) return;
+        if(r.done){ drain(); return; }
+        pending.push(new Uint8Array(r.value)); pendingLen+=r.value.byteLength;
+        processAvailable(32);   // 每批只解 32 行就让出主线程（更慢但更稳，防安卓闪退）
+        setTimeout(pump,0);
+      }).catch(function(){ if(!settled){ settled=true; resolve(new Uint8Array(0)); } });
+    }
+    pump();
+  });
+}
+/* 流式模式取 stgo：优先用 DecompressionStream 真流式解压（内存最小）；不支持/失败则回退全量解压 */
 async function extractStreamStgo(buf){
+  try{
+    const info=await parsePngInfo(buf); // {W,H,channels,comp}
+    if(typeof DecompressionStream!=='undefined'){
+      const collect=function(bpc,maxBytes){ return streamDecodeCollect(info.comp,info.W,info.H,info.channels,bpc,maxBytes); };
+      const r=await stgoFromPx(collect);
+      if(r) return r;
+    }
+  }catch(e){}
+  // 回退：全量解压（内存较大，仅当流式不可用/失败时）
   const {W,H,channels,raw}=await inflatePngRaw(buf);
   const collect=makeStreamCollect(raw,W,H,channels);
   return stgoFromPx(collect);
@@ -2548,9 +2670,9 @@ async function extractStreamStgo(buf){
 function toggleLowMem(){
   window.mmgLowMemStream=true;
   var b=document.getElementById('btnLowMem');
-  if(b){ b.textContent='已开启流式省内存（较慢），正在重新剥出…'; b.disabled=true; }
-  if(stegoQueue&&stegoQueue.length){ setHint('extractHint','已切换流式省内存模式（逐行解码，慢但稳）。正在重新剥出…',''); doExtract(); }
-  else { setHint('extractHint','已切换流式省内存模式，请重新选成品图后点「批量剥出原图」','ok'); }
+  if(b){ b.textContent='已开启流式省内存（逐行解码，较慢）'; }
+  if(stegoQueue&&stegoQueue.length){ setHint('extractHint','已切换流式省内存模式，正在重新剥出…',''); doExtract(); }
+  else { setHint('extractHint','已切换流式省内存模式，请选择成品图，选完会自动用流式剥出',''); pick('stego'); }
 }
 
 function parsePngBytes(buf){
@@ -2922,8 +3044,12 @@ function imgToCanvasBytes(img){
 function extractOne(item){
   // item: {img, file}
   const file=item && item.file;
-  // 取字节：优先 file.arrayBuffer，无 file 则从 img 画到 canvas 转 PNG
-  const bytesPromise=(file && file.arrayBuffer) ? file.arrayBuffer() : Promise.resolve(imgToCanvasBytes(item.img));
+  // 取字节：优先用「选文件瞬间预读进内存」的缓存，避免安卓 content:// 授权过期导致剥出时读不到
+  let bytesPromise;
+  if(item.bytes){ bytesPromise=Promise.resolve(item.bytes); }
+  else if(item.bytesPromise && !item.bytesFailed){ bytesPromise=item.bytesPromise.then(function(b){ return b || ((file&&file.arrayBuffer)?file.arrayBuffer():imgToCanvasBytes(item.img)); }); }
+  else if(file && file.arrayBuffer){ bytesPromise=file.arrayBuffer(); }
+  else { bytesPromise=Promise.resolve(imgToCanvasBytes(item.img)); }
   // PNG：直读字节解主隐写（STGO）
   return bytesPromise.then(buf=>{
     const stgoPromise = window.mmgLowMemStream
