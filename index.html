@@ -1141,19 +1141,29 @@ function mmgCapacityHint(){
 }
 // 降码率2M 模式下的容量提示：按降码率段大小估算，而非整份原视频
 function mmgCap30Enabled(){ return mmgMode()==='cap30'; }
-// 保存所有成品：依次触发每张成品的下载
-function mmgSaveAll(){
+// 保存所有成品：手机和电脑统一逐个依次保存（一次只触发 1 张，带进度，浏览器只需同意一次多文件下载即全部保存；避免一次点多个大 dataURL 把浏览器卡死）
+async function mmgSaveAll(){
   var arr=window._mmgAllUrls||[];
-
   if(!arr.length){ mmgHint('mmgHint','当前没有已生成的成品。','err'); return; }
-  arr.forEach(function(u,i){
+  var isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  var btn=document.querySelector('#mmgSaveAllBtn');
+  var n=arr.length;
+  if(isMobile){ mmgHint('mmgHint','手机浏览器一次只能保存 1 张，开始逐张保存 '+n+' 张…',''); }
+  for(var i=0;i<n;i++){
+    var u=arr[i];
     var a=document.createElement('a');
     a.href=u.url;
     a.download='成品'+(i+1)+'.png';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  });
+    if(btn) btn.textContent='保存所有成品（'+(i+1)+'/'+n+'）';
+    await new Promise(function(r){ setTimeout(r, isMobile?1800:120); });
+  }
+  if(btn) btn.textContent='保存所有成品';
+  mmgHint('mmgHint', isMobile
+    ? '已逐张触发 '+n+' 张保存，请留意每张的保存/相册确认；若某张没反应，就长按对应成品图选「保存图片」。'
+    : '已全部触发 '+n+' 张保存；电脑浏览器会问一次「下载多个文件」，允许后全部下载。','ok');
 }
 
 // ===== 每段单独换表图 =====
@@ -1259,22 +1269,32 @@ async function mmgFit30Scale(cw0,ch0,reloaded,builder){
   }
   return Math.max(1,lo);
 }
-function mmgLoad(file){
+function mmgLoad(file, cb){
+  function done(){ if(cb) try{ cb(); }catch(e){} }
   if(file.type.indexOf('video/')===0){
-    if(mmgSt.curPick==='secrets'&&mmgSt.secrets.some(function(s){return s._isVideo;})){ mmgHint('mmgHint','里图只能放入一个视频，不能多个视频一起放入','err'); return; }
+    if(mmgSt.curPick==='secrets'&&mmgSt.secrets.some(function(s){return s._isVideo;})){ mmgHint('mmgHint','里图只能放入一个视频，不能多个视频一起放入','err'); return done(); }
     var uv=URL.createObjectURL(file);
     var vo={src:uv,_isVideo:true,_name:file.name,_size:file.size};
     if(mmgSt.curPick==='secrets'){ mmgSt.secrets.push(vo); mmgRenderSecrets(); mmgUpd(); mmgPredict(); }
     else { mmgHint('mmgHint','视频只能作为里图（②选里图）使用','err'); }
-    return;
+    return done();
   }
   var u=URL.createObjectURL(file); var img=new Image();
   img.onload=function(){
     if(mmgSt.curPick==='cover'){ mmgSt.cover=img; mmgRenderDrop('mmgDropCover',img); mmgUpd(); mmgPredict(); }
     else if(mmgSt.curPick==='secrets'){ img._isGif=(file.type==='image/gif'||/\.gif$/i.test(file.name)); img._isWebp=(file.type==='image/webp'||/\.webp$/i.test(file.name)); img._size=file.size; mmgSt.secrets.push(img); mmgRenderSecrets(); mmgUpd(); }
+    done();
   };
-  img.onerror=function(){ mmgHint('mmgHint','不是有效的图片文件','err'); };
+  img.onerror=function(){ mmgHint('mmgHint','不是有效的图片文件','err'); done(); };
   img.src=u;
+}
+// 多选里图：按文件名自然排序后串行加载，保证添加顺序稳定（浏览器 FileList 不保证点选顺序）
+function mmgLoadSeq(files){
+  var arr=Array.prototype.slice.call(files||[]);
+  try{ arr.sort(function(a,b){ return (''+a.name).localeCompare(''+b.name, undefined, {numeric:true}); }); }catch(e){}
+  var k=0;
+  function next(){ if(k>=arr.length) return; mmgLoad(arr[k++], next); }
+  next();
 }
 mmgEl('mmgFile').addEventListener('change',function(){
   var fs=this.files; if(!fs||!fs.length)return;
@@ -1294,7 +1314,7 @@ mmgEl('mmgFile').addEventListener('change',function(){
     }
   }
   if(mmgSt.curPick==='secrets'&&!mmgSt.append){ mmgSt.secrets=[]; mmgEl('mmgSecretList').innerHTML=''; }
-  for(var i=0;i<fs.length;i++) mmgLoad(fs[i]);
+  if(mmgSt.curPick==='secrets'){ mmgLoadSeq(fs); } else { for(var i=0;i<fs.length;i++) mmgLoad(fs[i]); }
 });
 function mmgBindDrop(id,t){
   var e=mmgEl(id);
@@ -1304,7 +1324,7 @@ function mmgBindDrop(id,t){
     x.preventDefault();e.classList.remove('drag-over');
     var fs=x.dataTransfer&&x.dataTransfer.files; if(!fs||!fs.length)return;
     if(t==='secrets'&&!mmgSt.append){ mmgSt.secrets=[]; mmgEl('mmgSecretList').innerHTML=''; }
-    mmgSt.curPick=t; for(var i=0;i<fs.length;i++) mmgLoad(fs[i]);
+    mmgSt.curPick=t; if(t==='secrets'){ mmgLoadSeq(fs); } else { for(var i=0;i<fs.length;i++) mmgLoad(fs[i]); }
   });
 }
 mmgBindDrop('mmgDropCover','cover');
@@ -1490,7 +1510,7 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       var d2=cx2.getImageData(0,0,cw,ch); var px2=d2.data;
       await new Promise(function(done){ mmgWriteBits(px2,bits,bpc,'mmgEmbedProg',done); });
       cx2.putImageData(d2,0,0);
-      var url=await new Promise(function(res){ c2.toBlob(function(blob){ var fr=new FileReader(); fr.onload=function(){ res(fr.result); }; fr.readAsDataURL(blob); },'image/png'); });
+      var url=await new Promise(function(res){ c2.toBlob(function(blob){ res(URL.createObjectURL(blob)); },'image/png'); });
       urls.push({url:url,idx:s});
       // 暂存该段已嵌入的字节，供"换表图"重新生成该段复用
       if(!window._segPayloads) window._segPayloads=[];
@@ -1498,16 +1518,18 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     }
     window._segMeta={cw:cw,ch:ch,segHdr:segHdr,flags:flags,segCount:segCount};
     // 展示成品
+    if(window._rawResult && /^blob:/.test(window._rawResult)){ try{ URL.revokeObjectURL(window._rawResult); }catch(e){} }
     _rawResult=urls[0].url; _rawImg=null; _glowApplied=false;
     var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化';
     var resEl=mmgEl('mmgResult'); resEl.style.display='block';
     var dlRow=document.getElementById('mmgDlRow'); if(dlRow) dlRow.style.display=segCount>1?'none':'flex';
     var segList=mmgEl('mmgSegList');
     if(segCount>1){
+      if(window._mmgAllUrls) window._mmgAllUrls.forEach(function(u){ try{ URL.revokeObjectURL(u.url); }catch(e){} });
       window._mmgAllUrls=urls;
       segList.style.display='flex';
       segList.innerHTML='<div class="cap" style="width:100%">视频已分割为 '+segCount+' 段，自动复制表图生成 '+segCount+' 张成品；请把全部成品都选上，到取图页一起剥出即可自动拼接回完整视频。</div>'
-          +'<button type="button" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
+          +'<button type="button" id="mmgSaveAllBtn" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
       urls.forEach(function(u){
         var card=document.createElement('div'); card.className='box';
         card.style.cssText='flex:1 1 46%;min-width:150px;max-width:240px;box-sizing:border-box';
@@ -1744,19 +1766,21 @@ const f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       const d2=cx2.getImageData(0,0,cw,ch); const px2=d2.data;
       await new Promise(done=>mmgWriteBits(px2,bits,2,'mmgEmbedProg',done));
       cx2.putImageData(d2,0,0);
-      const url=await new Promise(res=>c2.toBlob(b=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);},'image/png'));
+      const url=await new Promise(res=>c2.toBlob(b=>res(URL.createObjectURL(b)),'image/png'));
       urls.push({url:url,idx:s});
     }
+    if(window._rawResult && /^blob:/.test(window._rawResult)){ try{ URL.revokeObjectURL(window._rawResult); }catch(e){} }
     _rawResult=urls[0].url; _rawImg=null; _glowApplied=false;
     const _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化';
     const resEl=mmgEl('mmgResult'); resEl.style.display='block';
     const dlRow=document.getElementById('mmgDlRow'); if(dlRow) dlRow.style.display=capSegs>1?'none':'flex';
     const segList=mmgEl('mmgSegList');
     if(capSegs>1){
+      if(window._mmgAllUrls) window._mmgAllUrls.forEach(u=>{ try{ URL.revokeObjectURL(u.url); }catch(e){} });
       window._mmgAllUrls=urls;
       segList.style.display='flex';
       segList.innerHTML='<div class="cap" style="width:100%">'+n+' 个视频已分割为 '+capSegs+' 段，自动复制表图生成 '+capSegs+' 张成品；请把全部成品都选上，到取图页一起剥出即可自动拼接还原全部视频。</div>'
-        +'<button type="button" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
+        +'<button type="button" id="mmgSaveAllBtn" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
       urls.forEach(u=>{
         const card=document.createElement('div'); card.className='box';
         card.style.cssText='flex:1 1 46%;min-width:150px;max-width:240px;box-sizing:border-box';
