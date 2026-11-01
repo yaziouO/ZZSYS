@@ -444,6 +444,15 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
       <input type="radio" name="mmgMode" value="cap30" id="mmgCap30" onchange="mmgSegModeVis();mmgPredict()"> 单张成品 ≤ 30MB（不可单独播放，但取图时全选即可获得完整视频）
     </label>
   </div>
+  <div id="mmgMultiFmt" style="display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">多张小图的存储方式</div>
+    <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="radio" name="mmgMultiFmt" value="single" id="mmgFmtSingle" checked onchange="mmgFmtChg()"> 独立（新版推荐：取图省内存，不易卡/闪退）
+    </label>
+    <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="radio" name="mmgMultiFmt" value="row" id="mmgFmtRow" onchange="mmgFmtChg()"> 拼接（旧版弃用：保留选项待检验）
+    </label>
+  </div>
   <button type="button" class="mmg-btn mmg-btn-primary" id="mmgEmbedBtn" style="margin-top:10px;width:100%" disabled>生成成品</button>
   <div class="mmg-progress" id="mmgEmbedProg" style="display:none"><div class="bar"></div></div>
 
@@ -866,11 +875,11 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </details>
   <script>
 /* ============ 多小图隐藏工具（前缀 mmg_，独立于主隐写） ============ */
-var mmgSt={cover:null,secrets:[],curPick:null,append:false,quality:'jpeg',scale:1};
+var mmgSt={cover:null,secrets:[],curPick:null,append:false,quality:'jpeg',scale:1,singleImg:true};
 function mmgEl(id){ return document.getElementById(id); }
 function mmgShowProg(id){ var e=document.getElementById(id); if(e){ e.classList.remove('indet'); e.style.display='block'; var bar=e.querySelector('.bar'); if(bar) bar.style.width='2%'; } }
 function mmgSetProg(id,frac){ var e=document.getElementById(id); if(e){ e.classList.remove('indet'); var bar=e.querySelector('.bar'); if(bar){ var p=Math.max(2,Math.min(100,Math.round(frac*100))); bar.style.width=p+'%'; } } }
-function mmgWriteBits(px,bits,bpc,id,done){ var bi=0,total=bits.length,pxLen=px.length,j=0,budget=14; function fr(){ var t0=Date.now(); while(j<pxLen){ for(var c2=0;c2<3;c2++){ if(bi>=total)break; var low=0; for(var k=0;k<bpc;k++){ if(bi<total)low|=bits[bi++]<<k; } px[j+c2]=(px[j+c2]&(0xFF<<bpc))|low; } j+=4; if(Date.now()-t0>=budget)break; if(bi>=total)break; } mmgSetProg(id,total?bi/total:1); if(bi<total){ setTimeout(fr,0); } else { done(); } } fr(); }
+function mmgWriteBits(px,bits,bpc,id,done,base,totalAll){ var bi=0,total=bits.length,pxLen=px.length,j=0,budget=14; function fr(){ var t0=Date.now(); while(j<pxLen){ for(var c2=0;c2<3;c2++){ if(bi>=total)break; var low=0; for(var k=0;k<bpc;k++){ if(bi<total)low|=bits[bi++]<<k; } px[j+c2]=(px[j+c2]&(0xFF<<bpc))|low; } j+=4; if(Date.now()-t0>=budget)break; if(bi>=total)break; } mmgSetProg(id,totalAll?((base+bi)/totalAll):(total?bi/total:1)); if(bi<total){ setTimeout(fr,0); } else { done(); } } fr(); }
 function mmgHideProg(id){ var e=document.getElementById(id); if(e){ e.style.display='none'; e.classList.remove('indet'); } }
 function mmgSetMode(m){
   if(mmgEl('mmgTabEmbed')) mmgEl('mmgTabEmbed').classList.add('active');
@@ -1069,7 +1078,12 @@ function mmgUpd(){
   if(cap) cap.style.display=show?'block':'none';
   if(strat) strat.style.display=show?'block':'none';
   if(none) none.style.display=show?'block':'none';
+  var fmt=mmgEl('mmgMultiFmt');
+  if(fmt) fmt.style.display=(!show && mmgSt.secrets.length>1)?'block':'none';
   mmgSegModeVis();
+}
+function mmgFmtChg(){
+  mmgSt.singleImg = !!(mmgEl('mmgFmtSingle') && mmgEl('mmgFmtSingle').checked);
 }
 function mmgRenderDrop(id,img){
   var e=mmgEl(id); e.classList.add('has-img');
@@ -1200,11 +1214,15 @@ function mmgRebuildSegsFrom(fromIdx, imgs){
   // 每张新表图只作用于一段：第 fromIdx 段用 imgs[0]、fromIdx+1 用 imgs[1]……表图用完即止，不覆盖后面没配图的段
   var endIdx=Math.min(segCount, fromIdx+imgs.length);
   mmgShowProg('mmgEmbedProg');
-  (function step(i){
+  (async function step(i){
     if(i>=endIdx){ mmgHideProg('mmgEmbedProg'); mmgHint('mmgHint','已为第 '+(fromIdx+1)+' 至第 '+endIdx+' 段套用新表图；其余段保持原表图。要继续给其他段换图，请点对应段的“换表图”。','ok'); return; }
-    var payload=payloads[i]; if(!payload){ step(i+1); return; }
+    var payload=payloads[i]; if(!payload){ await step(i+1); return; }
+    var pbytes;
+    if(payload && payload.opfs){ try{ pbytes=await mmgOpfsRead(payload.opfs,0,payload.len||0); }catch(e){ pbytes=null; } }
+    else { pbytes=payload; }
+    if(!pbytes || !pbytes.length){ await step(i+1); return; }
     var coverIm=imgs[i-fromIdx]; // 一张表图只对应一段
-    var bits=bytesToBits(payload,2);
+    var bits=bytesToBits(pbytes,2);
     var c=document.createElement('canvas'); c.width=meta.cw; c.height=meta.ch;
     var cx=c.getContext('2d'); cx.drawImage(coverIm,0,0,meta.cw,meta.ch);
     var d=cx.getImageData(0,0,meta.cw,meta.ch); var px=d.data;
@@ -1224,7 +1242,7 @@ function mmgRebuildSegsFrom(fromIdx, imgs){
           }
           if(window._mmgAllUrls&&window._mmgAllUrls[i]) window._mmgAllUrls[i].url=url;
           if(i===fromIdx){ _rawResult=url; _rawImg=null; }
-          step(i+1);
+          (async()=>{ await step(i+1); })();
         }; fr.readAsDataURL(blob);
       },'image/png');
     });
@@ -1338,6 +1356,34 @@ function mmgBuildRow(imgs,S){
   for(var i=0;i<imgs.length;i++){ ctx.drawImage(imgs[i],x,0,ws[i],S); x+=ws[i]; }
   return {canvas:c, ws:ws};
 }
+/* 新格式：每张小图独立编码成 PNG（统一高 S、宽按比例），返回拼接字节、每张宽、每张长度 */
+async function mmgBuildSingleImgs(imgs, S, q){
+  var ws=[], lens=[], parts=[];
+  for(var i=0;i<imgs.length;i++){
+    var img=imgs[i]; var iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+    var w=Math.max(16,Math.round(S*iw/ih)); ws.push(w);
+    var cv=document.createElement('canvas'); cv.width=w; cv.height=S;
+    var ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,S);
+    var sb=await imgToBytes(cv, q||'png'); lens.push(sb.length); parts.push(sb);
+  }
+  return {bytes:concatU8(parts), ws:ws, lens:lens};
+}
+/* 多小图 header 构造：singleImg=true 用"独立小图"布局，否则用旧"拼成长条"布局 */
+function mmgBuildMultiHeader(flags,n,S,mws,mlen,singleImg,secretLen){
+  var hlen=singleImg?(13+4*n):(12+2*n);
+  var header=new Uint8Array(hlen);
+  header.set(MAGIC,0); header[4]=flags;
+  header[5]=(secretLen>>>24)&0xFF; header[6]=(secretLen>>>16)&0xFF; header[7]=(secretLen>>>8)&0xFF; header[8]=secretLen&0xFF;
+  if(singleImg){
+    header[9]=(n>>>8)&0xFF; header[10]=n&0xFF;
+    header[11]=(S>>>8)&0xFF; header[12]=S&0xFF;
+    for(var i=0;i<n;i++){ var L=mlen[i]; header[13+4*i]=(L>>>24)&0xFF; header[14+4*i]=(L>>>16)&0xFF; header[15+4*i]=(L>>>8)&0xFF; header[16+4*i]=L&0xFF; }
+  } else {
+    header[9]=(S>>>8)&0xFF; header[10]=S&0xFF; header[11]=n;
+    for(var j=0;j<n;j++){ header[12+2*j]=(mws[j]>>>8)&0xFF; header[13+2*j]=mws[j]&0xFF; }
+  }
+  return header;
+}
 function mmgSliceMosaic(blob,meta){
   return new Promise(function(res,rej){
     var url=URL.createObjectURL(blob); var img=new Image();
@@ -1352,6 +1398,26 @@ function mmgSliceMosaic(blob,meta){
     };
     img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('拼接图损坏')); };
     img.src=url;
+  });
+}
+/* 新格式剥出：每张小图独立编码，按长度头逐段解码（内存峰值≈单张小图，低配手机不易卡/闪退） */
+function mmgDecodeSingleImgs(stgo){
+  return new Promise(function(res,rej){
+    try{
+      var lens=stgo.singleLens||[]; if(!lens.length){ rej(new Error('独立小图数据缺失')); return; }
+      stgo.blob.arrayBuffer().then(function(ab){
+        var u8=new Uint8Array(ab), pos=0, urls=[], i=0;
+        function next(){
+          if(i>=lens.length){ res(urls); return; }
+          var L=lens[i]; var part=u8.slice(pos,pos+L); pos+=L;
+          var fr=new FileReader();
+          fr.onload=function(){ urls.push(fr.result); i++; next(); };
+          fr.onerror=function(){ rej(new Error('独立小图解码失败')); };
+          fr.readAsDataURL(new Blob([part],{type:mmgSniffType(part)||'image/png'}));
+        }
+        next();
+      }).catch(function(e){ rej(e); });
+    }catch(e){ rej(e); }
   });
 }
 function isGifSecret(img){ return !!(img && (img._isGif || (img.src && img.src.indexOf('data:image/gif')===0))); }
@@ -1425,25 +1491,35 @@ async function mmgEmbedVideo(){
   mmgShowProg('mmgEmbedProg');
   try{
     var vsrc=mmgSt.secrets[0].src;
-    var vbuf=await fetch(vsrc).then(function(r){return r.arrayBuffer();});
-    var vBytes=new Uint8Array(vbuf);
+    var useOpfs=mmgOpfsAvailable();
+    var _evTag=null, _evTotal=0, readSeg=null;
+    if(useOpfs){
+      // 视频字节流式写盘，JS 内存不整段载入；分段时按需从磁盘读切片
+      _evTag='zzv'+Date.now();
+      await mmgOpfsCleanup('zzp'); // 清理上一批分段 payload（当前批 zzp+新时间戳不受影响）
+      _evTotal=await mmgOpfsStream(_evTag+'_v', vsrc);
+      readSeg=async function(st,en){ return mmgOpfsRead(_evTag+'_v', st, en-st); };
+    } else {
+      var vbuf=await fetch(vsrc).then(function(r){return r.arrayBuffer();});
+      var vBytes=new Uint8Array(vbuf);
+      _evTotal=vBytes.length;
+      readSeg=async function(st,en){ return vBytes.subarray(st,en); };
+    }
     var bpc=mmgGetBpc(); // 用户所选存储密度（2/5/7）：每通道5位，同一张表图能装约2.5倍视频：每通道3位，单张容量×1.5（同一张表图能装更大视频）
     var raw=drawToCanvas(mmgSt.cover); var cw0=raw.width,ch0=raw.height;
     var scale=mmgSt.scale||1;
     var reloaded=await new Promise(function(res){ raw.toBlob(function(b){var im=new Image();im.onload=function(){res(im);};im.src=URL.createObjectURL(b);},'image/png'); });
     if(mmgCap30Enabled()){
       // 单张成品≤30MB：放大表图到单张成品逼近30MB（分片最少、每张饱满）
-var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
-        return new Promise(function(rs){
-          var capBitsT=cwT*chT*3*bpc, perAvailT=Math.floor(capBitsT/8)-11;
-          var capSegsT=Math.max(1,Math.ceil(vBytes.length/perAvailT));
-          var segT=vBytes.subarray(0,Math.ceil(vBytes.length/capSegsT));
+var f30=await mmgFit30Scale(cw0,ch0,reloaded,async function(cwT,chT){
+        var capBitsT=cwT*chT*3*bpc, perAvailT=Math.floor(capBitsT/8)-11;
+        var capSegsT=Math.max(1,Math.ceil(_evTotal/perAvailT));
+        var segT=await readSeg(0,Math.ceil(_evTotal/capSegsT));
           var hdrT=new Uint8Array(capSegsT>1?11:9); hdrT.set(MAGIC,0); hdrT[4]=(bpc===2?1:0)|(bpc===3?2:0)|(bpc===5?4:0)|(bpc===7?8:0)|16|(capSegsT>1?32:0);
           hdrT[5]=(segT.length>>>24)&0xFF; hdrT[6]=(segT.length>>>16)&0xFF; hdrT[7]=(segT.length>>>8)&0xFF; hdrT[8]=segT.length&0xFF;
           if(capSegsT>1){ hdrT[9]=0; hdrT[10]=capSegsT; }
           var wrapT=new Uint8Array(hdrT.length+segT.length); wrapT.set(hdrT,0); wrapT.set(segT,hdrT.length);
-          rs(wrapT);
-        });
+          return wrapT;
       });
       scale=Math.min(f30,10);
       mmgSetScale(scale);
@@ -1466,24 +1542,27 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
         if(dur>0){ manualSeg=true; segCountByTime=Math.max(1,Math.ceil(dur/segDur)); }
       }
     }
-    var capSegs=Math.max(1,Math.ceil(vBytes.length/perAvail));
-    // 视频过大、且未手动分段、也未选"单张≤30MB"时：自动放大表图到能装下整段，再继续
+    var capSegs=Math.max(1,Math.ceil(_evTotal/perAvail));
+    // 视频过大、且未手动分段、也未选"单张≤30MB"时：受控放大表图（单边上限 _MMG_MAXSIDE，避免 scale10 把 canvas 撑爆内存），装不下整段就多分段
     if(capSegs>1 && !manualSeg && !mmgCap30Enabled()){
-      var needScale=Math.ceil(Math.sqrt((vBytes.length+9)*8/(cw0*ch0*3*bpc))*10)/10;
-      scale=Math.max(scale,needScale); scale=Math.min(scale,10);
+      var _MMG_MAXSIDE=3000;
+      var needScale=Math.ceil(Math.sqrt((_evTotal+9)*8/(cw0*ch0*3*bpc))*10)/10;
+      var limScale=Math.max(1,_MMG_MAXSIDE/Math.max(cw0,ch0));
+      if(cw0>=_MMG_MAXSIDE||ch0>=_MMG_MAXSIDE) limScale=1;
+      scale=Math.max(scale,Math.min(needScale,limScale));
       mmgSetScale(scale);
       canvas.width=Math.max(1,Math.round(cw0*scale)); canvas.height=Math.max(1,Math.round(ch0*scale));
       ctx.drawImage(reloaded,0,0,canvas.width,canvas.height);
       cw=canvas.width; ch=canvas.height;
       data=ctx.getImageData(0,0,cw,ch); px=data.data;
       capBits=cw*ch*3*bpc; perAvail=Math.floor(capBits/8)-11;
-      capSegs=Math.max(1,Math.ceil(vBytes.length/perAvail));
+      capSegs=Math.max(1,Math.ceil(_evTotal/perAvail));
     }
     // 按时间切(manualSeg)：严格按分钟/秒数切段；否则按表图容量自动分段
     var segCount=manualSeg?segCountByTime:Math.max(1,capSegs);
     // 按时间切分时，表图刚好放大到能装下该段（不过度放大到逼近30MB）
     if(manualSeg && segCount>1){
-      var perSeg=Math.ceil(vBytes.length/segCount);
+      var perSeg=Math.ceil(_evTotal/segCount);
       var needScale=Math.ceil(Math.sqrt((perSeg+11)*8/(cw0*ch0*3*bpc))*10)/10;
       scale=Math.max(1,needScale); scale=Math.min(scale,10);
       mmgSetScale(scale);
@@ -1496,25 +1575,29 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     var segHdr=segCount>1?11:9; // 分片头 11 字节（含 segIdx/segTotal），普通视频头 9 字节
     var flags=(bpc===2?1:0)|(bpc===3?2:0)|(bpc===5?4:0)|(bpc===7?8:0)|16|(segCount>1?32:0); // bpc2 + 视频 + 分段标记
     var urls=[];
+    var allBitsTotal=_evTotal*8+segCount*segHdr*8, bitAcc=0;
     for(var s=0;s<segCount;s++){
-      var st=Math.floor(vBytes.length*s/segCount), en=(s===segCount-1)?vBytes.length:Math.floor(vBytes.length*(s+1)/segCount);
-      var seg=vBytes.subarray(st,en);
+      var st=Math.floor(_evTotal*s/segCount), en=(s===segCount-1)?_evTotal:Math.floor(_evTotal*(s+1)/segCount);
+      var seg=await readSeg(st,en);
       var header=new Uint8Array(segHdr); header.set(MAGIC,0); header[4]=flags;
       header[5]=(seg.length>>>24)&0xFF; header[6]=(seg.length>>>16)&0xFF; header[7]=(seg.length>>>8)&0xFF; header[8]=seg.length&0xFF;
       if(segCount>1){ header[9]=s; header[10]=segCount; }
       var payload=new Uint8Array(segHdr+seg.length); payload.set(header,0); payload.set(seg,segHdr);
       var bits=bytesToBits(payload,bpc);
+      mmgHint('mmgHint','正在嵌入视频，第 '+(s+1)+'/'+segCount+' 段…（大视频需耐心等待，进度条持续推进即正常）','');
       // 每段用一张独立的表图副本（复制表图）
       var c2=document.createElement('canvas'); c2.width=cw; c2.height=ch;
       var cx2=c2.getContext('2d'); cx2.drawImage(reloaded,0,0,cw,ch);
       var d2=cx2.getImageData(0,0,cw,ch); var px2=d2.data;
-      await new Promise(function(done){ mmgWriteBits(px2,bits,bpc,'mmgEmbedProg',done); });
+      await new Promise(function(done){ mmgWriteBits(px2,bits,bpc,'mmgEmbedProg',done, bitAcc, allBitsTotal); });
+      bitAcc+=(seg.length+segHdr)*8;
       cx2.putImageData(d2,0,0);
       var url=await new Promise(function(res){ c2.toBlob(function(blob){ res(URL.createObjectURL(blob)); },'image/png'); });
       urls.push({url:url,idx:s});
-      // 暂存该段已嵌入的字节，供"换表图"重新生成该段复用
+      // 暂存该段已嵌入的字节，供"换表图"重新生成该段复用；大视频时写 OPFS 避免累积整段 payload 进内存
       if(!window._segPayloads) window._segPayloads=[];
-      window._segPayloads[s]=payload;
+      if(useOpfs){ const pk=(_evTag.replace('zzv','zzp'))+'_p'+s; await mmgOpfsWrite(pk, payload); window._segPayloads[s]={opfs:pk, len:payload.length}; }
+      else { window._segPayloads[s]=payload; }
     }
     window._segMeta={cw:cw,ch:ch,segHdr:segHdr,flags:flags,segCount:segCount};
     // 展示成品
@@ -1547,8 +1630,9 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       mmgEl('mmgDownload').href=urls[0].url;
       mmgHint('mmgHint','完成！视频已整份嵌入，成品 '+cw+'×'+ch+'；用取图剥出可播放视频。','ok');
     }
+    if(useOpfs){ try{ await mmgOpfsCleanup(_evTag); }catch(e){} }
     mmgHideProg('mmgEmbedProg');
-  }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
+  }catch(e){ if(useOpfs){ try{ await mmgOpfsCleanup(_evTag); }catch(_){} } mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
 }
 async function mmgEmbedGif(){
   mmgHint('mmgHint','正在嵌入动图…','');
@@ -1699,17 +1783,92 @@ function mmgSniffType(b){
   if(b.length>=4 && b[0]===0x1A&&b[1]===0x45&&b[2]===0xDF&&b[3]===0xA3) return 'video/webm';
   return 'application/octet-stream';
 }
+
+/* ===== OPFS 落盘（Origin Private File System）：支持时把大字节写浏览器私有文件，避免常驻 JS 内存 ===== */
+function mmgOpfsAvailable(){
+  try{ return !!(navigator && navigator.storage && navigator.storage.getDirectory && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')); }catch(e){ return false; }
+}
+var _mmgOpfsRootP=null;
+function mmgOpfsRoot(){ if(!_mmgOpfsRootP){ _mmgOpfsRootP=navigator.storage.getDirectory().catch(function(e){ _mmgOpfsRootP=null; throw e; }); } return _mmgOpfsRootP; }
+async function mmgOpfsWrite(name, data){ const r=await mmgOpfsRoot(); const f=await r.getFileHandle(name,{create:true}); const w=await f.createWritable(); await w.write(data); await w.close(); }
+// 流式写盘：从 blob/object URL 按块读入并写 OPFS，避免 arrayBuffer 一次性整段载入内存（大视频必须走这里）
+async function mmgOpfsStream(name, url){
+  const r=await mmgOpfsRoot(); const f=await r.getFileHandle(name,{create:true}); const w=await f.createWritable();
+  const res=await fetch(url);
+  let n=0;
+  if(res.body && res.body.getReader){
+    const reader=res.body.getReader();
+    for(;;){ const {done,value}=await reader.read(); if(done) break; await w.write(value); n+=value.length; }
+  } else {
+    const ab=await res.arrayBuffer(); await w.write(ab); n=ab.byteLength;
+  }
+  await w.close(); return n;
+}
+async function mmgOpfsRead(name, offset, len){ const r=await mmgOpfsRoot(); const f=await r.getFileHandle(name); const file=await f.getFile(); const ab=await file.slice(offset, offset+len).arrayBuffer(); return new Uint8Array(ab); }
+async function mmgOpfsFile(name){ const r=await mmgOpfsRoot(); const f=await r.getFileHandle(name); return f.getFile(); }
+async function mmgOpfsCleanup(prefix){ try{ const r=await mmgOpfsRoot(); for await (const e of r.values()){ if(e.name.indexOf(prefix)===0){ try{ await r.removeEntry(e.name); }catch(_){} } } }catch(e){} }
+/* 统一按 offset 读取的 payload 源：内存版用完整数组；OPFS 版用「内存头 + 磁盘视频文件」跨源按需读 */
+function mmgMakePayloadSrc(opfs, tag, hdr, vFiles){
+  if(!opfs){ return {mem:hdr, read:function(off,len){ return Promise.resolve(hdr.subarray(off,off+len)); }, flag:function(v){ hdr[4]=v; }}; }
+  const src={opfs:true, hdr:hdr, vFiles:vFiles||[]};
+  src.read=async function(off,len){
+    const out=new Uint8Array(len); let k=0;
+    if(off < this.hdr.length){ const a=Math.min(len, this.hdr.length-off); out.set(this.hdr.subarray(off,off+a),0); k+=a; off+=a; }
+    while(k<len){
+      let v=null; for(let i=0;i<this.vFiles.length;i++){ const vv=this.vFiles[i]; if(off>=vv.start && off < vv.start+vv.len){ v=vv; break; } }
+      if(!v) throw new Error('payload 越界');
+      const within=off-v.start; const a=Math.min(len-k, v.len-within);
+      const bytes=await mmgOpfsRead(v.name, within, a); out.set(bytes,k); k+=a; off+=a;
+    }
+    return out;
+  };
+  src.flag=function(v){ this.hdr[4]=v; };
+  src.cleanup=function(){ return mmgOpfsCleanup(tag); };
+  return src;
+}
+
 /* 混合多文件 bundle 嵌入：多个视频/动图/图片的原始字节按序拼接写入表图，header 记录个数+每文件长度；
    容量不够自动放大表图，仍放不下则自动分段复制表图生成多张成品（flags bit6=bundle，bit5=分段） */
 async function mmgEmbedBundle(){
   mmgHint('mmgHint','正在嵌入 '+mmgSt.secrets.length+' 个视频…','');
   mmgShowProg('mmgEmbedProg');
+  const n=mmgSt.secrets.length;
+  const hlen=10+4*n;               // bundle 头：magic4+flags1+总长4+个数1+每文件长度4*n
+  const useOpfs=mmgOpfsAvailable();
+  const tag='zzx'+Date.now();
+  let totalBytes=0, _psrc=null;
   try{
-    const n=mmgSt.secrets.length;
-    const arrs=[];
-    for(let i=0;i<n;i++){ const b=await fetch(mmgSt.secrets[i].src).then(r=>r.arrayBuffer()); arrs.push(new Uint8Array(b)); }
-    const totalBytes=arrs.reduce((s,a)=>s+a.length,0);
-    const hlen=10+4*n;               // bundle 头：magic4+flags1+总长4+个数1+每文件长度4*n
+    if(useOpfs){
+      // OPFS 落盘：逐视频读入→写盘→释放，JS 内存只留单个视频字节；payload 用「内存头 + 磁盘视频文件」按需跨源读
+      const hdr=new Uint8Array(hlen);
+      hdr[0]=MAGIC[0];hdr[1]=MAGIC[1];hdr[2]=MAGIC[2];hdr[3]=MAGIC[3];
+      hdr[4]=1|64; // bit6=bundle（分段标记在校准/生成时按 capSegs 再写）
+      hdr[9]=n;
+      const vFiles=[]; let vpos=hlen;
+      for(let i=0;i<n;i++){
+        // 流式写盘：不 arrayBuffer 整段载入（大视频内存峰值只到单块），OPFS 文件按需跨源读
+        const L=await mmgOpfsStream(tag+'_v'+i, mmgSt.secrets[i].src);
+        vFiles.push({name:tag+'_v'+i, start:vpos, len:L}); vpos+=L; totalBytes+=L;
+      }
+      hdr[5]=(totalBytes>>>24)&0xFF; hdr[6]=(totalBytes>>>16)&0xFF; hdr[7]=(totalBytes>>>8)&0xFF; hdr[8]=totalBytes&0xFF;
+      let ph=10;
+      for(let i=0;i<n;i++){ const L=vFiles[i].len; hdr[ph]=(L>>>24)&0xFF;hdr[ph+1]=(L>>>16)&0xFF;hdr[ph+2]=(L>>>8)&0xFF;hdr[ph+3]=L&0xFF; ph+=4; }
+      _psrc=mmgMakePayloadSrc(true, tag, hdr, vFiles);
+    } else {
+      // 内存路径（无 OPFS）：保持原逻辑
+      const arrs=[];
+      for(let i=0;i<n;i++){ const b=await fetch(mmgSt.secrets[i].src).then(r=>r.arrayBuffer()); arrs.push(new Uint8Array(b)); }
+      totalBytes=arrs.reduce((s,a)=>s+a.length,0);
+      const payload=new Uint8Array(hlen+totalBytes);
+      payload[0]=MAGIC[0];payload[1]=MAGIC[1];payload[2]=MAGIC[2];payload[3]=MAGIC[3];
+      payload[4]=1|64;
+      payload[5]=(totalBytes>>>24)&0xFF; payload[6]=(totalBytes>>>16)&0xFF; payload[7]=(totalBytes>>>8)&0xFF; payload[8]=totalBytes&0xFF;
+      payload[9]=n;
+      let poff=10;
+      for(let i=0;i<n;i++){ const L=arrs[i].length; payload[poff]=(L>>>24)&0xFF;payload[poff+1]=(L>>>16)&0xFF;payload[poff+2]=(L>>>8)&0xFF;payload[poff+3]=L&0xFF; poff+=4; }
+      for(let i=0;i<n;i++){ payload.set(arrs[i],poff); poff+=arrs[i].length; }
+      _psrc=mmgMakePayloadSrc(false, null, payload, null);
+    }
     const payloadLen=hlen+totalBytes;
     const raw=drawToCanvas(mmgSt.cover); const cw0=raw.width,ch0=raw.height;
     let scale=mmgSt.scale||1;
@@ -1717,29 +1876,18 @@ async function mmgEmbedBundle(){
     // 容量不足自动放大到精确倍率
     const needScale=Math.sqrt(payloadLen*8/(cw0*ch0*6));
     if(needScale>scale){ scale=Math.ceil(needScale*10)/10; mmgSetScale(scale); }
-    // 构造完整 payload（bundle头 + 全部文件字节）——不依赖 scale，提前构造供校准与正式生成共用
-    const payload=new Uint8Array(payloadLen);
-    payload[0]=MAGIC[0];payload[1]=MAGIC[1];payload[2]=MAGIC[2];payload[3]=MAGIC[3];
-    payload[4]=1|64; // bit6=bundle（分段标记在校准/生成时按 capSegs 再写）
-    payload[5]=(totalBytes>>>24)&0xFF; payload[6]=(totalBytes>>>16)&0xFF; payload[7]=(totalBytes>>>8)&0xFF; payload[8]=totalBytes&0xFF;
-    payload[9]=n;
-    let poff=10;
-    for(let i=0;i<n;i++){ const L=arrs[i].length; payload[poff]=(L>>>24)&0xFF;payload[poff+1]=(L>>>16)&0xFF;payload[poff+2]=(L>>>8)&0xFF;payload[poff+3]=L&0xFF; poff+=4; }
-    for(let i=0;i<n;i++){ payload.set(arrs[i],poff); poff+=arrs[i].length; }
     if(mmgCap30Enabled()){
       // 单张成品≤30MB：放大表图到单张成品逼近30MB（分片最少、每张饱满）；优先装整段但不超过30MB
-const f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
-        return new Promise(function(rs){
-          const capBitsT=cwT*chT*3*2; const perAvailT=Math.floor(capBitsT/8)-11;
-          const capSegsT=Math.max(1,Math.ceil(payloadLen/perAvailT));
-          const stT=0, enT=Math.ceil(payloadLen/capSegsT);
-          const segT=payload.subarray(stT,enT);
-          const hdrT=new Uint8Array(11); hdrT.set(MAGIC,0); hdrT[4]=1|64|(capSegsT>1?32:0);
-          hdrT[5]=(segT.length>>>24)&0xFF; hdrT[6]=(segT.length>>>16)&0xFF; hdrT[7]=(segT.length>>>8)&0xFF; hdrT[8]=segT.length&0xFF;
-          if(capSegsT>1){ hdrT[9]=0; hdrT[10]=capSegsT; }
-          const wrapT=new Uint8Array(11+segT.length); wrapT.set(hdrT,0); wrapT.set(segT,11);
-          rs(wrapT);
-        });
+      const f30=await mmgFit30Scale(cw0,ch0,reloaded,async function(cwT,chT){
+        const capBitsT=cwT*chT*3*2; const perAvailT=Math.floor(capBitsT/8)-11;
+        const capSegsT=Math.max(1,Math.ceil(payloadLen/perAvailT));
+        const stT=0, enT=Math.ceil(payloadLen/capSegsT);
+        const segT=await _psrc.read(stT,enT-stT);
+        const hdrT=new Uint8Array(11); hdrT.set(MAGIC,0); hdrT[4]=1|64|(capSegsT>1?32:0);
+        hdrT[5]=(segT.length>>>24)&0xFF; hdrT[6]=(segT.length>>>16)&0xFF; hdrT[7]=(segT.length>>>8)&0xFF; hdrT[8]=segT.length&0xFF;
+        if(capSegsT>1){ hdrT[9]=0; hdrT[10]=capSegsT; }
+        const wrapT=new Uint8Array(11+segT.length); wrapT.set(hdrT,0); wrapT.set(segT,11);
+        return wrapT;
       });
       scale=Math.min(scale,f30);
       if(scale>10) scale=10;
@@ -1750,12 +1898,12 @@ const f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     let cw=canvas.width,ch=canvas.height;
     const capBits=cw*ch*3*2; const perAvail=Math.floor(capBits/8)-11;
     const capSegs=Math.max(1,Math.ceil(payloadLen/perAvail));
-    payload[4]=1|64|(capSegs>1?32:0);
+    _psrc.flag(1|64|(capSegs>1?32:0));
     const urls=[];
     for(let s=0;s<capSegs;s++){
       // 每段是 payload 的一个字节切片，套 11 字节分段头
       const st=Math.floor(payloadLen*s/capSegs), en=(s===capSegs-1)?payloadLen:Math.floor(payloadLen*(s+1)/capSegs);
-      const seg=payload.subarray(st,en);
+      const seg=await _psrc.read(st,en-st);
       const hdr=new Uint8Array(11); hdr.set(MAGIC,0); hdr[4]=1|64|(capSegs>1?32:0);
       hdr[5]=(seg.length>>>24)&0xFF; hdr[6]=(seg.length>>>16)&0xFF; hdr[7]=(seg.length>>>8)&0xFF; hdr[8]=seg.length&0xFF;
       if(capSegs>1){ hdr[9]=s; hdr[10]=capSegs; }
@@ -1797,9 +1945,11 @@ const f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       mmgEl('mmgDownload').href=urls[0].url;
       mmgHint('mmgHint','完成！'+n+' 个视频已整份嵌入，成品 '+cw+'×'+ch+'；用取图剥出可还原出全部视频。','ok');
     }
+    if(useOpfs){ try{ await mmgOpfsCleanup(tag); }catch(e){} }
     mmgHideProg('mmgEmbedProg');
-  }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
+  }catch(e){ if(useOpfs){ try{ await mmgOpfsCleanup(tag); }catch(_){} } mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
 }
+
 async function mmgEmbed(){
   mmgHint('mmgHint','正在处理…','');
   mmgShowProg('mmgEmbedProg');
@@ -1825,14 +1975,24 @@ async function mmgEmbed(){
     var maxH=0; for(var k2=0;k2<n;k2++){ var s2=mmgSt.secrets[k2]; var hh=s2.naturalHeight||s2.height; if(hh>maxH) maxH=hh; }
     var S=Math.max(24,maxH);
     // 实际编码校验：容量不够就自动放大表图到精确倍率（保持里图原高）
-    var secretBytes=null, mws=null;
+    var secretBytes=null, mws=null, mlen=null;
+    var singleImg=mmgSt.singleImg;
+    var hlenMulti=singleImg?(13+4*n):(12+2*n);
     var cap30on=mmgCap30Enabled();
     for(var tries=0;tries<16;tries++){
-      var mb=mmgBuildRow(mmgSt.secrets,S);
-      var sb=await imgToBytes(mb.canvas,mmgSt.quality==='png'?'png':'jpeg');
-      if(sb.length<=availBytes){ secretBytes=sb; mws=mb.ws; break; }
+      if(secretBytes===null){
+        if(singleImg){
+          var si=await mmgBuildSingleImgs(mmgSt.secrets,S,mmgSt.quality==='png'?'png':'jpeg');
+          secretBytes=si.bytes; mws=si.ws; mlen=si.lens;
+        } else {
+          var mb=mmgBuildRow(mmgSt.secrets,S);
+          secretBytes=await imgToBytes(mb.canvas,mmgSt.quality==='png'?'png':'jpeg');
+          mws=mb.ws;
+        }
+      }
+      if(secretBytes.length+hlenMulti<=availBytes){ break; }
       // 容量不够：自动放大表图（里图保持原高）
-      var ns=scale*Math.sqrt((sb.length+12+2*n)/availBytes);
+      var ns=scale*Math.sqrt((secretBytes.length+hlenMulti)/availBytes);
       if(ns>scale){
         scale=Math.ceil(ns*10)/10; mmgSetScale(scale);
         canvas.width=Math.max(1,Math.round(cw0*scale)); canvas.height=Math.max(1,Math.round(ch0*scale));
@@ -1842,17 +2002,14 @@ async function mmgEmbed(){
         capBits=cw*ch*3*bpc; availBytes=Math.floor(capBits/8)-12;
       } else { break; }
     }
-    if(!secretBytes){ mmgHint('mmgHint','容量不够：表图自动放大后仍放不下。减少里图数量或换更大表图。','err'); return; }
+    if(secretBytes===null){ mmgHint('mmgHint','容量不够：表图自动放大后仍放不下。减少里图数量或换更大表图。','err'); return; }
     if(cap30on){
       // 单张成品≤30MB：放大表图到单张成品逼近30MB（每张饱满）
 var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
         return new Promise(function(rs){
           var capBitsT=cwT*chT*3*bpc, availT=Math.floor(capBitsT/8)-12;
-          if(secretBytes.length>availT){ rs(null); return; }
-          var hdrCal=new Uint8Array(12+2*n); hdrCal.set(MAGIC,0); hdrCal[4]=(bpc===2?1:0)|4|(mmgSt.quality==='png'?0:2);
-          hdrCal[5]=(secretBytes.length>>>24)&0xFF; hdrCal[6]=(secretBytes.length>>>16)&0xFF; hdrCal[7]=(secretBytes.length>>>8)&0xFF; hdrCal[8]=secretBytes.length&0xFF;
-          hdrCal[9]=(S>>>8)&0xFF; hdrCal[10]=S&0xFF; hdrCal[11]=n;
-          for(var wc=0;wc<n;wc++){ hdrCal[12+2*wc]=(mws[wc]>>>8)&0xFF; hdrCal[13+2*wc]=mws[wc]&0xFF; }
+          if(secretBytes.length+hlenMulti>availT){ rs(null); return; }
+          var hdrCal=mmgBuildMultiHeader((bpc===2?1:0)|4|(mmgSt.quality==='png'?0:2)|(singleImg?128:0), n, S, mws, mlen, singleImg, secretBytes.length);
           var payloadCal=new Uint8Array(hdrCal.length+secretBytes.length); payloadCal.set(hdrCal,0); payloadCal.set(secretBytes,hdrCal.length);
           rs(payloadCal);
         });
@@ -1865,19 +2022,15 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
       cw=canvas.width; ch=canvas.height;
       data=ctx.getImageData(0,0,cw,ch); px=data.data;
     }
-    var flags=(bpc===2?1:0)|4|(mmgSt.quality==='png'?0:2);
-    var hlen=12+2*n;
-    var header=new Uint8Array(hlen);
-    header.set(MAGIC,0); header[4]=flags;
-    header[5]=(secretBytes.length>>>24)&0xFF; header[6]=(secretBytes.length>>>16)&0xFF; header[7]=(secretBytes.length>>>8)&0xFF; header[8]=secretBytes.length&0xFF;
-    header[9]=(S>>>8)&0xFF; header[10]=S&0xFF; header[11]=n;
-    for(var w2=0;w2<n;w2++){ header[12+2*w2]=(mws[w2]>>>8)&0xFF; header[13+2*w2]=mws[w2]&0xFF; }
+    var flags=(bpc===2?1:0)|4|(mmgSt.quality==='png'?0:2)|(singleImg?128:0);
+    var header=mmgBuildMultiHeader(flags,n,S,mws,mlen,singleImg,secretBytes.length);
+    var hlen=header.length;
     var payload=new Uint8Array(hlen+secretBytes.length);
     payload.set(header,0); payload.set(secretBytes,hlen);
     var bits=bytesToBits(payload,bpc);
     await new Promise(function(done){ mmgWriteBits(px,bits,bpc,'mmgEmbedProg',done); });
     ctx.putImageData(data,0,0);
-    canvas.toBlob(function(blob){ var fr=new FileReader(); fr.onload=function(){ var url=fr.result; _rawResult=url; _rawImg=null; _glowApplied=false; var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化'; mmgEl('mmgPreview').src=url; mmgEl('mmgDownload').href=url; mmgEl('mmgResult').style.display='block'; mmgHint('mmgHint','完成！成品 '+cw+'×'+ch+'，内含 '+n+' 张小图（'+(mmgSt.quality==='png'?'PNG':'JPEG')+'·小图约 '+S+'px）。','ok'); mmgHideProg('mmgEmbedProg'); }; fr.readAsDataURL(blob); },'image/png');
+    canvas.toBlob(function(blob){ var fr=new FileReader(); fr.onload=function(){ var url=fr.result; _rawResult=url; _rawImg=null; _glowApplied=false; var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化'; mmgEl('mmgPreview').src=url; mmgEl('mmgDownload').href=url; mmgEl('mmgResult').style.display='block'; mmgHint('mmgHint','完成！成品 '+cw+'×'+ch+'，内含 '+n+' 张小图（'+(singleImg?'独立小图':'拼成长条')+'·'+(mmgSt.quality==='png'?'PNG':'JPEG')+'·小图约 '+S+'px）。','ok'); mmgHideProg('mmgEmbedProg'); }; fr.readAsDataURL(blob); },'image/png');
   }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
 }
 // 多小图还原统一走主取图页（主取图已识别多小图成品并自动切分）
@@ -2375,7 +2528,12 @@ async function extractFromBits(collect){
   const segmented=(flags&32)===32;
   const bundle=(flags&64)===64;
   let hlen=multi?12:(segmented?11:HEADER_LEN);
-  if(multi){ if(header.length<12) header=await collect(bpc,12); hlen=12+2*header[11]; }
+  const singleImg=multi&&(flags&128)===128;
+  if(multi){
+    if(header.length<hlen) header=await collect(bpc,hlen);
+    if(singleImg){ const nn=(header[9]<<8)|header[10]; hlen=13+4*nn; if(header.length<hlen) header=await collect(bpc,hlen); }
+    else { const nn=header[11]; hlen=12+2*nn; if(header.length<hlen) header=await collect(bpc,hlen); }
+  }
   if(bundle&&!segmented){
     if(header.length<10) header=await collect(bpc,10);
     hlen=10+4*header[9];
@@ -2403,13 +2561,19 @@ async function extractFromBits(collect){
   let isWebp=false;
   if(gifMode&&secretBytes.length>=12 && secretBytes[0]===0x52&&secretBytes[1]===0x49&&secretBytes[2]===0x46&&secretBytes[3]===0x46 && secretBytes[8]===0x57&&secretBytes[9]===0x45&&secretBytes[10]===0x42&&secretBytes[11]===0x50){ type='image/webp'; isWebp=true; }
   else if(gifMode) type='image/gif';
-  let meta=null;
+  let meta=null, singleLens=null, singleS=0;
   if(multi){
-    const n=header[11], ws=[];
-    for(let i=0;i<n;i++) ws.push((header[12+2*i]<<8)|header[13+2*i]);
-    meta={n, h:(header[9]<<8)|header[10], ws};
+    if(singleImg){
+      const n=(header[9]<<8)|header[10]; singleS=(header[11]<<8)|header[12];
+      const lens=[]; for(let i=0;i<n;i++){ lens.push((header[13+4*i]<<24>>>0)+(header[14+4*i]<<16)+(header[15+4*i]<<8)+header[16+4*i]); }
+      singleLens=lens;
+    } else {
+      const n=header[11], ws=[];
+      for(let i=0;i<n;i++) ws.push((header[12+2*i]<<8)|header[13+2*i]);
+      meta={n, h:(header[9]<<8)|header[10], ws};
+    }
   }
-  return {blob:new Blob([secretBytes],{type}), type, useJpeg, isGif:gifMode&&!isWebp, isWebp:isWebp, isVideo:videoMode, isBundle:bundle&&segmented, isSeg:segmented, segIdx:segmented?header[9]:0, segTotal:segmented?header[10]:0, meta:(gifMode||videoMode||bundle)?null:meta};
+  return {blob:new Blob([secretBytes],{type}), type, useJpeg, isGif:gifMode&&!isWebp, isWebp:isWebp, isVideo:videoMode, isBundle:bundle&&segmented, isSeg:segmented, segIdx:segmented?header[9]:0, segTotal:segmented?header[10]:0, meta:(gifMode||videoMode||bundle||singleImg)?null:meta, singleImg:singleImg, singleLens:singleLens, singleS:singleS};
 }
 /* 从拼接好的完整 payload（bundle头+全部字节）切分还原各文件；非 bundle 返回 null */
 function mmgParseBundlePayload(u8){
@@ -2992,7 +3156,7 @@ async function stgoFromPx(collect){
   const res=await extractFromBits(collect);
   if(!res) return null;
   if(res.error) return {error:res.error};
-  return {blob:res.blob,type:res.type,useJpeg:res.useJpeg,isGif:res.isGif,isWebp:res.isWebp,isVideo:res.isVideo,isBundle:res.isBundle,isSeg:res.isSeg,segIdx:res.segIdx,segTotal:res.segTotal,bundleFiles:res.bundleFiles||null,meta:res.meta};
+  return {blob:res.blob,type:res.type,useJpeg:res.useJpeg,isGif:res.isGif,isWebp:res.isWebp,isVideo:res.isVideo,isBundle:res.isBundle,isSeg:res.isSeg,segIdx:res.segIdx,segTotal:res.segTotal,bundleFiles:res.bundleFiles||null,meta:res.meta,singleImg:res.singleImg,singleLens:res.singleLens,singleS:res.singleS};
 }
 function stgoCanvasSoft(img){
   return new Promise(resolve=>{
@@ -3003,7 +3167,8 @@ function stgoCanvasSoft(img){
         const r=await stgoFromPx(function(bpc,maxBytes){ return collectBytesFromPx(px,4,bpc,maxBytes); });
         if(!r) return resolve(null);
         if(r.error) return resolve({error:r.error});
-        if(r.meta) resolve({blob:r.blob,type:r.type,useJpeg:r.useJpeg,kind:'主隐写',meta:r.meta});
+        if(r.singleImg) resolve({blob:r.blob,type:r.type,useJpeg:r.useJpeg,kind:'主隐写',singleImg:true,singleLens:r.singleLens,singleS:r.singleS});
+        else if(r.meta) resolve({blob:r.blob,type:r.type,useJpeg:r.useJpeg,kind:'主隐写',meta:r.meta});
         else if(r.isBundle&&!r.isSeg) resolve({isBundle:true,bundleFiles:r.bundleFiles,kind:'多文件混合'});
         else if(r.isVideo){ if(r.isSeg) return resolve({segBytes:r.blob,segIdx:r.segIdx,segTotal:r.segTotal,isSeg:true,kind:'视频分片'}); var vu=URL.createObjectURL(r.blob); resolve({videoUrl:vu,type:r.type,useJpeg:r.useJpeg,isVideo:true,kind:'视频'}); }
         else if(r.isBundle&&r.isSeg) resolve({segBytes:r.blob,segIdx:r.segIdx,segTotal:r.segTotal,isSeg:true,isBundle:true,kind:'多文件分片'});
@@ -3047,6 +3212,8 @@ function extractOne(item){
     return stgoPromise.then(async stgo=>{
       if(stgo){
         if(stgo.error) throw new Error(stgo.error);
+        if(stgo.singleImg) return mmgDecodeSingleImgs(stgo)
+          .then(urls=>({urls,type:stgo.type,useJpeg:stgo.useJpeg,kind:'多小图'}));
         if(stgo.meta) return mmgSliceMosaic(stgo.blob,stgo.meta)
           .then(urls=>({urls,type:stgo.type,useJpeg:stgo.useJpeg,kind:'多小图'}));
         if(stgo.isBundle&&!stgo.isSeg) return {isBundle:true, bundleFiles:stgo.bundleFiles, kind:'多文件混合'};
@@ -3061,6 +3228,8 @@ function extractOne(item){
       // 非标准 PNG 字节解析失败：退回 canvas 尝试 STGO
       return stgoCanvasSoft(item.img).then(r=>{
         if(r){
+          if(r.singleImg) return mmgDecodeSingleImgs(r)
+            .then(urls=>({urls,type:r.type,useJpeg:r.useJpeg,kind:'多小图'}));
           if(r.meta) return mmgSliceMosaic(r.blob,r.meta)
             .then(urls=>({urls,type:r.type,useJpeg:r.useJpeg,kind:'多小图'}));
           return r;
@@ -3115,6 +3284,13 @@ async function doExtract(){
   mmgShowProg('mmgExtractProg');
   let ok=0, fail=0;
   const segParts=[];
+  const segOpfs=mmgOpfsAvailable();
+  let segOpfsWarn=false;
+  const segTag='zzx'+Date.now();
+  // 取图端 OPFS：剥出的分段字节落盘，合并时按需读回（File 组合省内存）。
+  // 合并产生的完整视频 Blob 仍引用这些 OPFS 文件，故不能立即清理；
+  // 在下一批取图开始时清理上一批遗留（当前批 tag 为新时间戳，不受影响）。
+  if(segOpfs){ try{ await mmgOpfsCleanup('zzx'); }catch(e){} }
   const digits=Math.max(2,String(list.length).length);
   for(let i=0;i<list.length;i++){
     const item=document.createElement('div');
@@ -3125,7 +3301,13 @@ async function doExtract(){
       const r=await extractOne(list[i]);
       ok++;
       if(r.isSeg){
-        segParts.push({idx:r.segIdx, bytes:r.segBytes, total:r.segTotal, isBundle:!!r.isBundle});
+        if(segOpfs&&!segOpfsWarn){
+          const skey=segTag+'_s'+(r.segIdx||0);
+          try{ await mmgOpfsWrite(skey, r.segBytes); segParts.push({idx:r.segIdx, opfs:skey, bytes:null, total:r.segTotal, isBundle:!!r.isBundle}); }
+          catch(e){ segOpfsWarn=true; segParts.push({idx:r.segIdx, opfs:null, bytes:r.segBytes, total:r.segTotal, isBundle:!!r.isBundle}); }
+        } else {
+          segParts.push({idx:r.segIdx, opfs:null, bytes:r.segBytes, total:r.segTotal, isBundle:!!r.isBundle});
+        }
         item.innerHTML='<div class="cap">第 '+(i+1)+' 张 ✓ 已收集'+(r.isBundle?'多文件':'视频')+'分片（第 '+((r.segIdx||0)+1)+' / '+r.segTotal+' 段）</div>';
         continue;
       }
@@ -3175,24 +3357,41 @@ async function doExtract(){
   if(segParts.length){
     const total=segParts[0].total;
     const byIdx={}; let complete=segParts.length>=total;
-    for(const p of segParts){ byIdx[p.idx]=p.bytes; }
+    for(const p of segParts){ byIdx[p.idx]=p; }
     for(let t=0;t<total;t++){ if(!byIdx[t]){ complete=false; break; } }
     const box=document.createElement('div'); box.className='box';
     if(complete){
-      let n=0; const seq=[];
-      for(let t=0;t<total;t++){ const b=byIdx[t]; seq.push(b); n+=b.size; }
-      const u8=new Uint8Array(n); let k=0;
-      for(const b of seq){ const ab=await b.arrayBuffer(); u8.set(new Uint8Array(ab),k); k+=ab.byteLength; }
       const isBundleSeg=!!segParts[0].isBundle;
-      const bFiles=isBundleSeg?mmgParseBundlePayload(u8):null;
-      if(bFiles&&bFiles.length){
-        box.innerHTML=mmgRenderBundleFiles(bFiles,-1,'已拼接并还原 '+bFiles.length+' 个文件（共 '+total+' 段分片）');
-        setHint('extractHint','完成：'+total+' 段分片已全部集齐，自动拼回并还原出全部文件','ok');
+      const seq=[]; let n=0;
+      for(let t=0;t<total;t++){
+        const p=byIdx[t];
+        const b = (p.opfs) ? await mmgOpfsFile(p.opfs) : p.bytes;
+        seq.push(b); n+=b.size;
+      }
+      if(isBundleSeg){
+        // 多文件分片：需完整字节解析，构造 u8（内存≈视频总量，仅多文件混合场景才需要）
+        const u8=new Uint8Array(n); let k=0;
+        for(const b of seq){ const ab=await b.arrayBuffer(); u8.set(new Uint8Array(ab),k); k+=ab.byteLength; }
+        const bFiles=mmgParseBundlePayload(u8);
+        if(bFiles&&bFiles.length){
+          box.innerHTML=mmgRenderBundleFiles(bFiles,-1,'已拼接并还原 '+bFiles.length+' 个文件（共 '+total+' 段分片）');
+          setHint('extractHint','完成：'+total+' 段分片已全部集齐，自动拼回并还原出全部文件','ok');
+        } else {
+          const jt=mmgSniffType(u8);
+          const vu=URL.createObjectURL(new Blob([u8],{type:jt}));
+          box.innerHTML='<video src="'+vu+'" controls style="max-width:100%;max-height:60vh;border-radius:8px"></video>'
+            +'<div class="cap">已自动拼接完整视频（共 '+total+' 段分片）</div>'
+            +'<a class="btn btn-primary" href="'+vu+'" download="完整视频'+mmgExtFor(jt)+'">保存完整视频</a>';
+          setHint('extractHint','完成：'+total+' 段分片已全部集齐并自动拼成完整视频','ok');
+        }
       } else {
-        const jt=mmgSniffType(u8);
-        const vu=URL.createObjectURL(new Blob([u8],{type:jt}));
+        // 单视频分片：用 Blob 组合，不把全部段一次性拷进连续内存（浏览器按需流式读取），内存峰值≈单段+合并引用
+        const head=new Uint8Array(await seq[0].slice(0,16).arrayBuffer());
+        const jt=mmgSniffType(head);
+        const merged=new Blob(seq,{type:jt});
+        const vu=URL.createObjectURL(merged);
         box.innerHTML='<video src="'+vu+'" controls style="max-width:100%;max-height:60vh;border-radius:8px"></video>'
-          +'<div class="cap">已自动拼接完整视频（共 '+total+' 段分片）</div>'
+          +'<div class="cap">已自动拼接完整视频（共 '+total+' 段分片，流式合并省内存）</div>'
           +'<a class="btn btn-primary" href="'+vu+'" download="完整视频'+mmgExtFor(jt)+'">保存完整视频</a>';
         setHint('extractHint','完成：'+total+' 段分片已全部集齐并自动拼成完整视频','ok');
       }
