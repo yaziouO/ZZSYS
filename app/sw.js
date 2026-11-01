@@ -1,4 +1,4 @@
-var CACHE = "zzs-pwa-v13";
+var CACHE = "zzs-pwa-v14";
 var PRECACHE = [
   "./",
   "./index.html",
