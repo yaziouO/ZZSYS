@@ -17,15 +17,18 @@ self.addEventListener("activate", function (e) {
 });
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
+  // 网络优先：先向服务器请求最新版，离线时才回落缓存
   e.respondWith(
-    caches.match(e.request).then(function (r) {
-      return r || fetch(e.request).then(function (resp) {
-        if (resp && resp.ok) {
-          var copy = resp.clone();
-          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
-        }
-        return resp;
-      }).catch(function () { return caches.match("./index.html"); });
+    fetch(e.request).then(function (resp) {
+      if (resp && resp.ok) {
+        var copy = resp.clone();
+        caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+      }
+      return resp;
+    }).catch(function () {
+      return caches.match(e.request).then(function (r) {
+        return r || caches.match("./index.html");
+      });
     })
   );
 });
