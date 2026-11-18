@@ -380,8 +380,8 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </script>
 
 <header>
-  <!-- 版本号：每次发版只改下面这个 v387 -->
-  <h1>作战实验室<span class="zz-ver">v387</span></h1>
+  <!-- 版本号：每次发版只改下面这个 v392 -->
+  <h1>作战实验室<span class="zz-ver">v392</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   </header>
 
@@ -3725,7 +3725,17 @@ el('mrgSaveJpg').addEventListener('click',function(){
 })();
 </script>
 <div id="download-area">
-  <button type="button" class="btn btn-ghost" style="margin-top:12px;padding:6px 14px;font-size:12px;text-decoration:none" onclick="mmgDownloadApk()">下载本工具安卓APP（离线版）</button>
+  <details id="zzMirror" style="margin-top:10px;text-align:center;padding:7px 12px">
+    <summary style="font-size:12.5px">其他在线网址 + 离线APP版</summary>
+    <div style="margin-top:8px;font-size:12px;line-height:1.9;color:var(--muted);text-align:center">
+    <div style="margin-top:6px">GitHub Pages 主站：<span style="color:var(--text);user-select:text;-webkit-user-select:text;word-break:break-all;font-size:11.5px">https://yaziouo.github.io/ZZSYS/</span></div>
+    <div style="margin-top:6px">主站 App 入口：<span style="color:var(--text);user-select:text;-webkit-user-select:text;word-break:break-all;font-size:11.5px">https://yaziouo.github.io/ZZSYS/app/index.html</span></div>
+    <div style="margin-top:6px">Netlify：<span style="color:var(--text);user-select:text;-webkit-user-select:text;word-break:break-all;font-size:11.5px">https://zzsys.netlify.app/</span></div>
+    <div style="margin-top:6px">ArtiDrop：<span style="color:var(--text);user-select:text;-webkit-user-select:text;word-break:break-all;font-size:11.5px">https://artidrop.ai/a/FqKBOeNX3</span></div>
+    <div style="margin-top:6px">妙搭：<span style="color:var(--text);user-select:text;-webkit-user-select:text;word-break:break-all;font-size:11.5px">https://4macmghw1kte0.doubao.link/app/app_17gg34s6cgg</span></div>
+    <div style="margin-top:10px">安卓 App 安装包：长按复制，到浏览器打开<br><span style="color:var(--text);user-select:text;-webkit-user-select:text;word-break:break-all;font-size:11.5px">https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk</span></div>
+    </div>
+  </details>
   <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.5px">腾讯频道号 592962059Q</div>
   <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;letter-spacing:.5px">BUG反馈Q群：592941563</div>
 </div>
@@ -8273,6 +8283,12 @@ window.gltLoadStego=function(file){
 <script>
 /* 内置安卓APK下载：把 base64 转成 Blob 再触发下载，兼容大多数内置浏览器（微信/QQ/系统自带等） */
 
+function zzCheckUpdate(){
+  try{
+    if(window.Android && window.Android.checkUpdate){ window.Android.checkUpdate(); return; }
+  }catch(e){}
+  alert('网页版没有内置更新器。\n请长按页面上的链接复制，到手机浏览器打开下载。');
+}
 function mmgDownloadApk(){
   var url='https://aka.doubaocdn.com/s/dL5A40sOWs';
   var NAME='作战实验室.apk';
