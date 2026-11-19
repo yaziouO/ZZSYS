@@ -1,1 +1,1 @@
-{"code": 69, "name": "4.32", "url": "https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk", "note": "v399: 大图成品取图修复（超大图自动流式解码，不再报 Invalid array length）；图种 TS 视频新增「转成 MP4 播放」按钮（只换容器不转码）"}
+{"code": 70, "name": "4.33", "url": "https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk", "note": "v403: 新增「TS 转 MP4」独立工具（只换容器不转码，支持图种/分卷剥出的 .ts）；分卷合成的 TS 也可一键转 MP4；TS 视频转前不预载，转换速度明显提升"}
