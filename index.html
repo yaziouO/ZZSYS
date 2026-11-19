@@ -373,8 +373,8 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </script>
 
 <header>
-  <!-- 版本号：每次发版只改下面这个 v399 -->
-  <h1>作战实验室<span class="zz-ver">v399</span></h1>
+  <!-- 版本号：每次发版只改下面这个 v403 -->
+  <h1>作战实验室<span class="zz-ver">v403</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   </header>
 
@@ -1755,6 +1755,82 @@ window.tjpDoExtract=function(){
     </div>
   </div>
 </details>
+<details id="tsm-app" style="margin-top:12px">
+  <summary>TS 转 MP4（只换容器不转码）<button type="button" class="zzq" data-q="TS 转 MP4：把 .ts 里的原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
+为什么需要：浏览器和手机默认放不了 .ts，转成 .mp4 就能直接播、能拖进度、能传平台。
+速度：纯搬运，68MB 约 1 秒；文件越大越慢，但远快于重新压缩。
+限制：只认 MPEG-TS 里的 H.264 + AAC；HEVC(H.265)、AC3/MP2 音频会直接报不支持。
+TS 原文件不会被改动，转换结果另存为新文件。">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="tsm_drop" onclick="document.getElementById('tsm_file').click()">
+      <div class="label">选 TS 视频（.ts）</div>
+      <div class="sub">点这里选、拖进来，或 Ctrl+V 粘贴文件；只换容器，不转码</div>
+    </div>
+    <input type="file" id="tsm_file" accept=".ts,.m2ts,.mts,video/mp2t,video/*" hidden onchange="tsmPick(this.files[0])">
+    <div class="hint" id="tsm_status" style="margin-top:8px">尚未选择文件</div>
+    <button class="btn btn-primary" id="tsm_btn" style="width:100%;margin-top:10px;display:none" onclick="tsmRun()">开始转换</button>
+    <div class="result" id="tsm_result" style="display:none">
+      <div class="box" id="tsm_info" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
+      <div id="tsm_play" style="margin-top:8px"></div>
+      <div id="tsm_dl" style="margin-top:8px"></div>
+    </div>
+  </div>
+</details>
+<script>
+/* ================== TS 转 MP4 分支工具（前缀 tsm_） ================== */
+var tsmFile=null, tsmUrl=null;
+function tsmMB(n){ return (n/1048576).toFixed(n>=10485760?0:1)+' MB'; }
+function tsmPick(f){
+  if(!f) return;
+  tsmFile=f;
+  var el=document.getElementById('tsm_status');
+  el.style.color='var(--muted)';
+  el.textContent='已选：'+(f.name||'视频')+'（'+tsmMB(f.size)+'）';
+  var b=document.getElementById('tsm_btn');
+  b.style.display='block'; b.disabled=false; b.textContent='开始转换';
+  document.getElementById('tsm_result').style.display='none';
+}
+async function tsmRun(){
+  if(!tsmFile) return;
+  var btn=document.getElementById('tsm_btn'), st=document.getElementById('tsm_status');
+  btn.disabled=true; btn.textContent='读取文件…';
+  st.style.color='var(--muted)';
+  try{
+    var buf=await tsmFile.arrayBuffer();
+    btn.textContent='解析中…';
+    var r=await window.tsRemuxToMp4(new Uint8Array(buf), function(t,p){ btn.textContent=t+' '+Math.round(p*100)+'%'; });
+    var blob=new Blob([r.bytes],{type:'video/mp4'});
+    if(tsmUrl) URL.revokeObjectURL(tsmUrl);
+    tsmUrl=URL.createObjectURL(blob);
+    var info=r.info;
+    document.getElementById('tsm_info').innerHTML='<b style="color:var(--text)">'+info.width+'×'+info.height+' · '+info.videoFrames+' 帧 · '+info.videoSec.toFixed(2)+' 秒 · '+info.codec+'</b><br>MP4 体积 '+tsmMB(info.size)+'（原 TS '+tsmMB(tsmFile.size)+'）';
+    document.getElementById('tsm_play').innerHTML='<video src="'+tsmUrl+'" controls playsinline style="width:100%;max-height:60vh;border-radius:10px;background:#000;display:block"></video>';
+    var base=(tsmFile.name||'视频').replace(/\.[^.]+$/,'');
+    document.getElementById('tsm_dl').innerHTML='<a class="btn btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none" download="'+base+'.mp4" href="'+tsmUrl+'">保存 MP4</a>';
+    document.getElementById('tsm_result').style.display='block';
+    btn.disabled=false; btn.textContent='重新转换';
+    st.style.color='#79d18a'; st.textContent='转换完成 ✓';
+  }catch(e){
+    btn.disabled=false; btn.textContent='重试转换';
+    st.style.color='#ff8a8a';
+    st.textContent='转换失败：'+(e&&e.message||e);
+  }
+}
+(function(){
+  var d=document.getElementById('tsm_drop'), inp=document.getElementById('tsm_file');
+  if(!d) return;
+  d.addEventListener('dragover',function(e){ e.preventDefault(); d.style.borderColor='var(--accent)'; });
+  d.addEventListener('dragleave',function(){ d.style.borderColor=''; });
+  d.addEventListener('drop',function(e){
+    e.preventDefault(); d.style.borderColor='';
+    if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]) tsmPick(e.dataTransfer.files[0]);
+  });
+  window.addEventListener('paste',function(e){
+    var f=e.clipboardData&&e.clipboardData.files&&e.clipboardData.files[0];
+    if(f) tsmPick(f);
+  });
+})();
+</script>
   <script>
 /* ============ 多小图隐藏工具（前缀 mmg_，独立于主隐写） ============ */
 var mmgSt={cover:null,secrets:[],curPick:null,append:false,quality:'jpeg',scale:1,singleImg:true};
@@ -4864,7 +4940,7 @@ function mmgRenderBundleFiles(files,labelIdx,title){
     var tsTk=isTs? gpTsReg(f.bytes, (f.name||('视频'+(i+1)+'.ts'))) : '';
     row+='<div class="box" style="flex:1 1 '+(isVid?'100%':'46%')+';min-width:150px;max-width:'+(isVid?'100%':'240px')+';box-sizing:border-box;margin:'+(isVid?'6px 0':'6px')+'">';
     if(isVid){
-      row+='<video'+(isTs?(' id="tsv'+tsTk+'"'):'')+' src="'+u+'" controls playsinline style="width:100%;max-height:62vh;border-radius:10px;background:#000;display:block"></video>'
+      row+='<video'+(isTs?(' id="tsv'+tsTk+'"'):'')+' src="'+u+'"'+(isTs?' preload="none"':'')+' controls playsinline style="width:100%;max-height:62vh;border-radius:10px;background:#000;display:block"></video>'
         +'<button class="btn btn-ghost" style="margin-top:6px;width:100%" onclick="gpVideoFullscreen(this)">全屏播放</button>';
       if(isTs){
         row+='<button class="btn btn-ghost" data-tsbtn="1" style="margin-top:6px;width:100%" onclick="tsRemuxPlay(\''+tsTk+'\',this)">转成 MP4 播放（实验·只换容器不转码）</button>';
@@ -7057,19 +7133,26 @@ async function gpJoinParts(items){
       msgs.push(g.name+'：只集到 '+got+' / '+g.total+' 卷');
       continue;
     }
-    var blobs=[], sum=0;
-    for(var t=0;t<g.total;t++){ var ch=g.parts[t]; blobs.push(ch); sum+=ch.length; }
+    var sum=0, t;
+    for(t=0;t<g.total;t++){ sum+=g.parts[t].length; }
     if(sum!==g.origTotal){
       allOk=false;
       msgs.push(g.name+'：卷长合计不符（'+sum+' / '+g.origTotal+'）');
       continue;
     }
+    var merged=new Uint8Array(sum), off=0;
+    for(t=0;t<g.total;t++){ merged.set(g.parts[t], off); off+=g.parts[t].length; }
     var mime=gpMimeByName(g.name);
-    var url=URL.createObjectURL(new Blob(blobs,{type:mime}));
+    var url=URL.createObjectURL(new Blob([merged],{type:mime}));
     var isVid=mime.indexOf('video/')===0, isAud=mime.indexOf('audio/')===0, isImg=mime.indexOf('image/')===0;
+    var isTs=(mime==='video/mp2t');
+    var tsTk=isTs? gpTsReg(merged, g.name) : '';
     html+='<div class="cap">已合并：'+gpEsc(g.name)+'（'+g.total+' 卷 · '+gpFmt(sum)+'）</div>';
     if(isVid){
-      html+='<video src="'+url+'" controls preload="metadata" playsinline style="width:100%;max-height:52vh;border-radius:8px;background:#000;display:block;margin:6px 0"></video>';
+      html+='<video'+(isTs?(' id="tsv'+tsTk+'"'):'')+' src="'+url+'"'+(isTs?' preload="none"':'')+' controls preload="metadata" playsinline style="width:100%;max-height:52vh;border-radius:8px;background:#000;display:block;margin:6px 0"></video>';
+      if(isTs){
+        html+='<button class="btn btn-ghost" data-tsbtn="1" style="margin:0 0 6px;width:100%" onclick="tsRemuxPlay(\''+tsTk+'\',this)">转成 MP4 播放（实验·只换容器不转码）</button>';
+      }
     } else if(isAud){
       html+='<audio src="'+url+'" controls preload="metadata" style="width:100%;margin:6px 0"></audio>';
     } else if(isImg){
