@@ -284,7 +284,9 @@
 /* ===== 工具说明小问号 ===== */
 details#gp-app-details>summary,details#mmgMainWrap>summary,details#lg-app-details>summary,
 details#tjp-app-details>summary,details#glt-app-details>summary,details#mrg-app-details>summary,
-details#hx-app>summary{position:relative;padding-right:42px}
+details#hx-app>summary,
+details#tsm-app>summary{position:relative;padding-right:42px}
+details>summary{position:relative}
 .zzq{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:20px;height:20px;
  border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--muted);
  font:700 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0;
@@ -373,8 +375,8 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </script>
 
 <header>
-  <!-- 版本号：每次发版只改下面这个 v403 -->
-  <h1>作战实验室<span class="zz-ver">v403</span></h1>
+  <!-- 版本号：每次发版只改下面这个 v404 -->
+  <h1>作战实验室<span class="zz-ver">v405</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   </header>
 
@@ -386,7 +388,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 <!-- ============ 藏图 ============ -->
 <div id="paneEmbed" class="pane active">
   <details id="gp-app-details" style="margin-top:12px">
-    <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600">新·图种式（直通隐写） 待测试<button type="button" class="zzq" data-q="图种式：把里图原样塞进图片文件里，成品就是一张普通图片。
+    <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">新·图种式（直通隐写） 待测试<button type="button" class="zzq" data-q="图种式：把里图原样塞进图片文件里，成品就是一张普通图片。
 ① 载体图：任意图片，GIF 会保留动画。
 ② 里图：图片、动图、视频、APK/压缩包都行，可多选。
 成品格式 PNG = 无损直通（推荐）；GIF = 兼容更广，部分平台只认 GIF。
@@ -477,7 +479,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   </details>
 
 <details id="mmgMainWrap" style="margin-top:10px">
-  <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600">作战图（像素隐写）<button type="button" class="zzq" data-q="作战图（像素隐写）：把内容写进像素最低几位，成品还是一张正常图片。
+  <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">作战图（像素隐写）<button type="button" class="zzq" data-q="作战图（像素隐写）：把内容写进像素最低几位，成品还是一张正常图片。
 能藏图片、动图，或一整个视频（视频只能放一个）。
 存储密度 2/5/7 位：档位越高装得越多，表图也越容易看出噪点，解出的视频始终无损。
 纯图片拼图固定按 2 位写入。">?</button></summary>
@@ -744,7 +746,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 <!-- ============ 光棱图制作解密工具（光棱坦克算法，独立前缀 glt_，不与上文冲突） ============ -->
 <!-- ============ 图夹 Pro 兼容工具（独立前缀 tjp_） ============ -->
 <details id="lg-app-details" style="margin-top:12px">
-  <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600">新·救生网格（抗压缩） 开发中<button type="button" class="zzq" data-q="救生网格：画面里撒细点，把里图压成小样藏进画面，平台重新压缩也能捞回来。
+  <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">新·救生网格（抗压缩） 开发中<button type="button" class="zzq" data-q="救生网格：画面里撒细点，把里图压成小样藏进画面，平台重新压缩也能捞回来。
 ① 表图：承载画面的图。② 里图：压成 JPEG 小样写进画面。
 可填「成品上限 MB」，工具会把表图放大到尽量贴近上限，装更清晰的小样。
 开发中：能扛轻度压缩，压太狠仍会丢。">?</button></summary>
@@ -782,7 +784,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </details>
 
 <details id="tjp-app-details" style="margin-top:12px">
-  <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600">图夹制作工具<button type="button" class="zzq" data-q="图夹：表图＋里图，里图按原字节直塞，不压缩不转码，什么文件都能放。
+  <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">图夹制作工具<button type="button" class="zzq" data-q="图夹：表图＋里图，里图按原字节直塞，不压缩不转码，什么文件都能放。
 表图支持 PNG/JPG/GIF；不选表图会自动生成一张底色图。
 成品格式跟表图走：表图是 GIF 就出 GIF，其它出 PNG。
 取图页已自动识别图夹成品，可批量剥出；支持可选密码。">?</button></summary>
@@ -1492,7 +1494,7 @@ window.tjpDoExtract=function(){
 </script>
 
 <details id="glt-app-details" style="margin-top:12px">
-  <summary>光棱图制作解密工具<button type="button" class="zzq" data-q="光棱图：表图和里图各占一半亮度，原图看着基本正常，要用「显形」才能看到里图。
+  <summary style="position:relative;padding-right:42px">光棱图制作解密工具<button type="button" class="zzq" data-q="光棱图：表图和里图各占一半亮度，原图看着基本正常，要用「显形」才能看到里图。
 ① 表图 ② 里图；采样 3×3 取心隐藏效果最好。
 输出 PNG 时参数写在图片内，放进取图页会自动显形。
 里图/表图两个阈值滑杆微调显影清晰度；只支持单张图片。">?</button></summary>
@@ -1650,7 +1652,7 @@ window.tjpDoExtract=function(){
 </style>
 
 <details id="mrg-app-details" style="margin-top:12px">
-  <summary>幻影图制作工具<button type="button" class="zzq" data-q="幻影图（幻影坦克）：同一张图，白底看是表图、黑底看是里图，两个画面叠在一张图里。
+  <summary style="position:relative;padding-right:42px">幻影图制作工具<button type="button" class="zzq" data-q="幻影图（幻影坦克）：同一张图，白底看是表图、黑底看是里图，两个画面叠在一张图里。
 ① 表图（白背景显示）② 里图（黑背景显示）。
 可设输出尺寸与全彩/黑白；高级参数里有里图去色和混合权重。
 适合两张强反差画面（白天/夜晚、正/邪），白底环境更明显。">?</button></summary>
@@ -1732,7 +1734,7 @@ window.tjpDoExtract=function(){
   </div>
 </details>
 <details id="hx-app" style="margin-top:12px">
-  <summary>混淆图制作解密工具<button type="button" class="zzq" data-q="混淆图：把像素打乱成「像素粥」，成品看着像乱码。
+  <summary style="position:relative;padding-right:42px">混淆图制作解密工具<button type="button" class="zzq" data-q="混淆图：把像素打乱成「像素粥」，成品看着像乱码。
 「解混淆」逆回一步，「还原」回到最初原图。
 只能解本工具混淆出来的图，被平台压过或别处的图无效。
 只加一道「看不懂」的门槛，不承担加密作用。">?</button></summary>
@@ -1756,7 +1758,7 @@ window.tjpDoExtract=function(){
   </div>
 </details>
 <details id="tsm-app" style="margin-top:12px">
-  <summary>TS 转 MP4（只换容器不转码）<button type="button" class="zzq" data-q="TS 转 MP4：把 .ts 里的原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
+  <summary style="position:relative;padding-right:42px">TS 转 MP4（只换容器不转码）<button type="button" class="zzq" data-q="TS 转 MP4：把 .ts 里的原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
 为什么需要：浏览器和手机默认放不了 .ts，转成 .mp4 就能直接播、能拖进度、能传平台。
 速度：纯搬运，68MB 约 1 秒；文件越大越慢，但远快于重新压缩。
 限制：只认 MPEG-TS 里的 H.264 + AAC；HEVC(H.265)、AC3/MP2 音频会直接报不支持。
@@ -7673,8 +7675,32 @@ async function gpSpanWait(cap,limit){
 
 async function gpBigWritable(name,mime,kind,cap){
   var ok=Android.fileBegin(name,mime);
-  if(!ok) throw new Error('创建文件失败：存储权限不足或磁盘已满');
+  if(!ok){
+    var d='';
+    try{ if(Android.lastFileError) d=Android.lastFileError()||''; }catch(e){}
+    throw new Error('创建文件失败：'+(d||'存储权限不足或磁盘已满'));
+  }
   return {name:name,mime:mime};
+}
+
+/* 存储诊断：剩余空间 + 相册回收站占用（安卓 11+ 删掉的视频先进回收站，默认 30 天不释放） */
+function gpStorageInfo(){
+  try{ if(window.Android && Android.storageInfo) return JSON.parse(Android.storageInfo()); }catch(e){}
+  return null;
+}
+function gpStorageTip(){
+  var si=gpStorageInfo(); if(!si) return '';
+  var t='设备剩余 '+(si.freeText||'未知');
+  if(si.trashBytes>0) t+='；相册回收站还占着 '+(si.trashText||'')+'，去相册清空回收站能立刻释放';
+  return t;
+}
+function gpStorageGuard(needBytes){
+  var si=gpStorageInfo(); if(!si || si.free<0) return;
+  if(needBytes>0 && si.free < needBytes*1.05){
+    throw new Error('存储空间不足：设备剩余 '+(si.freeText||'')+'，这次大约要写 '+(needBytes/1048576).toFixed(0)
+      +' MB'+(si.trashBytes>0?('；相册回收站还占着 '+(si.trashText||'')+'，去相册清空回收站能立刻释放'):'')
+      +'。清出空间后再试。');
+  }
 }
 
 async function gpOpenInSystemPlayer(url,name,mime,btn){
@@ -7725,7 +7751,8 @@ function gpCleanTemp(){
   try{ if(typeof mmgOpfsCleanupTemp==='function') mmgOpfsCleanupTemp(); }catch(e){}
   if(!(window.Android && Android.clearPlayCache)) return;
   try{ Android.clearPlayCache(); }catch(e){}
-  setHint('extractHint','已清理临时文件','ok');
+  var tipC=gpStorageTip();
+  setHint('extractHint','已清理临时文件'+(tipC?('｜'+tipC):''),'ok');
 }
 
 function gpApplyModeRows(webMode){
@@ -7758,9 +7785,17 @@ function gpAppModeInit(tries){
 function gpAppModePaint(){}
 async function gpAppNativeExtract(){
   if(!stegoQueue || !stegoQueue.length){ setHint('extractHint','先用上面那块选成品图，再点这个','err'); return; }
+  var need=0, i;
+  for(i=0;i<stegoQueue.length;i++){ need+=(stegoQueue[i].size||0); }
+  try{ gpStorageGuard(need); }
+  catch(eS){ setHint('extractHint',eS.message,'err'); return; }
   window.__gpNative=true; gpAppModePaint();
   setHint('extractHint','原生加速：全在 Java 侧读写，字节不进页面内存…','');
   try{ await doExtract(); }
+  catch(eX){
+    var tip=gpStorageTip();
+    setHint('extractHint',(eX&&eX.message||eX)+(tip?('｜'+tip):''),'err');
+  }
   finally{ window.__gpNative=false; gpAppModePaint(); }
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', gpAppModeInit); else gpAppModeInit();

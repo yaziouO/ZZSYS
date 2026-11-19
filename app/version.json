@@ -1,1 +1,1 @@
-{"code": 70, "name": "4.33", "url": "https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk", "note": "v403: 新增「TS 转 MP4」独立工具（只换容器不转码，支持图种/分卷剥出的 .ts）；分卷合成的 TS 也可一键转 MP4；TS 视频转前不预载，转换速度明显提升"}
+{"code": 72, "name": "4.35", "url": "https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk", "note": "v405: 修取图页/折叠行问号位置（不再飘到按钮区、不再压住折叠行）；App 多选多张成品时每一张都能走原生直读（不再只有第一张），多张 1G 级成品可一起批量剥出"}
