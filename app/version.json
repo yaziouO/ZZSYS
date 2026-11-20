@@ -1,1 +1,1 @@
-{"code":75,"name":"4.38","url":"https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk","note":"新增：错误码 140–143（光棱图无成品/保存失败/显形测试失败/非有效图片）\n修复：光棱图空成品点保存或显形测试会存空白画布 → 改报 E506-140；非图片文件提示统一为「这不是有效的图片文件」；mmgSaveAllBtn 重复 id；角标 v405 统一为 4.38；清理 8 处死代码"}
+{"code":77,"name":"4.39","url":"https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk","note":"新增：更新提示改为与页面同款暗色卡片（深色底 + 金色标题 + 分段说明）\n修复：旧弹窗沿用系统白底 AlertDialog，与工具页风格割裂 → 统一为作战实验室配色"}
