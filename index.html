@@ -301,6 +301,165 @@ details>summary{position:relative}
 #zzQTip{padding-right:26px}
 </style>
 <style id="mmgLbStyle">#mmgLightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:99999;align-items:center;justify-content:center;cursor:zoom-out}#mmgLightbox img{max-width:92vw;max-height:88vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6)}</style>
+<script>
+/* ===== 错误码体系：所有错误提示都会带 [E数字]，方便截图反馈定位 =====
+   第一位＝工具：1图种式 2作战图 3救生网格 4图夹 5光棱图 6幻影图 7混淆图 8TS转MP4 9取图 0通用
+   后两位＝环节：01读取 02解析/还原 03生成 11? 04保存 05写盘 06环境/权限 99其它 */
+(function(){
+  window.__zzLastHint='';
+  /* 文案编号表：横杠后的三位数唯一对应一句错误文案 */
+  var TB=[["未知脚本错误","001"], ["[E001] 页面脚本异常：","002"], ["」还没有内容可保存：先点上面的生成/剥出，等出现成品再保存","003"], ["不支持","004"], ["表图读取失败：","005"], ["里图读取失败：","006"], ["上限计算失败：","007"], ["先选表图","008"], ["先选里图","009"], ["写入失败：网格容量或尺寸不足","010"], ["生成失败：","011"], ["这张图里没有救生网格，或者已经被压烂读不出来了","012"], [" B），但里面没有小样","013"], ["失败：","014"], ["当前环境不支持压缩流","015"], ["当前环境不支持解压流","016"], ["当前环境不支持加密（需要安全上下文）","017"], ["还没选里图","018"], ["表图转 PNG 失败","019"], ["转换失败：","020"], ["单张表图容量有上限：手机约可直接嵌入50MB内容，电脑约150MB内容，超过可能导致工具崩溃。","021"], ["没有藏东西","022"], ["请先选好表图，才能实时估算容量","023"], ["表图容量不足，请换更大的表图","024"], ["无法创建文件","025"], ["写入失败","026"], ["保存失败：","027"], ["当前没有已生成的成品。","028"], ["请先生成视频分段成品，再对某段换表图。","029"], ["换表图写盘失败：","030"], ["里图只能放入一个视频，不能多个视频一起放入","031"], ["视频不能与图片/动图混藏：一次只可添加视频，或只添加图片/动图","032"], ["拼接图损坏","033"], ["独立小图数据缺失","034"], ["独立小图解码失败","035"], [" 字节不足，生成时将自动放大表图至约 ","036"], ["出错了：","037"], ["× 后仍不够，请换更大的表图或压缩动图。","038"], ["请先生成成品，再做光棱化。","039"], ["请先生成成品，再做伪装效果。","040"], ["磁盘空间不足：还需要约 ","041"], ["这张 GIF 解析失败，换一张试试","042"], ["容量不足：还差 ","043"], ["先选一张 GIF 动图当表图","044"], ["表图读取失败：不是 GIF","045"], ["GIF 载体出错：","046"], ["容量不够：表图自动放大后仍放不下。减少里图数量或换更大表图。","047"], ["图片读取失败","048"], ["保存失败","049"], ["canvas 不可用","050"], ["容量不够：这张表图最多藏 ","051"], ["还没有生成成品","052"], ["测试失败：成品数据损坏","053"], ["找不到视频数据，请重新剥出","054"], ["写临时文件失败（缓存空间不足）","055"], ["写入中断（缓存空间不足）","056"], ["打开播放器失败：","057"], ["没有可用的字节","058"], ["TS 里找不到 SPS/PPS，无法封装 H.264","059"], ["读取失败","060"], ["不支持的PNG颜色类型","061"], ["Huffman解码失败","062"], ["无效块类型","063"], ["这张图里的压缩数据超出预期（可能已损坏），已中止解压；请换原成品重试","064"], ["载体读取失败，先选一张载体再试","065"], [" 已接近或超过上限，请把上限调大或换小一点的载体","066"], ["读文件失败：","067"], ["：切段引擎缺失，无法合成","068"], ["：合成失败（","069"], ["图片解码失败","070"], ["载体解码失败","071"], ["转 PNG 失败","072"], ["读块失败","073"], ["写入失败（存储空间不足或被系统拦下）","074"], ["，已超过频道 30MB 上限，上传会被压坏；请填上限切段","075"], ["，接近/超过 B站 20MB，建议填 20 切段","076"], ["，超过贴吧 10MB，贴吧用请填 10 切段","077"], ["；超过 1920 的边已等比缩到 ","078"], ["读取载体失败：","079"], ["读取 GIF 失败","080"], ["已转成 GIF（原图颜色超过 256，做了 256 色量化，画面有轻微变化）","081"], ["超过 1920 的边已等比缩到 ","082"], ["转 GIF 失败：","083"], ["打包失败：","084"], ["还没有分包成品","085"], [" 张：浏览器可能拦截多文件下载，请在弹窗里点「允许」","086"], ["先选一张表图当载体","087"], ["先选要藏进去的里图（本区块选，或去主隐图里选）","088"], ["这个环境没有分块写盘通道","089"], ["这张图里没有本工具的成品块","090"], ["这张图里没有本工具的注释数据（可能被平台转码或压缩过）","091"], ["创建文件失败：","092"], ["存储权限不足或磁盘已满","093"], ["存储空间不足：设备剩余 ","094"], ["建文件失败（存储权限或空间不足）","095"], ["写入中断","096"], ["用系统播放器打开失败：","097"], ["这张成品走流式这次不支持：改用内存方式尝试解出。设备内存足够就能解开；内存不够会中断，可到电脑上解。","098"], ["密码不对，或这张图被平台压缩过；请用原图重试","099"], ["没有输入密码，放弃剥出","100"], ["密码不对，或这张图被平台压缩/转码了；先确认密码，再用原图（以「文件」方式发送）重试","101"], ["密码不对，或这张图被平台压缩/转码了；先用原图重试","102"], ["没有藏东西，或这张图被平台压缩/转码过；请用原图（以「文件」方式发送）再试","103"], ["图片数据不可用，请重新选择","104"], ["还没选成品图","105"], ["没有藏东西，不是本工具的成品","106"], ["请先选择图片","107"], ["还没有成品，先选好表图和里图。","108"], ["显形测试失败：","109"], ["顶层 box 结构异常","110"], ["没有 trak","111"], ["轨道结构不支持：","112"], ["超出 32 位偏移上限","113"], ["没有视频轨道","114"], ["视频没有采样","115"], ["找不到关键帧","116"], ["没有可合并的段","117"], ["第 1 段解析失败：","118"], ["这张成品里装了 ","119"], ["这个环境没有分块写盘通道","120"], ["这张成品是加密的，流式路径解不了","121"], ["改用内存方式尝试解出","122"], ["分段表图只支持 PNG 成品格式，先把成品格式切到 PNG 再选","123"], ["分段表图读取失败：","124"], ["先选一张载体图，再选分段表图","125"], ["这张成品的数据没留在本地，没法单独换表图","126"], ["换表图失败：","127"], ["这张成品的数据读不回来了","128"], ["图片尺寸读不到","129"], ["先选一张载体图（用它的画幅）","130"],["多张表图只在 PNG 成品格式生效",131],["先选一张载体图，再选多张表图",132],["多张表图读取失败",133],["多张表图没启用",134],["分段表图读取失败",135],["只有 PNG 成品格式才能一张一张叠放载体",136],["载体没加上",137],["换表图后校验没通过",138],["开救生网格时只能放一张载体",139],["光棱图还没有成品，先选好表图和里图",140],["光棱图保存失败",141],["光棱图显形测试失败",142],["这不是有效的图片文件",143]];
+
+  function modOfHint(id){
+    var t=String(id==null?'':id);
+    if(/^mmg/i.test(t)) return 2;
+    if(/^glt/i.test(t)) return 5;
+    if(/^tjp/i.test(t)) return 4;
+    if(/^lg/i.test(t)) return 3;
+    if(/^mrg/i.test(t)) return 6;
+    if(/^hx/i.test(t)) return 7;
+    if(/^tsm/i.test(t)) return 8;
+    if(/^gp/i.test(t)) return 1;
+    if(/extract|embed|stego|stg/i.test(t)) return 9;
+    return 0;
+  }
+  function kindOf(t){
+    t=String(t==null?'':t);
+    if(/保存|下载|另存|存到相册|写入相册|触发下载/.test(t)) return '04';
+    if(/写入|写盘|落盘|磁盘|空间不足|剩余空间|存储空间|创建文件|新建文件/.test(t)) return '05';
+    if(/读取|读不|打不开|取不到|载入|选择图片|选图|选成品|选一张|没选|未选/.test(t)) return '01';
+    if(/解压|解码|剥出|还原|解析|识别|合成|拼接|集齐|解密|显形|密码|口令|损坏|坏数据|不是本工具|被平台压/.test(t)) return '02';
+    if(/生成|嵌入|打包|封装|切段|分割|转码|转换|容量不够/.test(t)) return '03';
+    return '06';
+  }
+  function looksErr(t,flag){
+    if(flag) return true;
+    return /失败|出错|错误|不支持|无法|不足|异常|拒绝|没有|得先|先选/.test(String(t==null?'':t));
+  }
+  window.zzModOfHint=modOfHint;
+  /* 找最长命中的已登记文案，返回其编号；没登记给 000 */
+  function codeNo(t){
+    var best='', bid='000';
+    for(var i=0;i<TB.length;i++){
+      var k=TB[i][0];
+      if(k && t.indexOf(k)>=0 && k.length>best.length){ best=k; bid=TB[i][1]; }
+    }
+    return bid;
+  }
+  window.zzTag=function(text,flag,hintId){
+    if(hintId) window.__zzLastHint=String(hintId);
+    var t=(text==null?'':String(text));
+    if(!t) return t;
+    if(/^\[E\d{3}-\d{3}\]/.test(t)) return t;
+    if(!looksErr(t,flag)) return t;
+    return '[E'+modOfHint(hintId)+kindOf(t)+'-'+codeNo(t)+'] '+t;
+  };
+  try{
+    var zzRawAlert=window.alert;
+    window.alert=function(m){
+      try{ zzRawAlert.call(window, zzTag(m, true, window.__zzLastHint)); }
+      catch(e){ zzRawAlert.call(window, m); }
+    };
+  }catch(e){}
+})();
+/* ===== 第二层：全局兜底与保存反馈（v429） =====
+   E001 页面脚本异常  E002 异步任务未捕获  E004 保存时没有内容 */
+(function(){
+  function ensureToast(){
+    var d=document.getElementById('zzToast');
+    if(d) return d;
+    if(!document.body) return null;
+    d=document.createElement('div'); d.id='zzToast';
+    d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:78px;z-index:99998;background:rgba(20,26,38,.96);color:#e6edf3;border:1px solid #3b4658;border-radius:10px;padding:8px 14px;font-size:12px;line-height:1.55;max-width:92vw;box-shadow:0 4px 16px rgba(0,0,0,.45);transition:opacity .25s;opacity:0;pointer-events:none;text-align:center';
+    document.body.appendChild(d);
+    return d;
+  }
+  window.zzToast=function(msg,isErr){
+    try{
+      var d=ensureToast(); if(!d) return;
+      d.textContent=msg;
+      d.style.borderColor=isErr?'#f85149':'#3b4658';
+      d.style.color=isErr?'#ffd7d5':'#e6edf3';
+      d.style.opacity='1';
+      clearTimeout(window.__zzToastT);
+      window.__zzToastT=setTimeout(function(){ try{ d.style.opacity='0'; }catch(e){} }, isErr?6000:2600);
+    }catch(e){}
+  };
+  window.zzShowGlobal=function(msg){
+    try{
+      var d=document.getElementById('zzGlobalErr');
+      if(!d){
+        if(!document.body) return;
+        d=document.createElement('div'); d.id='zzGlobalErr';
+        d.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#3a1c1c;color:#ffd7d5;border:1px solid #f85149;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.6;box-shadow:0 4px 18px rgba(0,0,0,.55);white-space:pre-wrap;cursor:pointer';
+        d.title='点一下关闭';
+        document.body.appendChild(d);
+        d.addEventListener('click', function(){ d.style.display='none'; });
+      }
+      d.textContent=msg;
+      d.style.display='block';
+    }catch(e){}
+  };
+  /* 未捕获的脚本异常 */
+  window.addEventListener('error', function(ev){
+    try{
+      var m=(ev&&ev.message)?ev.message:'未知脚本错误';
+      var f=(ev&&ev.filename)?String(ev.filename).split('/').pop():'';
+      var ln=(ev&&ev.lineno)?ev.lineno:'';
+      zzShowGlobal('[E001] 页面脚本异常：'+m+(f?('（'+f+(ln?':'+ln:'')+'）'):'')+'\n点这条可关闭；截图发给开发者即可定位');
+    }catch(_){}
+  }, true);
+  /* 未处理的异步错误 */
+  window.addEventListener('unhandledrejection', function(ev){
+    try{
+      var r=ev&&ev.reason;
+      var m=(r&&(r.message||r))?String(r.message||r):'未知';
+      zzShowGlobal('[E002] 异步任务没被处理：'+m+'\n点这条可关闭；截图发给开发者即可定位');
+    }catch(_){}
+  });
+  /* 所有下载链接点击都给一句反馈：成功触发 或 提示没内容 */
+  document.addEventListener('click', function(e){
+    var a=null;
+    try{ a=(e.target&&e.target.closest)?e.target.closest('a[download]'):null; }catch(_){ a=null; }
+    if(!a) return;
+    var href=a.getAttribute('href')||'';
+    var nm=a.getAttribute('download')||'成品';
+    if(!href||href==='#'||href.indexOf('javascript:')===0){
+      e.preventDefault(); e.stopPropagation();
+      zzToast('[E004] 「'+nm+'」还没有内容可保存：先点上面的生成/剥出，等出现成品再保存', true);
+      return;
+    }
+    zzToast('已触发保存：'+nm+'（若相册或下载里没出现，就长按成品图另存）');
+  }, true);
+  /* 底部运行环境自检 */
+  function paintEnv(extraTxt){
+    try{
+      var line=document.getElementById('zzEnvLine'); if(!line) return;
+      var opfs=(navigator.storage&&navigator.storage.getDirectory)?'有':'无';
+      var dec=(typeof DecompressionStream!=='undefined')?'有':'无';
+      var bridge=(window.Android&&window.Android.fileBegin)?'有':'无';
+      var dl=('download' in document.createElement('a'))?'支持':'不支持';
+      line.textContent='运行环境：OPFS '+opfs+'｜原生解压 '+dec+'｜App 通道 '+bridge+'｜下载属性 '+dl+'｜'+extraTxt;
+    }catch(e){}
+  }
+  function bootEnv(){
+    paintEnv('存储读取中…');
+    try{
+      if(navigator.storage&&navigator.storage.estimate){
+        navigator.storage.estimate().then(function(q){
+          var freeTxt='—';
+          try{
+            if(q&&q.quota) freeTxt='配额 '+Math.round(q.quota/1048576)+'MB'+(q.usage!=null?('，已用 '+Math.round(q.usage/1048576)+'MB'):'');
+          }catch(e){}
+          paintEnv('存储 '+freeTxt);
+        }).catch(function(){ paintEnv('存储 未知'); });
+      } else { paintEnv('存储 未知'); }
+    }catch(e){ paintEnv('存储 未知'); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bootEnv);
+  else bootEnv();
+})();
+</script>
 </head>
 <body>
 <button type="button" class="float-btn theme-toggle" id="themeToggle" aria-label="切换皮肤">
@@ -376,7 +535,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 
 <header>
   <!-- 版本号：每次发版只改下面这个 v404 -->
-  <h1>作战实验室<span class="zz-ver">v405</span></h1>
+  <h1>作战实验室<span class="zz-ver">4.38</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   </header>
 
@@ -390,29 +549,28 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   <details id="gp-app-details" style="margin-top:12px">
     <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">新·图种式（直通隐写） 待测试<button type="button" class="zzq" data-q="图种式：把里图原样塞进图片文件里，成品就是一张普通图片。
 ① 载体图：任意图片，GIF 会保留动画。
-② 里图：图片、动图、视频、APK/压缩包都行，可多选。
+② 里图：图片/视频/音频/压缩包/安装包/文档/任何文件都可尝试，可多选。
 成品格式 PNG = 无损直通（推荐）；GIF = 兼容更广，部分平台只认 GIF。
 可加 2～4 位密码；回到上方「取图」页放进成品即可原样剥出。
 「单个成品上限」填多少 MB：每张成品不超过它，装不下会自动切成多张，取图时全选可自动合成；留空就整包装一张。开救生网格时只出整张，需要装得进上限。">?</button></summary>
     <div class="opt" style="margin-top:8px">
-      <input type="file" id="gpFile" accept="image/*,.gif,.png,.jpg,.jpeg,.webp,.bmp" style="display:none" onchange="gpOnCarrier(this)">
+      <input type="file" id="gpFile" accept="image/*,.gif,.png,.jpg,.jpeg,.webp,.bmp" multiple style="display:none" onchange="gpOnCarrier(this)">
       <div id="gpDropPair" style="display:flex;gap:10px;margin-top:10px;align-items:stretch;flex-wrap:nowrap">
       <div class="mmg-drop" id="gpDropCarrier" onclick="document.getElementById('gpFile').click()" style="flex:1 1 0;min-width:0">
         <div class="t"><span class="gpL">① 选载体图（任意图片）</span><span class="gpS">① 载体图</span></div>
-        <div class="s" id="gpCarrierTip"><span class="gpL">GIF 原样使用（动画保留）；PNG/JPG 按成品格式承载——成品选 PNG 就无损直通，不做 256 色量化</span><span class="gpS">点选或拖入，按成品格式承载</span></div>
-        <div id="gpCarrierBox" onclick="event.stopPropagation()" style="display:none;gap:10px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);text-align:left">
-          <img id="gpCarrierImg" alt="载体预览" style="width:72px;height:72px;object-fit:cover;border-radius:8px;flex:none;background:var(--card2)">
-          <div style="min-width:0">
-            <div id="gpCarrier" style="font-size:12px;color:var(--text);word-break:break-all">未选</div>
-            <div id="gpCarrierNote" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
-          </div>
+        <div class="s" id="gpCarrierTip"><span class="gpL">GIF 原样使用（动画保留）；PNG/JPG 按成品格式承载——成品选 PNG 就无损直通，不做 256 色量化；可多选，也能一张一张加，多张按段轮换</span><span class="gpS">点选或拖入，可多选（多张按段轮换）</span></div>
+        <div id="gpCarrierBox" onclick="event.stopPropagation()" style="display:none;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);text-align:left">
+          <img id="gpCarrierImg" alt="载体预览" style="display:none">
+          <div id="gpCarrier" style="display:none">未选</div>
+          <div id="gpCarrierList"></div>
+          <div id="gpCarrierMulti" style="display:none;font-size:12px;color:var(--muted);line-height:1.5;word-break:break-all"></div>
         </div>
       </div>
 
       <input type="file" id="gpSecretFile" accept="*/*" multiple style="display:none" onchange="gpOnSecrets(this)">
       <div class="mmg-drop" id="gpDropSecrets" onclick="document.getElementById('gpSecretFile').click()" style="flex:1 1 0;min-width:0">
         <div class="t"><span class="gpL">② 选里图（可多选）</span><span class="gpS">② 里图</span></div>
-        <div class="s" id="gpSecretTip"><span class="gpL">图片、动图、视频，或任意文件（APK/ZIP 等）；这里不选就沿用「主隐图 · ② 选里图」里已选的</span><span class="gpS">可多选·空则用主隐图</span></div>
+        <div class="s" id="gpSecretTip"><span class="gpL">可多选:图片/视频/音频/压缩包/安装包/文档/任何文件都可尝试；这里不选就沿用「主隐图 · ② 选里图」里已选的</span><span class="gpS">可多选:图片/视频/音频/压缩包/安装包/文档/任何文件都可尝试</span></div>
         <div id="gpSecretList" onclick="event.stopPropagation()" style="text-align:left"></div>
       </div>
       </div>
@@ -744,7 +902,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </style>
 
 <!-- ============ 光棱图制作解密工具（光棱坦克算法，独立前缀 glt_，不与上文冲突） ============ -->
-<!-- ============ 图夹 Pro 兼容工具（独立前缀 tjp_） ============ -->
+<!-- ============ 图夹兼容工具（独立前缀 tjp_） ============ -->
 <details id="lg-app-details" style="margin-top:12px">
   <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">新·救生网格（抗压缩） 开发中<button type="button" class="zzq" data-q="救生网格：画面里撒细点，把里图压成小样藏进画面，平台重新压缩也能捞回来。
 ① 表图：承载画面的图。② 里图：压成 JPEG 小样写进画面。
@@ -805,7 +963,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
       <div id="tjpInnerList" style="margin-top:6px"></div>
       <div class="tjp-opt">
         <div class="tjp-lab">密码（可选）</div>
-        <input id="tjpPwd" type="text" autocomplete="off" placeholder="留空 = 不加密；带密码的成品，图夹 Pro 原版输密码也能解" style="width:100%">
+        <input id="tjpPwd" type="text" autocomplete="off" placeholder="留空 = 不加密；带密码的成品，图夹原版输密码也能解" style="width:100%">
       </div>
       <div style="font-size:12px;color:var(--muted);margin-top:8px">成品格式跟着表图走：表图是 GIF → 出 GIF；其它 → 出 PNG。里图是原字节直塞，不压缩、不转码。<br>解图请到上方「取图」页：图夹成品已自动识别，可批量剥出。</div>
       <button id="tjpGenBtn" class="btn" style="width:100%;margin-top:10px" onclick="tjpGenerate()">生成成品</button>
@@ -842,7 +1000,7 @@ var lgRaw=null, lgRawW=0, lgRawH=0, lgRawName='', lgSec=null;
 var lgFit=null, lgFitBytes=null, lgOutBlob=null, lgOutUrl='';
 
 function lgel(id){ return document.getElementById(id); }
-function lgHint(id,t,c){ var e=lgel(id); if(!e) return; e.textContent=t||''; e.style.color = c==='err' ? 'var(--err, #f85149)' : (c==='ok' ? '#3fb950' : 'var(--muted)'); }
+function lgHint(id,t,c){ var e=lgel(id); if(!e) return; t=zzTag(t,c==='err',id); e.textContent=t||''; e.style.color = c==='err' ? 'var(--err, #f85149)' : (c==='ok' ? '#3fb950' : 'var(--muted)'); }
 function lgPitch(){ var e=lgel('lgDens'); var p=parseInt(e&&e.value,10); return (GP_RC_DENS_LIST.indexOf(p)>=0)?p:14; }
 function lgMbTarget(){ var e=lgel('lgMaxMB'); var v=parseFloat(e&&e.value); return (v>0)? v*1048576 : 0; }
 function lgFmt(n){ return (typeof gpRcSize==='function')? gpRcSize(n) : (n+' B'); }
@@ -1125,8 +1283,8 @@ window.lgSeek = async function(file){
 </style>
 
 <script>
-/* ================== 图夹 Pro 兼容模块（tjp） ==================
-   格式（实测自图夹 Pro 成品）：
+/* ================== 图夹兼容模块（tjp） ==================
+   格式（实测自图夹成品）：
    PNG：IDAT 解压流 = 原像素扫描行 + 载荷；载荷 = u32 文件数(BE) + 每个文件[u32 名长, 名, u64 长度, 原字节]
    GIF：末尾 (0x3B 之前) 插入 Application Extension 0x21FF0B + "STEGDATA V6" + 255 分块[u32 载荷长 + 载荷] + 0x00
    加密：PBKDF2-SHA256(密码, salt "xcn2025", 100000 轮) → AES-256-GCM，封装 = IV(12) + 密文 + tag(16)
@@ -1381,7 +1539,7 @@ window.tjpPaneGo=function(){
   var pe=document.getElementById('tjpPaneEmbed');
   if(pe) pe.classList.add('active');
 };
-function tjpSay(el,msg,err){ var d=document.getElementById(el); if(!d) return; d.textContent=msg||''; d.style.color=err?'#ff7b72':'var(--muted)'; }
+function tjpSay(el,msg,err){ var d=document.getElementById(el); if(!d) return; msg=zzTag(msg,!!err,el); d.textContent=msg||''; d.style.color=err?'#ff7b72':'var(--muted)'; }
 
 window.tjpPick=function(which){
   var inp=document.createElement('input');
@@ -1443,7 +1601,7 @@ window.tjpGenerate=async function(){
     var blob = isGif ? tjpEmbedGif(coverBytes,payload) : await tjpEmbedPng(coverBytes,payload);
     var ext=isGif?'gif':'png';
     var url=URL.createObjectURL(blob);
-    var name='图夹Pro成品_'+Date.now()+'.'+ext;
+    var name='图夹成品_'+Date.now()+'.'+ext;
     document.getElementById('tjpResult').innerHTML=
       '<div style="font-size:12px;color:var(--muted);margin-bottom:6px">成品 '+tjpFmt(blob.size)+' · '+(pwd?'已加密':'未加密')+' · '+ext.toUpperCase()+'</div>'+
       '<img src="'+url+'" style="max-width:100%;border-radius:10px;border:1px solid var(--border)">'+
@@ -1815,7 +1973,7 @@ async function tsmRun(){
   }catch(e){
     btn.disabled=false; btn.textContent='重试转换';
     st.style.color='#ff8a8a';
-    st.textContent='转换失败：'+(e&&e.message||e);
+    st.textContent=zzTag('转换失败：'+(e&&e.message||e),true,'tsm_status');
   }
 }
 (function(){
@@ -1996,7 +2154,7 @@ function mmgSetQuality(mode){
   try{ mmgRenderSecrets(); }catch(e){}
 }
 function mmgPick(t,append){ mmgSt.curPick=t; mmgSt.append=!!append; var f=mmgEl('mmgFile'); f.value=''; f.click(); }
-function mmgHint(id,text,type){ var e=mmgEl(id); e.textContent=text; e.className='mmg-hint'+(type?' '+type:''); }
+function mmgHint(id,text,type){ var e=mmgEl(id); if(!e) return; text=zzTag(text,type==='err',id); e.textContent=text; e.className='mmg-hint'+(type?' '+type:''); }
 /* ---- 错误解释：红字报错下方自动追加"原因 + 怎么避免" ---- */
 function mmgErrExplain(msg){
   msg=(msg||'').toString();
@@ -2201,20 +2359,36 @@ window.mmgSaveSegO=async function(idx,btn){
   if(btn) btn.disabled=true;
   try{ ok=await gpSaveViaHttp(f,nm,mm,btn,true); }catch(e){}
   if(!ok){
-    try{
-      if(!(window.Android&&Android.fileBegin&&Android.fileChunk)) throw new Error('没有原生保存通道');
-      if(!Android.fileBegin(nm,mm)) throw new Error('无法创建文件');
-      var CH=8*1024*1024;
-      for(var off=0;off<f.size;off+=CH){
-        var b64=await gpReadB64(f.slice(off,Math.min(f.size,off+CH)));
-        if(!Android.fileChunk(b64)) throw new Error('写入失败');
-        if(btn) btn.textContent='保存中 '+Math.round(Math.min(f.size,off+CH)*100/f.size)+'%';
+    var hasBridge=!!(window.Android&&Android.fileBegin&&Android.fileChunk);
+    if(hasBridge){
+      try{
+        if(!Android.fileBegin(nm,mm)) throw new Error('无法创建文件');
+        var CH=8*1024*1024;
+        for(var off=0;off<f.size;off+=CH){
+          var b64=await gpReadB64(f.slice(off,Math.min(f.size,off+CH)));
+          if(!Android.fileChunk(b64)) throw new Error('写入失败');
+          if(btn) btn.textContent='保存中 '+Math.round(Math.min(f.size,off+CH)*100/f.size)+'%';
+        }
+        Android.fileEnd(); ok=true;
+        if(btn) btn.textContent='已保存第'+(idx+1)+'段';
+      }catch(e){
+        try{ Android.fileAbort&&Android.fileAbort(); }catch(_){}
+        mmgHint('mmgHint','保存失败：'+e.message,'err');
       }
-      Android.fileEnd(); ok=true;
-      if(btn) btn.textContent='已保存第'+(idx+1)+'段';
-    }catch(e){
-      try{ Android.fileAbort&&Android.fileAbort(); }catch(_){}
-      mmgHint('mmgHint','保存失败：'+e.message,'err');
+    } else {
+      /* 网页版兜底：没有 App 原生通道，就让浏览器直接下载这一段（以前这里直接报「没有原生保存通道」） */
+      try{
+        var durl=URL.createObjectURL(f);
+        var da=document.createElement('a');
+        da.href=durl; da.download=nm; da.rel='noopener';
+        document.body.appendChild(da); da.click(); document.body.removeChild(da);
+        setTimeout(function(){ try{ URL.revokeObjectURL(durl); }catch(_){} }, 300000);
+        ok=true;
+        if(btn) btn.textContent='已触发下载第'+(idx+1)+'段';
+        mmgHint('mmgHint','已触发浏览器下载第 '+(idx+1)+' 段（'+nm+'）；若没出现，就长按下面的成品图选「保存图片/存储到相册」。','ok');
+      }catch(e){
+        mmgHint('mmgHint','保存失败：'+e.message,'err');
+      }
     }
   }
   if(btn) btn.disabled=false;
@@ -2225,7 +2399,7 @@ async function mmgSaveAll(){
   var arr=window._mmgAllUrls||[];
   if(!arr.length){ mmgHint('mmgHint','当前没有已生成的成品。','err'); return; }
   var isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-  var btn=document.querySelector('#mmgSaveAllBtn');
+  var btn=document.querySelector('.mmg-save-all');
   var n=arr.length;
   if(isMobile){ mmgHint('mmgHint','手机浏览器一次只能保存 1 张，开始逐张保存 '+n+' 张…',''); }
   for(var i=0;i<n;i++){
@@ -2718,7 +2892,7 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,async function(cwT,chT){
       window._mmgAllUrls=urls;
       segList.style.display='flex';
       segList.innerHTML='<div class="cap" style="width:100%">视频已分割为 '+segCount+' 段，自动复制表图生成 '+segCount+' 张成品；请把全部成品都选上，到取图页一起剥出即可自动拼接回完整视频。</div>'
-          +'<button type="button" id="mmgSaveAllBtn" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
+          +'<button type="button" class="mmg-save-all mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
       urls.forEach(function(u){
         var card=document.createElement('div'); card.className='box';
         card.style.cssText='flex:1 1 46%;min-width:150px;max-width:240px;box-sizing:border-box';
@@ -3063,7 +3237,7 @@ async function mmgEmbedBundle(){
       window._mmgAllUrls=urls;
       segList.style.display='flex';
       segList.innerHTML='<div class="cap" style="width:100%">'+n+' 个视频已分割为 '+capSegs+' 段，自动复制表图生成 '+capSegs+' 张成品；请把全部成品都选上，到取图页一起剥出即可自动拼接还原全部视频。</div>'
-        +'<button type="button" id="mmgSaveAllBtn" class="mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
+        +'<button type="button" class="mmg-save-all mmg-btn mmg-btn-primary" style="width:100%;padding:10px 0;font-size:14px" onclick="mmgSaveAll()">保存所有成品</button>';
       urls.forEach(u=>{
         const card=document.createElement('div'); card.className='box';
         card.style.cssText='flex:1 1 46%;min-width:150px;max-width:240px;box-sizing:border-box';
@@ -3746,7 +3920,7 @@ function requestRender(){
   if(now-last>=90){ last=now; renderNow(); }
   else { clearTimeout(timer); timer=setTimeout(function(){ last=Date.now(); renderNow(); },90); }
 }
-function setHint(msg,cls){ var h=el('mrgHint'); h.textContent=msg; h.className='mrg-hint'+(cls?(' '+cls):''); }
+function setHint(msg,cls){ var h=el('mrgHint'); msg=zzTag(msg,cls==='err','mrgHint'); h.textContent=msg; h.className='mrg-hint'+(cls?(' '+cls):''); }
 
 /* ---------- 参数联动 ---------- */
 function linkPair(rangeId,inputId,prop){
@@ -3817,6 +3991,8 @@ el('mrgSaveJpg').addEventListener('click',function(){
   </details>
   <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.5px">腾讯频道号 592962059Q</div>
   <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;letter-spacing:.5px">BUG反馈Q群：592941563</div>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;line-height:1.7;letter-spacing:.5px">如遇报错请连同错误代码与运行环境一起截图发往群聊@群主。</div>
+  <div id="zzEnvLine" style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;line-height:1.7;letter-spacing:.3px">运行环境：读取中…</div>
 </div>
 
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
@@ -3881,15 +4057,7 @@ function setMode(m){
   }
   try{ if(window.tipsHide) window.tipsHide(); }catch(e){}
 }
-let quality='slim'; // slim=JPEG省空间, lossless=PNG无损
-function setQuality(q){
-  quality=q;
-  document.getElementById('qSlim').classList.toggle('active',q==='slim');
-  document.getElementById('qLossless').classList.toggle('active',q==='lossless');
-  document.getElementById('qualityNote').textContent = q==='slim'
-    ? 'JPEG：体积小 5～10 倍，表图不用很大；还原图肉眼几乎无差。'
-    : 'PNG：原图逐像素无损，但体积大，需要明显更大的表图。';
-}
+
 
 function pick(t){ currentPickTarget=t; const fi=document.getElementById('fileInput'); fi.value=''; fi.click(); }
 
@@ -3907,9 +4075,7 @@ function loadFileMain(file, target){
   const url=URL.createObjectURL(file);
   const img=new Image();
   img.onload=()=>{
-    if(target==='cover'){ coverImg=img; renderDrop('dropCover',img); updateEmbedBtn(); }
-    else if(target==='secret'){ secretImg=img; renderDrop('dropSecret',img); updateEmbedBtn(); }
-    else if(target==='stego'){
+    if(target==='stego'){
       const item={img, file};
       // 关键：选文件瞬间立即把字节预读进内存，规避安卓 content:// 临时授权在剥出时才失效的问题
       if(file && file.arrayBuffer){
@@ -3924,7 +4090,7 @@ function loadFileMain(file, target){
       setHint('extractHint','已选 '+stegoQueue.length+' 张成品，点「批量剥出原图」','ok');
     }
   };
-  img.onerror=()=>setHint(target==='stego'?'extractHint':'embedHint','这不是有效的图片文件','err');
+  img.onerror=()=>setHint('extractHint','这不是有效的图片文件','err');
   img.src=url;
 }
 document.getElementById('fileInput').addEventListener('change',e=>{
@@ -3985,27 +4151,13 @@ function bindDrop(elId,target){
 }
 bindDrop('dropStego','stego');
 
-function renderDrop(id,img){
-  const el=document.getElementById(id);
-  el.classList.add('has-img');
-  el.innerHTML='<img src="'+img.src+'" alt=""><div class="label">已选：'+img.width+' × '+img.height+'</div>';
-}
+
 function setHint(id,text,type){
   const el=document.getElementById(id);
+  text=zzTag(text,type==='err',id);
   el.textContent=text; el.className='hint'+(type?' '+type:'');
 }
-function updateEmbedBtn(){ document.getElementById('btnEmbed').disabled=!(coverImg&&secretImg); }
-function resetEmbed(){
-  coverImg=null; secretImg=null;
-  [['dropCover','① 选表图','点这里选，或直接把图片拖进来'],
-   ['dropSecret','② 选原图','点这里选，或直接把图片拖进来']].forEach(([id,t,s])=>{
-    const el=document.getElementById(id); el.classList.remove('has-img');
-    el.innerHTML='<div class="label">'+t+'</div><div class="sub">'+s+'</div>';
-  });
-  setHint('embedHint','','');
-  document.getElementById('embedResult').classList.remove('show');
-  updateEmbedBtn();
-}
+
 
 function drawToCanvas(img){
   const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
@@ -4040,94 +4192,9 @@ function bitsToBytes(bits){
 }
 
 /* ============ 藏图 ============ */
-async function doEmbed(){
-  setHint('embedHint','正在处理…','');
-  try{
-    const bpc = 2;
-    const useJpeg = (quality==='slim');
 
-    // 关键：先让表图像素经历一次 PNG 往返，保证写入时用的像素
-    // 和取图时浏览器解码 PNG 后读到的像素一致（消除颜色管理/微差异）
-    const rawCanvas=drawToCanvas(coverImg);
-    const cw=rawCanvas.width, ch=rawCanvas.height;
-    const reloaded = await new Promise(res=>{
-      rawCanvas.toBlob(blob=>{
-        const img=new Image();
-        img.onload=()=>res(img);
-        img.src=URL.createObjectURL(blob);
-      },'image/png');
-    });
-    // 用往返后的图作为写入底图
-    const canvas=drawToCanvas(reloaded);
-    const ctx=canvas.getContext('2d');
-    const data=ctx.getImageData(0,0,cw,ch);
-    const px=data.data;
 
-    const secretBytes=await imgToBytes(secretImg, useJpeg?'jpeg':'png');
 
-    const flags=(bpc===2?1:0)|(useJpeg?2:0);
-    const header=new Uint8Array(HEADER_LEN);
-    header.set(MAGIC,0);
-    header[4]=flags;
-    header[5]=(secretBytes.length>>>24)&0xFF;
-    header[6]=(secretBytes.length>>>16)&0xFF;
-    header[7]=(secretBytes.length>>>8)&0xFF;
-    header[8]=secretBytes.length&0xFF;
-    const payload=new Uint8Array(HEADER_LEN+secretBytes.length);
-    payload.set(header,0); payload.set(secretBytes,HEADER_LEN);
-
-    const channelsPerPixel=3;
-    const capacityBits=cw*ch*channelsPerPixel*bpc;
-    const needBits=payload.length*8;
-    if(needBits>capacityBits){
-      const haveKB=(capacityBits/8/1024).toFixed(0), needKB=(needBits/8/1024).toFixed(0);
-      setHint('embedHint','容量不够：这张表图最多藏 '+haveKB+' KB，原图需要 '+needKB+' KB。换更大的表图，或把原图缩小。','err');
-      return;
-    }
-
-    const bits=bytesToBits(payload,bpc);
-    let bi=0;
-    for(let i=0;i<px.length;i+=4){
-      for(let ch2=0; ch2<3; ch2++){
-        if(bi>=bits.length) break;
-        let low=0;
-        for(let k=0;k<bpc;k++){ if(bi<bits.length) low|=bits[bi++]<<k; }
-        px[i+ch2]=(px[i+ch2]&(0xFF<<bpc))|low;
-      }
-    }
-    ctx.putImageData(data,0,0);
-
-    canvas.toBlob(blob=>{
-      const fr=new FileReader();
-      fr.onload=()=>{
-        const url=fr.result;
-        document.getElementById('embedPreview').src=url;
-        document.getElementById('embedDownload').href=url;
-        document.getElementById('embedResult').classList.add('show');
-        setHint('embedHint','完成！成品 '+cw+'×'+ch+'，长按图片即可保存。','ok');
-      };
-      fr.readAsDataURL(blob);
-    },'image/png');
-  }catch(err){ setHint('embedHint','出错了：'+err.message,'err'); mmgErrAppend('embedHint',err.message); }
-}
-
-/* ============ 显形测试：用刚生成的成品立刻跑一遍还原 ============ */
-function testReveal(){
-  const url=document.getElementById('embedPreview').src;
-  if(!url){ alert('还没有生成成品'); return; }
-  const img=new Image();
-  img.onload=()=>{
-    stegoImg=img;
-    stegoQueue=[{img}];
-    setMode('extract');
-    renderDrop('dropStego', img);
-    document.getElementById('btnExtract').disabled=false;
-    setHint('extractHint','正在测试还原…','');
-    doExtract();
-  };
-  img.onerror=()=>alert('测试失败：成品数据损坏');
-  img.src=url;
-}
 
 /* ============ 取图 ============ */
 async function extractFromBits(collect){
@@ -5150,14 +5217,7 @@ async function extractStreamStgo(buf){
   const collect=makeStreamCollect(raw,W,H,channels);
   return stgoFromPx(collect);
 }
-/* 闪退兜底按键：切换流式省内存模式并自动重新剥出 */
-function toggleLowMem(){
-  window.mmgLowMemStream=true;
-  var b=document.getElementById('btnLowMem');
-  if(b){ b.textContent='已开启老格式流式解码（逐行，较慢）'; }
-  if(stegoQueue&&stegoQueue.length){ setHint('extractHint','已切换老格式流式解码，正在重新剥出…',''); doExtract(); }
-  else { setHint('extractHint','已切换老格式流式解码，请选择老成品图，选完会自动剥出',''); pick('stego'); }
-}
+
 
 function parsePngBytes(buf){
   const b=new Uint8Array(buf);
@@ -5221,12 +5281,12 @@ function inflateZlib(data, expectedLen){
         .arrayBuffer()
         .then(ab=>new Uint8Array(ab))
         .catch(function(e){
-          if(BIG) throw new Error('这张图的数据太大，浏览器原生解压没成功：请改用「App 专用：原生加速批量剥出」，或换小一点的成品');
+          /* 大的也照试纯 JS：设备内存撑得住就一定能解出，撑不住会自行中断，不再直接拒绝 */
           return inflateJS(data, expectedLen);
         });
     }catch(e){ /* 回退纯 JS */ }
   }
-  if(BIG) return Promise.reject(new Error('这张图的数据太大，当前浏览器不支持流式解压：请改用「App 专用：原生加速批量剥出」剥出'));
+  /* 没有原生解压接口也照样试纯 JS：大的只是慢一点，不再直接拒绝 */
   return Promise.resolve(inflateJS(data, expectedLen));
 }
 
@@ -5535,6 +5595,124 @@ function imgToCanvasBytes(img){
 
 /* ===== GIF 直通通道：里图字节写进 GIF 注释块，图像一帧不改 ===== */
 var gpSt={bytes:null,name:''};
+
+/* ===== 图种式：分段多表图 + 单张换表图 ===== */
+var _gpSegCovers=[];
+function gpSegSay(m,type){ try{ setHint('gpHint', m, type||''); }catch(e){} }
+function gpSegCoverMaxBytes(defLen){
+  var m=defLen||0;
+  for(var i=0;i<_gpSegCovers.length;i++){ if(_gpSegCovers[i].bytes.length>m) m=_gpSegCovers[i].bytes.length; }
+  return m;
+}
+function gpSegCoverAt(idx, F){
+  if(_gpSegCovers.length>1) return _gpSegCovers[idx % _gpSegCovers.length];
+  return F;
+}
+
+function gpSegCoversClear(){
+  for(var i=0;i<_gpSegCovers.length;i++){
+    if(_gpSegCovers[i].url){ try{ URL.revokeObjectURL(_gpSegCovers[i].url); }catch(e){} }
+  }
+  _gpSegCovers.length=0;
+  gpCarrierReset();
+}
+function _gpSameBytes(a,b){
+  if(a===b) return true;
+  if(!a||!b||a.length!==b.length) return false;
+  for(var i=0;i<a.length;i+=4096){ if(a[i]!==b[i]) return false; }
+  for(var j=1;j<=64;j++){ if(a[a.length-j]!==b[b.length-j]) return false; }
+  return true;
+}
+async function gpCoverToPng(u8, mime, W, H){
+  var im=await gpImgFromBytes(u8, mime||'image/*');
+  var sw=im.naturalWidth||im.width, sh=im.naturalHeight||im.height;
+  if(!sw||!sh) throw new Error('图片尺寸读不到');
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  var cx=cv.getContext('2d');
+  var s=Math.max(W/sw, H/sh), dw=sw*s, dh=sh*s;
+  cx.drawImage(im, (W-dw)/2, (H-dh)/2, dw, dh);
+  var blob=await new Promise(function(r){ cv.toBlob(r,'image/png'); });
+  if(!blob) throw new Error('转 PNG 失败');
+  return {fmt:'png', ext:'.png', mime:'image/png', bytes:new Uint8Array(await blob.arrayBuffer())};
+}
+
+/* 每段 payload 留在本地，供生成后单张换表图；OPFS 不可用就不留，避免内存翻倍 */
+var _gpPayKeys=[], _gpPaySeq=0;
+async function gpPayDropOld(){
+  if(_gpPayKeys.length){
+    try{
+      var r=await mmgOpfsRoot();
+      for(var i=0;i<_gpPayKeys.length;i++){ try{ await r.removeEntry(_gpPayKeys[i]); }catch(e){} }
+    }catch(e){}
+  }
+  _gpPayKeys=[];
+}
+async function gpPayKeep(u8){
+  /* 换表图已改为直接从成品图里剥出 payload，不再往 OPFS 备份一份：
+     5 张 55MB 的成品要备份 275MB，配额不够就备份失败、换不了表图 */
+  return null;
+}
+async function gpPayRead(h){
+  if(!h) return null;
+  if(h.opfs){ var b=await mmgOpfsRead(h.opfs,0,h.len); return b; }
+  return h.mem||null;
+}
+function gpSwapCover(j){
+  var items=_gpPartUrls||[]; var it=items[j];
+  if(!it){ gpSegSay('还没有分包成品，先生成','err'); return; }
+  if(!it.pay && !it.raw && !it.url){ gpSegSay('这张成品的数据没留在本地，没法单独换表图','err'); return; }
+  window._gpSwapIdx=j;
+  var inp=document.getElementById('gpSwapFile');
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.id='gpSwapFile'; inp.accept='image/*'; inp.style.display='none'; document.body.appendChild(inp); }
+  inp.value=''; inp.onchange=gpSwapCoverChanged; inp.click();
+}
+async function gpSwapCoverChanged(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var j=window._gpSwapIdx||0, items=_gpPartUrls||[], it=items[j];
+  if(!it) return;
+  try{
+    gpSegSay('正在换第 '+(j+1)+' 张的表图…');
+    var base=await gpCarrierOut();
+    if(!base) throw new Error('先选一张载体图（用它的画幅）');
+    var im0=await gpImgFromBytes(base.bytes, base.mime);
+    var W=im0.naturalWidth||im0.width, H=im0.naturalHeight||im0.height;
+    var u8=new Uint8Array(await f.arrayBuffer());
+    var newF=await gpCoverToPng(u8, f.type, W, H);
+    if(gpOutFmt()==='gif'){
+      try{ var __newG=await gpPngBytesToGif(newF.bytes); if(__newG) newF={fmt:'gif', ext:'.gif', mime:'image/gif', bytes:__newG}; }catch(e3){}
+    }
+    var payload=null;
+    try{ payload=await gpPayRead(it.pay); }catch(e0){}
+    if(!payload||!payload.length){
+      try{
+        var srcU8=it.raw||null;
+        if(!srcU8&&it.url){ srcU8=new Uint8Array(await (await fetch(it.url)).arrayBuffer()); }
+        if(srcU8) payload=gpStripPayload(srcU8);
+      }catch(e1){}
+    }
+    if(!payload||!payload.length) throw new Error('这张成品的数据读不回来了');
+    var FC=await gpStampCarrier(newF, it.stamp.label, it.stamp.meta, it.stamp.rcBuf);
+    var res=gpWrap(FC,payload);
+    var chk=null; try{ chk=gpTryGifPass(res); }catch(e2){}
+    if(!chk||(!chk.seg&&!chk.enc)) throw new Error('换表图后校验没通过，已放弃这次修改');
+    if(it.url){ try{ URL.revokeObjectURL(it.url); }catch(_){ } }
+    it.url=URL.createObjectURL(new Blob([res],{type:(FC&&FC.mime)||'image/png'}));
+    it.bytes=res.length;
+    var img=document.getElementById('gpPartImg'+j); if(img) img.src=it.url;
+    var a=document.getElementById('gpPartA'+j);
+    if(a){ a.href=it.url; a.textContent='保存第 '+(j+1)+' 张（'+gpFmt(it.bytes)+'）'; }
+    gpSegSay('第 '+(j+1)+' 张已换成新表图，其余张不变；这张要重新保存','ok');
+  }catch(err){ gpSegSay('换表图失败：'+((err&&err.message)||err),'err'); }
+}
+function gpPartCard(j, items, jobs){
+  var it=items[j], jb=jobs[j];
+  return '<div class="cap" style="font-size:12px;color:var(--muted);margin-top:8px">第 '+(j+1)+' / '+items.length+' 张 · 第 '+((jb.idx||0)+1)+' / '+jb.total+' '+(jb.durMs?'段 · '+gpDurTxt(jb.durMs):'卷 · 原文件 '+gpFmt(jb.origTotal||0))+'</div>'
+   +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'
+   +'<img id="gpPartImg'+j+'" src="'+it.url+'" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex:none;background:var(--card2)">'
+   +'<a id="gpPartA'+j+'" class="btn btn-primary" href="'+it.url+'" download="'+it.name+'" style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;box-sizing:border-box;background:linear-gradient(135deg,#f0bd6e,#c98a3a);color:#22304a;border:0;text-decoration:none">保存第 '+(j+1)+' 张（'+gpFmt(it.bytes)+'）</a>'
+   +'</div>'
+   +'<button type="button" class="btn" onclick="gpSwapCover('+j+')" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);font-size:12px">换表图（只重做这一张）</button>';
+}
 window.__gpNative=false;   /* 默认浏览器式：只在页面预览，不落盘 */
 var gpSecrets=[];            // 本区块自己选的里图 [{file,name,size}]
 var GP_TAG=[0x8C,0xF3,0x2A,0x5E,0x91,0x47];        // 图种标识（二进制魔数，v323 起写入）
@@ -5599,15 +5777,19 @@ function gpSegFileName(s){
 /* 切段并生成多张 GIF；返回 'done' / 'fallback' / 'stop' */
 async function gpBuildSegs(list, mb){
   var hint=document.getElementById('gpHint'), out=document.getElementById('gpOut');
-  function say(t,st){ hint.textContent=t; hint.className='hint'+(st===1||st==='err'?' err':(st==='ok'?' ok':'')); }
+  function say(t,st){ t=zzTag(t,(st===1||st==='err'),'gpHint'); hint.textContent=t; hint.className='hint'+(st===1||st==='err'?' err':(st==='ok'?' ok':'')); }
   if(!window.mzmp4) return 'fallback';
   if(!gpCurPw) gpNewPw();
+  await gpPayDropOld();
   var F=await gpCarrierOut();
   if(!F){ say('载体读取失败，先选一张载体再试',1); return; }
   var cb=F.bytes;
+  var cbMax=gpSegCoverMaxBytes(cb.length);
   var limit=Math.floor(mb*1000000);
-  var space=limit-cb.length-400;
-  if(space<16384){ say('载体本身 '+gpFmt(cb.length)+' 已接近或超过上限，请把上限调大或换小一点的载体',1); return 'stop'; }
+  var space=limit-cbMax-400;
+  if(space<16384){ say('载体本身 '+gpFmt(cbMax)+' 已接近或超过上限，请把上限调大或换小一点的载体',1); return 'stop'; }
+  var im0=await gpImgFromBytes(F.bytes,F.mime);
+  var imW=im0.naturalWidth||im0.width, imH=im0.naturalHeight||im0.height;
   say('正在按关键帧切段…');
   var sources=[], i;
   try{
@@ -5659,10 +5841,19 @@ async function gpBuildSegs(list, mb){
     var payload=await gpEncPayload(plainSeg, gpCurPw);
     var lb=(jobs.length>1?((j+1)+'/'+jobs.length):'');
     if(gpCurPw) lb+=(lb?' · ':'')+gpCurPw;
-    var FC=await gpStampCarrier(F,lb||'', {kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total}, ((gpCurPw||!GP_RC_ON)?null:function(cap){ return gpRsMake([{name:jobs[j].name||'成品', size:jobs[j].origTotal||0, arr:jobs[j].arr, mime:jobs[j].mime}], cap); }));
+    var metaObj={kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total};
+    var rcBuf=null;
+    if(!(gpCurPw||!GP_RC_ON)){ try{ rcBuf=await gpRsMake([{name:jobs[j].name||'成品', size:jobs[j].origTotal||0, arr:jobs[j].arr, mime:jobs[j].mime}], gpRcCap(imW,imH)); }catch(erc){ rcBuf=null; } }
+    var Fcur=gpSegCoverAt(j,F);
+    if(Fcur && gpOutFmt()==='gif' && Fcur.fmt!=='gif'){
+      try{ var __gifC=await gpPngBytesToGif(Fcur.bytes); if(__gifC) Fcur={fmt:'gif', ext:'.gif', mime:'image/gif', bytes:__gifC}; }catch(e0){}
+    }
+    var FC=await gpStampCarrier(Fcur,lb||'', metaObj, rcBuf);
     var res=gpWrap(FC,payload);
-    items.push({url:URL.createObjectURL(new Blob([res],{type:F.mime})),
-                bytes:res.length, raw:res, name:baseName+('00'+(j+1)).slice(-3)+F.ext});
+    var payH=await gpPayKeep(payload);
+    items.push({url:URL.createObjectURL(new Blob([res],{type:(FC&&FC.mime)||F.mime})),
+                bytes:res.length, raw:res, name:baseName+('00'+(j+1)).slice(-3)+((FC&&FC.ext)||F.ext),
+                pay:payH, stamp:{label:(lb||''), meta:metaObj, rcBuf:rcBuf}});
   }
   _gpPartUrls=items;
   var prevEl=document.getElementById('gpPrev'), dlEl=document.getElementById('gpDl');
@@ -5674,8 +5865,7 @@ async function gpBuildSegs(list, mb){
   for(j=0;j<jobs.length;j++) totalDur+=jobs[j].durMs||0;
   var nh='<div style="font-size:12px;color:var(--text);margin:2px 0 6px">共 '+items.length+' 张成品，每张 ≤ '+mb+' MB（含载体）；视频被切成 '+sources.length+' 个文件共 '+jobs.length+' 段，合计 '+gpDurTxt(totalDur)+'</div>';
   for(j=0;j<items.length;j++){
-    nh+='<div class="cap" style="font-size:12px;color:var(--muted);margin-top:8px">第 '+(j+1)+' / '+items.length+' 张 · 第 '+((jobs[j].idx||0)+1)+' / '+jobs[j].total+' '+(jobs[j].durMs?'段 · '+gpDurTxt(jobs[j].durMs):'卷 · 原文件 '+gpFmt(jobs[j].origTotal||0))+'</div>';
-      nh+='<a class="btn btn-primary" href="'+items[j].url+'" download="'+items[j].name+'" style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:6px;background:linear-gradient(135deg,#f0bd6e,#c98a3a);color:#22304a;border:0;text-decoration:none">保存第 '+(j+1)+' 张（'+gpFmt(items[j].bytes)+'）</a>';
+    nh+=gpPartCard(j, items, jobs);
   }
   nh+='<button type="button" class="btn btn-primary" onclick="gpDlAll()" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#f0bd6e,#c98a3a);color:#22304a;border:0;font-weight:700">全部保存（'+items.length+' 张）</button>';
   parts.innerHTML=nh;
@@ -6323,7 +6513,9 @@ async function gpCarrierOut(){
 /* core */ function gpParsePart(){ return GPC.gpParsePart.apply(null,arguments); }
 
 function gpFmt(n){ return n>1000000 ? (n/1000000).toFixed(1)+' MB' : Math.round(n/1000)+' KB'; }
-var GP_BIG_READ = 96*1024*1024;   // 超过这个尺寸的成品不再整份读进内存
+var GP_BIG_READ = 96*1024*1024;   // 超过这个尺寸的成品优先走流式；流式走不通会回退到内存方式尝试
+/* 流式路径遇到「这次不支持」的情况，用这个错误告知调用方改走内存方式，而不是直接让用户失败 */
+function gpFallback(msg){ var e=new Error(msg); e.__fallback=true; return e; }
 var GP_BIG_CHUNK_MIN = 4*1024*1024, GP_BIG_CHUNK_MAX = 16*1024*1024;
 function gpBigSpeedCfg(){
   var p='auto';
@@ -6474,10 +6666,167 @@ function gpTailBytes(u8){
 }
 
 function gpOnCarrier(inp){
-  var f=inp.files&&inp.files[0];
+  var fs=Array.prototype.slice.call(inp.files||[]);
   inp.value='';
-  gpAddCarrier(f);
+  gpAddCarriers(fs);
 }
+function gpCarrierUrl(it){
+  if(!it.url){
+    try{ it.url=URL.createObjectURL(new Blob([it.bytes],{type:'image/png'})); }catch(e){ return ''; }
+  }
+  return it.url;
+}
+function gpRenderCarrierList(){
+  var box=document.getElementById('gpCarrierList');
+  if(!box) return;
+  var n=_gpSegCovers.length;
+  if(!n){ box.innerHTML=''; return; }
+  var html='<div style="display:flex;flex-wrap:wrap;gap:8px;row-gap:10px;padding:2px">';
+  for(var i=0;i<n;i++){
+    var it=_gpSegCovers[i];
+    var badge=(i===0?'基准':('第'+(i+1)+'张'));
+    var nm=it.name||('第'+(i+1)+'张');
+    html+='<div style="position:relative;width:40px" title="'+gpEsc(nm)+' · '+gpFmt(it.bytes.length)+'">'
+      +'<div style="width:38px;height:38px;border-radius:7px;overflow:hidden;border:1px solid var(--border);background:var(--card2)">'
+      +'<img src="'+gpCarrierUrl(it)+'" style="width:100%;height:100%;object-fit:cover;display:block">'
+      +'</div>'
+      +'<div style="position:absolute;top:-5px;right:-2px;width:16px;height:16px;border-radius:50%;'
+      +'background:#e2603f;color:#fff;font-size:11px;line-height:15px;text-align:center;cursor:pointer;'
+      +'box-shadow:0 1px 3px rgba(0,0,0,.4);user-select:none" title="移除" onclick="gpRmCarrier('+i+')">×</div>'
+      +'<div style="font-size:9.5px;color:var(--muted);margin-top:3px;text-align:center;white-space:nowrap">'+gpEsc(badge)+'</div>'
+      +'</div>';
+  }
+  html+='</div>';
+  box.innerHTML=html;
+}
+async function gpSyncCarrierNote(){
+  gpRenderCarrierList();
+  var el=document.getElementById('gpCarrierMulti');
+  if(!el) return;
+  var n=_gpSegCovers.length;
+  if(!n){ el.style.display='none'; el.innerHTML=''; return; }
+  var head='共 '+n+' 张';
+  try{
+    var b=await gpCarrierOut();
+    if(b&&b.bytes){
+      var im=await gpImgFromBytes(b.bytes, b.mime);
+      var W=im.naturalWidth||im.width, H=im.naturalHeight||im.height;
+      if(W&&H) head+=' · '+W+'×'+H;
+    }
+  }catch(e){}
+  el.style.display='block';
+  el.innerHTML=head
+    +(n>1?' · 第1段用第1张，用完从头轮转':' · 全部段都用这张')
+    +' · <span style="cursor:pointer;color:var(--accent)" onclick="gpSegCoversClear()">全部清空</span>';
+}
+function gpMultiNote(){ gpSyncCarrierNote(); }
+function gpCarrierReset(){
+  gpSt.file=null; gpSt.png=null; gpSt.bytes=null; gpSt.name='';
+  var img=document.getElementById('gpCarrierImg'); if(img) img.removeAttribute('src');
+  var txt=document.getElementById('gpCarrier'); if(txt) txt.textContent='未选';
+  var box=document.getElementById('gpCarrierBox'); if(box) box.style.display='none';
+  var tip=document.getElementById('gpCarrierTip'); if(tip) tip.style.display='';
+  gpSyncCarrierNote();
+  gpUpdEst();
+}
+async function gpRmCarrier(i){
+  var it=_gpSegCovers[i];
+  if(!it) return;
+  if(it.url){ try{ URL.revokeObjectURL(it.url); }catch(e){} }
+  _gpSegCovers.splice(i,1);
+  if(!_gpSegCovers.length){ gpCarrierReset(); return; }
+  if(i===0){
+    var b=_gpSegCovers[0];
+    gpSt.png=b.bytes; gpSt.bytes=null; gpSt.name=b.name||''; gpSt.file=null;
+    if(!b.mime){ b.mime='image/png'; b.fmt='png'; b.ext='.png'; }
+    var img=document.getElementById('gpCarrierImg');
+    if(img) img.src=gpCarrierUrl(b);
+    try{
+      var im=await gpImgFromBytes(b.bytes,'image/png');
+      var W=im.naturalWidth||im.width, H=im.naturalHeight||im.height;
+      document.getElementById('gpCarrier').textContent=(b.name||'载体')+' → PNG · '+W+'×'+H+' · '+gpFmt(b.bytes.length);
+    }catch(e){}
+  }
+  await gpSyncCarrierNote();
+  gpUpdEst();
+  gpSegSay('已移除第 '+(i+1)+' 张载体，剩 '+_gpSegCovers.length+' 张','ok');
+}
+function gpWaitCarrierReady(ms){
+  return new Promise(function(res){
+    var t0=Date.now();
+    (async function chk(){
+      var b=null;
+      try{ b=await gpCarrierOut(); }catch(e){}
+      if(b&&b.bytes&&b.bytes.length) return res(true);
+      if(Date.now()-t0>(ms||8000)) return res(false);
+      setTimeout(chk,120);
+    })();
+  });
+}
+/* 一张一张往载体区里加：不覆盖已有的；第一张定画幅，后面的统一到它 */
+async function gpAddCarriers(list){
+  list=Array.prototype.slice.call(list||[]);
+  if(!list.length) return;
+  if(GP_RC_ON){
+    _gpSegCovers.length=0;
+    gpAddCarrier(list[0]);
+    if(list.length>1) gpSegSay('开救生网格时只能放一张载体；这次先用第一张','err');
+    return;
+  }
+  var base=null;
+  try{ base=await gpCarrierOut(); }catch(e){}
+  var hasBase=!!(base&&base.bytes&&base.bytes.length);
+  if(!hasBase){
+    gpAddCarrier(list[0]);
+    var ok=await gpWaitCarrierReady(8000);
+    base=null;
+    try{ base=await gpCarrierOut(); }catch(e){}
+    if(!ok||!base||!base.bytes||!base.bytes.length) return;
+    var __png0=null;
+    try{
+      var __im0=await gpImgFromBytes(base.bytes, base.mime);
+      var __fu8=new Uint8Array(await list[0].arrayBuffer());
+      __png0=await gpCoverToPng(__fu8, list[0].type||'', __im0.naturalWidth||__im0.width, __im0.naturalHeight||__im0.height);
+    }catch(e0){}
+    _gpSegCovers=[__png0
+      ? {name:(list[0]&&list[0].name)||'', bytes:__png0.bytes, fmt:'png', ext:'.png', mime:'image/png'}
+      : {name:(list[0]&&list[0].name)||'', bytes:base.bytes, fmt:(base.fmt||'png'), ext:(base.ext||'.png'), mime:(base.mime||'image/png')}];
+    await gpSyncCarrierNote();
+    list=list.slice(1);
+    if(!list.length) return;
+  }
+  await gpAppendCarriers(list);
+}
+async function gpAppendCarriers(files){
+  files=Array.prototype.slice.call(files||[]);
+  if(!files.length) return;
+  try{
+    var base=await gpCarrierOut();
+    if(!base||!base.bytes) throw new Error('先放一张载体图');
+    var im0=await gpImgFromBytes(base.bytes, base.mime);
+    var W=im0.naturalWidth||im0.width, H=im0.naturalHeight||im0.height;
+    if(!W||!H) throw new Error('载体尺寸读不到');
+    var added=0, skipped=0;
+    for(var i=0;i<files.length;i++){
+      var u8=new Uint8Array(await files[i].arrayBuffer());
+      var png=await gpCoverToPng(u8, files[i].type||'', W, H);
+      var dup=false;
+      for(var k=0;k<_gpSegCovers.length;k++){
+        if(_gpSameBytes(_gpSegCovers[k].bytes, png.bytes)){ dup=true; break; }
+      }
+      if(dup){ skipped++; continue; }
+      png.name=files[i].name||'';
+      _gpSegCovers.push(png); added++;
+    }
+    await gpSyncCarrierNote();
+    gpUpdEst();
+    if(added) gpSegSay('已加上 '+added+' 张载体，现在一共 '+_gpSegCovers.length+' 张，按段轮转','ok');
+    else if(skipped) gpSegSay('这几张和已有的重复，没有重复放进去','ok');
+  }catch(e){
+    gpSegSay('载体没加上：'+((e&&e.message)||e),'err');
+  }
+}
+async function gpSegCoversSet(files){ return gpAppendCarriers(files); }
 function gpAddCarrier(f){
   if(!f) return;
   gpSt.file=f;
@@ -6490,7 +6839,7 @@ function gpAddCarrier(f){
 }
 /* 静态图 → 无损 PNG 载体（成品选 PNG 时使用） */
 async function gpCarrierToPng(f){
-  var note=document.getElementById('gpCarrierNote');
+  var note=null;
   if(note){ note.style.color='var(--muted)'; note.textContent='正在把 '+f.name+' 读成 PNG 载体…'; }
   try{
     var url=URL.createObjectURL(f);
@@ -6615,7 +6964,7 @@ async function gpCarrierAsPng(f, isGifIn){
     var w=im2.naturalWidth, h=im2.naturalHeight;
     document.getElementById('gpCarrierImg').src=u2;
     document.getElementById('gpCarrier').textContent=f.name+' → PNG · '+w+'×'+h+' · '+gpFmt(gpSt.png.length);
-    var note=document.getElementById('gpCarrierNote');
+    var note=null;
     if(note){
       note.style.color='var(--muted)';
       var sec0=0; try{ sec0=gpSecrets.reduce(function(a,b){ return a+b.size; },0); }catch(e0){ sec0=0; }
@@ -6642,14 +6991,7 @@ function gpUseRawGif(f){
       var tail=gpTailBytes(gpSt.bytes);
       document.getElementById('gpCarrier').textContent=
         f.name+' · GIF 原样 · '+(img.naturalWidth||'?')+'×'+(img.naturalHeight||'?')+' · '+gpFmt(gpSt.bytes.length);
-      var note=document.getElementById('gpCarrierNote');
-      if(tail>0){
-        note.style.color='#e5534b';
-        note.textContent='注意：这张载体 trailer 后已带 '+gpFmt(tail)+' 别家数据，成品体积会在这上面叠加';
-      } else {
-        note.style.color='var(--muted)';
-        note.textContent='载体结构干净，可以放心用';
-      }
+      var note=null;
       document.getElementById('gpCarrierBox').style.display='flex';
       var cTip=document.getElementById('gpCarrierTip'); if(cTip) cTip.style.display='none';
       gpRenderSecrets(); gpUpdEst();
@@ -6681,7 +7023,7 @@ function gpJpegRoundtrip(cv, q){
   });
 }
 async function gpConvertToGif(f){
-  var note=document.getElementById('gpCarrierNote');
+  var note=null;
   if(note){ note.style.color='var(--muted)'; note.textContent='正在把 '+f.name+' 转成 GIF 载体…'; }
   var url=URL.createObjectURL(f);
   var img=new Image();
@@ -6707,18 +7049,7 @@ async function gpConvertToGif(f){
       gpSt.bytes=enc.bytes; gpSt.name=f.name;
       document.getElementById('gpCarrierImg').src=URL.createObjectURL(new Blob([enc.bytes],{type:'image/gif'}));
       document.getElementById('gpCarrier').textContent=f.name+' → GIF · '+w+'×'+h+' · '+gpFmt(enc.bytes.length);
-      var nt=document.getElementById('gpCarrierNote');
-      nt.style.color='var(--muted)';
-      var msg=[];
-      msg.push(enc.quantized
-        ? '已转成 GIF（原图颜色超过 256，做了 256 色量化，画面有轻微变化）'
-        : '已转成 GIF（'+enc.colors+' 色以内，逐像素无损）');
-      if(sc<1) msg.push('超过 1920 的边已等比缩到 '+w+'×'+h);
-      if(didJpeg) msg.push('PNG 先压成 JPG 再转 GIF，成品更小');
-      if(/webp|apng/i.test(f.type||'')) msg.push('动图只取第一帧');
-      if(enc.quantized&&document.getElementById('gpRcOn')&&document.getElementById('gpRcOn').checked)
-        msg.push('256 色量化不影响救生网格，取图时仍能读出小样');
-      nt.textContent=msg.join('；');
+      var nt=null;
       document.getElementById('gpCarrierBox').style.display='flex';
       var cTip=document.getElementById('gpCarrierTip'); if(cTip) cTip.style.display='none';
       gpRenderSecrets(); gpUpdEst();
@@ -6995,6 +7326,23 @@ function gpGifEncode(data,w,h){
 /* core */ function gpReadComment(){ return GPC.gpReadComment.apply(null,arguments); }
 
 /* 取图端：整张图是 GIF 且带图种标识注释 → 直接拆出文件列表 */
+/* 从成品图里把当初注入的那段 payload 原样剥出来（换表图用，无需任何本地备份） */
+function gpStripPayload(u8){
+  if(!u8||u8.length<20) return null;
+  var c=(u8[0]===0x89&&u8[1]===0x50&&u8[2]===0x4E&&u8[3]===0x47) ? gpReadPngChunk(u8) : gpReadComment(u8);
+  if(!c) return null;
+  var off=0;
+  if(gpTagAt(c,0,GP_TAG,GP_TAG_OLD)) off=GP_TAG.length;
+  if(off===0) return null;
+  var fpEnd=off;
+  if(c.length>=off+GP_FP_TAG.length+2){
+    var fhit=true, fi;
+    for(fi=0;fi<GP_FP_TAG.length;fi++){ if(c[off+fi]!==GP_FP_TAG[fi]){ fhit=false; break; } }
+    if(fhit){ fpEnd=off+GP_FP_TAG.length+2+(((c[off+5]<<8)|c[off+6]) & 0xFFFF); }
+  }
+  if(fpEnd>c.length) fpEnd=off;
+  return c.subarray(fpEnd);
+}
 function gpTryGifPass(buf){
   var u8=(buf&&buf.byteLength!==undefined&&typeof buf.slice==='function')? (buf instanceof Uint8Array?buf:new Uint8Array(buf)) : null;
   if(!u8||u8.length<20) return null;
@@ -7022,19 +7370,23 @@ function gpTryGifPass(buf){
 /* 按单张成品上限分包：每个文件切成多卷，每张成品装一卷 */
 async function gpBuildParts(list, mb){
   var hint=document.getElementById('gpHint'), out=document.getElementById('gpOut');
-  function say(t,st){ hint.textContent=t; hint.className='hint'+(st===1||st==='err'?' err':(st==='ok'?' ok':'')); }
+  function say(t,st){ t=zzTag(t,(st===1||st==='err'),'gpHint'); hint.textContent=t; hint.className='hint'+(st===1||st==='err'?' err':(st==='ok'?' ok':'')); }
   gpNewPw();
+  await gpPayDropOld();
   var F=await gpCarrierOut();
   if(!F){ say('载体读取失败，先选一张载体再试',1); return; }
   var cb=F.bytes;
+  var cbMax=gpSegCoverMaxBytes(cb.length);
+  var im0=await gpImgFromBytes(F.bytes,F.mime);
+  var imW=im0.naturalWidth||im0.width, imH=im0.naturalHeight||im0.height;
   if(true){
     var segRes=await gpBuildSegs(list, mb);
     if(segRes==='done'||segRes==='stop') return;
   }
   var limit=Math.floor(mb*1000000);
-  var space=limit-cb.length-400;
+  var space=limit-cbMax-400;
   if(space<1024){
-    say('载体本身 '+gpFmt(cb.length)+' 已接近或超过上限，请把上限调大或换小一点的载体',1); return;
+    say('载体本身 '+gpFmt(cbMax)+' 已接近或超过上限，请把上限调大或换小一点的载体',1); return;
   }
   var budget=Math.floor(space/1.006);
   say('正在按 '+mb+' MB 分包…');
@@ -7072,10 +7424,19 @@ async function gpBuildParts(list, mb){
       var payload=await gpEncPayload(plainPart, gpCurPw);
       var lb=(jobs.length>1?((j+1)+'/'+jobs.length):'');
       if(gpCurPw) lb+=(lb?' · ':'')+gpCurPw;
-      var FC=await gpStampCarrier(F,lb||'', {kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total}, ((gpCurPw||!GP_RC_ON)?null:function(cap){ return gpRsMake([{name:jobs[j].name||'成品', size:jobs[j].origTotal||0, arr:jobs[j].arr, mime:jobs[j].mime}], cap); }));
+      var metaObj={kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total};
+      var rcBuf=null;
+      if(!(gpCurPw||!GP_RC_ON)){ try{ rcBuf=await gpRsMake([{name:jobs[j].name||'成品', size:jobs[j].origTotal||0, arr:jobs[j].arr, mime:jobs[j].mime}], gpRcCap(imW,imH)); }catch(erc){ rcBuf=null; } }
+      var Fcur=gpSegCoverAt(j,F);
+    if(Fcur && gpOutFmt()==='gif' && Fcur.fmt!=='gif'){
+      try{ var __gifC=await gpPngBytesToGif(Fcur.bytes); if(__gifC) Fcur={fmt:'gif', ext:'.gif', mime:'image/gif', bytes:__gifC}; }catch(e0){}
+    }
+      var FC=await gpStampCarrier(Fcur,lb||'', metaObj, rcBuf);
       var res=gpWrap(FC,payload);
-      items.push({url:URL.createObjectURL(new Blob([res],{type:F.mime})),
-                  bytes:res.length, raw:res, name:baseName+('00'+(j+1)).slice(-3)+F.ext});
+      var payH=await gpPayKeep(payload);
+      items.push({url:URL.createObjectURL(new Blob([res],{type:(FC&&FC.mime)||F.mime})),
+                  bytes:res.length, raw:res, name:baseName+('00'+(j+1)).slice(-3)+((FC&&FC.ext)||F.ext),
+                  pay:payH, stamp:{label:(lb||''), meta:metaObj, rcBuf:rcBuf}});
     }
     _gpPartUrls=items;
     var prevEl=document.getElementById('gpPrev'), dlEl=document.getElementById('gpDl');
@@ -7085,8 +7446,7 @@ async function gpBuildParts(list, mb){
     parts.style.display='';
     var nh='<div style="font-size:12px;color:var(--text);margin:2px 0 6px">共 '+items.length+' 张成品，每张 ≤ '+mb+' MB（含载体）</div>';
     for(var j=0;j<items.length;j++){
-      nh+='<div class="cap" style="font-size:12px;color:var(--muted);margin-top:8px">第 '+(j+1)+' / '+items.length+' 张 · 第 '+((jobs[j].idx||0)+1)+' / '+jobs[j].total+' '+(jobs[j].durMs?'段 · '+gpDurTxt(jobs[j].durMs):'卷 · 原文件 '+gpFmt(jobs[j].origTotal||0))+'</div>';
-      nh+='<a class="btn btn-primary" href="'+items[j].url+'" download="'+items[j].name+'" style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:6px;background:linear-gradient(135deg,#f0bd6e,#c98a3a);color:#22304a;border:0;text-decoration:none">保存第 '+(j+1)+' 张（'+gpFmt(items[j].bytes)+'）</a>';
+      nh+=gpPartCard(j, items, jobs);
     }
     nh+='<button type="button" class="btn btn-primary" onclick="gpDlAll()" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#f0bd6e,#c98a3a);color:#22304a;border:0;font-weight:700">全部保存（'+items.length+' 张）</button>';
     parts.innerHTML=nh;
@@ -7173,7 +7533,7 @@ async function gpJoinParts(items){
 
 async function gpBuild(){
   var hint=document.getElementById('gpHint'), out=document.getElementById('gpOut');
-  function say(t,st){ hint.textContent=t; hint.className='hint'+(st===1||st==='err'?' err':(st==='ok'?' ok':'')); }
+  function say(t,st){ t=zzTag(t,(st===1||st==='err'),'gpHint'); hint.textContent=t; hint.className='hint'+(st===1||st==='err'?' err':(st==='ok'?' ok':'')); }
   if(!gpSt.bytes && !(gpSt.png&&gpSt.png.length)){ say('先选一张表图当载体',1); return; }
   var list, usedOld=false;
   if(gpSecrets.length){
@@ -7284,7 +7644,7 @@ async function gpBuild(){
       handler(fs);
     });
   }
-  bindGp('gpDropCarrier',function(fs){ gpAddCarrier(fs[0]); });
+  bindGp('gpDropCarrier',function(fs){ gpAddCarriers(fs); });
   bindGp('gpDropSecrets',function(fs){ gpAddSecrets(fs); });
   try{ gpEncToggle(); }catch(e){}
 })();
@@ -7514,7 +7874,7 @@ async function gpBigStreamPngChunk(file,chunkStart,skipBytes,endOffset,sink){
 /* 主入口：返回 {gpSaved:{name,bytes}} 或抛出可读错误 */
 async function gpBigExtract(file,item){
   if(!(window.Android&&Android.fileBegin&&Android.fileChunk&&Android.fileEnd))
-    throw new Error('这个环境不支持分块写盘，请在电脑上解这张大成品');
+    throw gpFallback('这个环境没有分块写盘通道');
   var cap=window.__gpProgCap;
   function note(t){ if(cap) cap.textContent=t; }
   note('读取结构…');
@@ -7571,7 +7931,7 @@ async function gpBigExtract(file,item){
     else { var tmp=await gpBigPeek(file,commentStart,payloadOff+320); ph=tmp.subarray(payloadOff); }
   }
   if(gpTagAt(ph,0,GP_ENC_TAG,GP_ENC_TAG_OLD))
-    throw new Error('这张成品是加密的，App 里无法流式解；请在电脑上输入密码取出');
+    throw gpFallback('这张成品是加密的，流式路径解不了');
 
   var name='', mime='application/octet-stream', fileSkip=payloadOff, kind='raw';
   var isSeg=ph.length>=24&&gpTagAt(ph,0,GP_SEG_TAG,GP_SEG_TAG_OLD);
@@ -7591,7 +7951,7 @@ async function gpBigExtract(file,item){
       bhl=10+2*bn+ntb+4*bn;
       if(ph.length>=10+2*bn+ntb) bname=gpFromUtf8(ph.subarray(10+2*bn,10+2*bn+ntb));
     }
-    if(bn!==1) throw new Error('这张成品里装了 '+bn+' 个文件，App 只能流式写单文件；请到电脑上解，或藏的时候只放一个文件');
+    if(bn!==1) throw gpFallback('这张成品里装了 '+bn+' 个文件，流式路径只能写单文件');
     var lensOff=gpIsNamesMagic(ph)?(10+2*bn+gpNameTableBytes(ph,bn)):10;
     if(ph.length>=bhl+4){
       var blen=((ph[lensOff]<<24)>>>0)+(ph[lensOff+1]<<16)+(ph[lensOff+2]<<8)+ph[lensOff+3];
@@ -7804,8 +8164,17 @@ function extractOne(item){
   // item: {img, file}
   const file=item && item.file;
   if(file && file.size>GP_BIG_READ && window.Android && Android.fileBegin && window.__gpNative===true){
-    return gpBigExtract(file,item);
+    return gpBigExtract(file,item).catch(function(err){
+      if(!err || err.__fallback!==true) throw err;
+      // 流式这次不支持（加密 / 多文件 / 通道异常）：不直接失败，改用内存方式尝试
+      try{ setHint('extractHint','这张成品走流式这次不支持：改用内存方式尝试解出。设备内存足够就能解开；内存不够会中断，可到电脑上解。',''); }catch(_){}
+      return extractOneMem(item);
+    });
   }
+  return extractOneMem(item);
+}
+function extractOneMem(item){
+  const file=item && item.file;
   // 取字节：优先用「选文件瞬间预读进内存」的缓存，避免安卓 content:// 授权过期导致剥出时读不到
   let bytesPromise;
   if(item.bytes){ bytesPromise=Promise.resolve(item.bytes); }
@@ -7842,22 +8211,22 @@ function extractOne(item){
     }catch(eGlt){}
     var gfFiles=gfTryExtract(gfB);
     if(gfFiles&&gfFiles.length) return {isBundle:true, bundleFiles:gfFiles, kind:'GIF 动图·原图'};
-    // 图夹 Pro 兼容成品（PNG 的 IDAT 尾部 / GIF 的 STEGDATA 块）
+    // 图夹兼容成品（PNG 的 IDAT 尾部 / GIF 的 STEGDATA 块）
     if(window.tjpExtractAsync){
       var tjpRes=null;
       try{ tjpRes=await window.tjpExtractAsync(gfB,'',prog); }catch(eT){}
       if(tjpRes&&tjpRes.files&&tjpRes.files.length){
         var tjpFiles=tjpRes.files.map(function(f){ return {bytes:f.bytes, type:mmgSniffType(f.bytes), name:f.name}; });
-        return {isBundle:true, bundleFiles:tjpFiles, kind:'图夹 Pro（'+tjpRes.kind+'）'};
+        return {isBundle:true, bundleFiles:tjpFiles, kind:'图夹（'+tjpRes.kind+'）'};
       }
       if(tjpRes&&tjpRes.needPwd){
-        var tjpPw=(window.prompt('这张成品用图夹 Pro 加密过，请输入密码','')||'').trim();
+        var tjpPw=(window.prompt('这张成品用图夹加密过，请输入密码','')||'').trim();
         if(tjpPw){
           if(prog) prog('用密码解密…',0.5);
           var tjp2=await window.tjpExtractAsync(gfB,tjpPw,prog);
           if(tjp2&&tjp2.files&&tjp2.files.length){
             var tjpFiles2=tjp2.files.map(function(f){ return {bytes:f.bytes, type:mmgSniffType(f.bytes), name:f.name}; });
-            return {isBundle:true, bundleFiles:tjpFiles2, kind:'图夹 Pro（'+tjp2.kind+'）'};
+            return {isBundle:true, bundleFiles:tjpFiles2, kind:'图夹（'+tjp2.kind+'）'};
           }
           throw new Error('密码不对，或这张图被平台压缩过；请用原图重试');
         }
@@ -8286,7 +8655,7 @@ function mmgMoveVideo(btn,dir){
 /* 保存为 JPG：主藏图靠 LSB 存数据，必须无损；故保存当前成品（PNG 内容）命名 .jpg，像素不动、LSB 完好，主取图照常剥出 */
 function mmgSaveJpg(){
   var s=document.getElementById('mmgPreview').src;
-  if(!s||s===''){ var h=document.getElementById('mmgHint'); if(h) h.textContent='请先生成成品'; return; }
+  if(!s||s===''){ var h=document.getElementById('mmgHint'); if(h) h.textContent=zzTag('请先生成成品',true,'mmgHint'); return; }
   var a=document.createElement('a'); a.href=s; a.download='成品.jpg';
   document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); },100);
 }
@@ -8364,11 +8733,11 @@ function hxLoad(blob,onLoad){
     hxShow(hxCurrent,'原图');
     if(onLoad) onLoad();
   };
-  img.onerror=()=>{document.getElementById('hx_status').textContent='图片读取失败';};
+  img.onerror=()=>{document.getElementById('hx_status').textContent=zzTag('图片读取失败',true,'hx_status');};
   img.src=url;
 }
 function hxApply(fn){
-  if(!hxCurrent){document.getElementById('hx_status').textContent='请先选择图片';return;}
+  if(!hxCurrent){document.getElementById('hx_status').textContent=zzTag('请先选择图片',true,'hx_status');return;}
   hxCurrent=fn(hxCurrent,hxCurve,hxW*hxH,hxOffset);
 }
 function hxConfuse(){hxApply(hxConfuseFn);hxShow(hxCurrent,'已混淆');document.getElementById('hx_status').textContent='已混淆（像素打乱）';}
@@ -8502,7 +8871,7 @@ function renderDrop(dropId,img){
   if(label) label.textContent='已选：'+img.width+' × '+img.height;
 }
 function setHint(id,text,type){
-  var h=el(id); h.textContent=text; h.className='glt-hint'+(type?' '+type:'');
+  var h=el(id); text=zzTag(text,type==='err',id); h.textContent=text; h.className='glt-hint'+(type?' '+type:'');
 }
 /* ---------- 藏图（编码）：里图+表图就绪即自动生成；参数变化实时重算 ---------- */
 
@@ -8673,6 +9042,7 @@ function doEncode(){
     innerTh:parseInt(el('gltInnerThR').value,10),
     coverTh:parseInt(el('gltCoverThR').value,10)
   };
+  var _pv0=el('gltEmbedCanvas'); if(_pv0) _pv0.dataset.ready='';
   setHint('gltEmbedHint','正在生成…');
   try{
     var w0=state.innerImg.naturalWidth||state.innerImg.width;
@@ -8703,6 +9073,7 @@ function doEncode(){
     /* 实时预览直接画到结果画布，不做 PNG 编码，拖动阈值不卡 */
     var pv=el('gltEmbedCanvas'); pv.width=W; pv.height=H;
     pv.getContext('2d').putImageData(new ImageData(out,W,H),0,0);
+    pv.dataset.ready='1';
     el('gltEmbedResult').classList.add('show');
     var safe=thumbSafety(pv);
     if(safe.worst<90){
@@ -8737,7 +9108,7 @@ function thumbSafety(canvas){
 function saveGlt(fmt){
   try{
     var pv=el('gltEmbedCanvas');
-    if(!pv.width){ alert('还没有成品，先选好表图和里图。'); return; }
+    if(!pv.dataset.ready){ setHint('gltEmbedHint','光棱图还没有成品，先选好表图和里图','err'); return; }
     var safe=thumbSafety(pv);
     if(safe.worst<90){
       if(!confirm('这张成品在相册缩略图里会显得很黑（按 1/'+safe.w+' 缩略亮度只有 '+Math.round(safe.worst)+'），别人一眼能看出被处理过。\n建议改用「抗缩略·棋盘」采样或把里图阈值调到 48 以上。\n仍要保存吗？')) return;
@@ -8747,7 +9118,7 @@ function saveGlt(fmt){
     if(fmt==='png'){ url=injectPngText(pv.toDataURL('image/png'),'PRSM','0'+toHex(th,2)); }
     else { url=injectJpegPrsm(pv.toDataURL('image/jpeg',0.92),'0'+toHex(th,2)); }
     triggerDownload(url,'成品.'+(fmt==='png'?'png':'jpg'));
-  }catch(err){ alert('保存失败：'+err.message); }
+  }catch(err){ setHint('gltEmbedHint','光棱图保存失败：'+err.message,'err'); }
 }
 el('gltSaveEmbed').addEventListener('click',function(){ saveGlt(el('gltFormat').value); });
 el('gltSaveJpeg').addEventListener('click',function(){ saveGlt('jpeg'); });
@@ -8755,6 +9126,7 @@ el('gltSaveJpeg').addEventListener('click',function(){ saveGlt('jpeg'); });
 /* ---------- 显形测试（一次性编码成品并自动还原验证） ---------- */
 el('gltTestReveal').addEventListener('click',function(){
   try{
+    if(!el('gltEmbedCanvas').dataset.ready){ setHint('gltEmbedHint','光棱图还没有成品，先选好表图和里图','err'); return; }
     var dataURL=el('gltEmbedCanvas').toDataURL('image/png');
     var img=new Image();
     img.onload=function(){
@@ -8765,9 +9137,9 @@ el('gltTestReveal').addEventListener('click',function(){
       gltPendingMeta=null;
       addGltItem(null,img);
     };
-    img.onerror=function(){ alert('测试失败：成品数据损坏'); };
+    img.onerror=function(){ setHint('gltExtractHint','光棱图显形测试失败：成品数据损坏','err'); };
     img.src=dataURL;
-  }catch(err){ alert('显形测试失败：'+err.message); }
+  }catch(err){ setHint('gltExtractHint','光棱图显形测试失败：'+err.message,'err'); }
 });
 
 /* ---------- 参数变化即触发实时重算 ---------- */
