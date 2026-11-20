@@ -1,4 +1,4 @@
-var CACHE = "zzs-pwa-v17";
+var CACHE = "zzs-pwa-v18";
 var PRECACHE = [
   "./",
   "./index.html",
@@ -12,12 +12,11 @@ self.addEventListener("install", function (e) {
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
     return Promise.all(keys.filter(function (k) { return k !== CACHE; })
-      .map(function (k) { return caches.delete(k); }));
+      .map(function (k) { caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
-  // 网络优先：先向服务器请求最新版，离线时才回落缓存
   e.respondWith(
     fetch(e.request).then(function (resp) {
       if (resp && resp.ok) {
