@@ -589,7 +589,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 
 <header>
   <!-- 版本号：每次发版只改下面这个 v404 -->
-  <h1>作战实验室<span class="zz-ver">4.44</span></h1>
+  <h1>作战实验室<span class="zz-ver">4.45</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   <button type="button" class="upd-btn" onclick="updOpen()" title="查看最近几个版本的更新内容"><i></i>更新公告</button>
   </header>
@@ -598,12 +598,17 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   <div class="upd-card">
     <div class="upd-head">
       <div class="upd-kicker">RELEASE NOTES</div>
-      <div class="upd-title">更新公告<span class="upd-pill">4.44</span></div>
+      <div class="upd-title">更新公告<span class="upd-pill">4.45</span></div>
       <button type="button" class="upd-x" onclick="updClose()" aria-label="关闭">×</button>
     </div>
     <div class="upd-body">
       <section class="upd-sec">
-        <div class="upd-ver">4.44<em>本次</em></div>
+        <div class="upd-ver">4.45<em>本次</em></div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>GIF 缩减工具：动图/静态图都能压小，缩完先看体积再保存；多选拖拽粘贴都行；GIF 可缩尺寸、减色、降帧，静态图四档画质；顺带清掉图里藏的附加数据、注释、EXIF，写明清掉多少。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>成品总有一张取不出（载体自带注释块）：生成时剥旧注释、取图按工具标记认块，旧成品免重生成；旧成品当载体残留旧数据会撑爆分段，生成前先剥净；分段预算按每张载体各算并计入音频，超上限缩载体重做，放不下提示该调到多少 MB。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.44</div>
         <div class="upd-line"><span class="upd-tag add">新增</span><span>GIF 表图随视频一起分段（可勾选，默认开）；动图过大时自动缩分辨率；表图是动图时成品格式自动切 GIF。</span></div>
         <div class="upd-line"><span class="upd-tag fix">修复</span><span>动图分段预算计算异常导致成品张数不对。</span></div>
       </section>
@@ -643,7 +648,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 <!-- ============ 藏图 ============ -->
 <div id="paneEmbed" class="pane active">
   <details id="gp-app-details" style="margin-top:12px">
-    <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">新·图种式（直通隐写） 待测试<button type="button" class="zzq" data-q="图种式：把里图原样塞进图片文件里，成品就是一张普通图片。
+    <summary style="cursor:pointer;font-size:14px;color:var(--text);font-weight:600" style="position:relative;padding-right:42px">新·图种式（直通隐写）<button type="button" class="zzq" data-q="图种式：把里图原样塞进图片文件里，成品就是一张普通图片。
 ① 载体图：任意图片，GIF 会保留动画。
 ② 里图：图片/视频/音频/压缩包/安装包/文档/任何文件都可尝试，可多选。
 成品格式 PNG = 无损直通（推荐）；GIF = 兼容更广，部分平台只认 GIF。
@@ -654,7 +659,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
       <div id="gpDropPair" style="display:flex;gap:10px;margin-top:10px;align-items:stretch;flex-wrap:nowrap">
       <div class="mmg-drop" id="gpDropCarrier" onclick="document.getElementById('gpFile').click()" style="flex:1 1 0;min-width:0">
         <div class="t"><span class="gpL">① 选载体图（任意图片）</span><span class="gpS">① 载体图</span></div>
-        <div class="s" id="gpCarrierTip"><span class="gpL">GIF 原样使用（动画保留）；PNG/JPG 按成品格式承载——成品选 PNG 就无损直通，不做 256 色量化；可多选，也能一张一张加，多张按段轮换；填了「单个成品上限」后，勾选下面的「GIF 表图也一起分段」，单张动图就会跟着视频切成同样段数，每张成品用其中一段（默认勾选）</span><span class="gpS">可多选；勾选后单张动图跟着分段</span></div>
+        <div class="s" id="gpCarrierTip"><span class="gpL">可多选GIF/PNG/JPG<br>多选图时视频分段后每一段都用不同图</span><span class="gpS">可多选GIF/PNG/JPG<br>多选图时视频分段后每一段都用不同图</span></div>
         <div id="gpCarrierBox" onclick="event.stopPropagation()" style="display:none;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);text-align:left">
           <img id="gpCarrierImg" alt="载体预览" style="display:none">
           <div id="gpCarrier" style="display:none">未选</div>
@@ -2045,7 +2050,820 @@ TS 原文件不会被改动，转换结果另存为新文件。">?</button></sum
     </div>
   </div>
 </details>
+<details id="gsz-app" style="margin-top:12px">
+  <summary style="position:relative;padding-right:42px">GIF 缩减工具<button type="button" class="zzq" data-q="GIF 缩减：把过大的动图压小，顺带也能缩 PNG / JPG / WebP 静态图；先看预览和体积，满意再保存。
+① 选图：可多选，拖进来、点选、Ctrl+V 都行；GIF 按下面的颜色/帧率调，静态图按「画质」重编码；原文件不会被改动。
+② 尺寸：按百分比缩小分辨率，100% = 不动尺寸。
+③ 颜色：256 = 全彩不量化；128/64/32 会把相近颜色合并，越小越省，渐变会有台阶。
+④ 帧率：100% = 保留全部帧；50% = 隔一帧留一帧，被跳过的帧延时自动累加到保留帧上，总时长不变，动作会变顿。
+⑤ 帧差分：每帧只存「和上一帧不一样的那块矩形」，无损；帧数、延时、总时长都不变，静态背景多的图减得最多。
+⑥ 合并重复帧：完全相同的帧只留一张、延时累加；会减少帧数，拿它当藏视频载体前请先看帧数够不够。
+⑦ 顺带清理：重编码会把图片尾部附加的数据、注释块、EXIF/文本元数据全部丢掉——图种或藏过东西的图，缩完就是一张干净图（有清理时会在结果里写明清掉了多少）。
+每张都从原图重算，不会越缩越糊。">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="gsz_drop" onclick="document.getElementById('gsz_file').click()">
+      <div class="label">选图（GIF / PNG / JPG / WebP，可多选）</div>
+      <div class="sub">点这里选，也可以直接把文件拖进来或 Ctrl+V 粘贴；缩完先看预览和体积，满意再保存</div>
+    </div>
+    <input type="file" id="gsz_file" accept="image/gif,image/png,image/jpeg,image/webp,.gif,.png,.jpg,.jpeg,.webp" multiple hidden onchange="gszPick(this.files)">
+    <div class="hint" id="gsz_status" style="margin-top:8px">尚未选择文件</div>
+    <div id="gsz_opts" style="display:none;margin-top:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">尺寸
+          <select id="gsz_scale" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="1">100%（不动）</option>
+            <option value="0.9">90%</option>
+            <option value="0.8">80%</option>
+            <option value="0.7">70%</option>
+            <option value="0.6">60%</option>
+            <option value="0.5">50%</option>
+            <option value="0.4">40%</option>
+            <option value="0.3">30%</option>
+            <option value="0.2">20%</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">颜色
+          <select id="gsz_colors" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="256">256 色（不量化）</option>
+            <option value="128">128 色</option>
+            <option value="64">64 色</option>
+            <option value="32">32 色</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">帧率
+          <select id="gsz_fps" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="100">100%（全帧）</option>
+            <option value="75">75%</option>
+            <option value="50">50%（隔帧留一）</option>
+            <option value="25">25%</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">画质（静态图用）
+          <select id="gsz_quality" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="1">原画质（100%，基本不压）</option>
+            <option value="0.92">高（92%）</option>
+            <option value="0.8" selected>标准（80%）</option>
+            <option value="0.6">省空间（60%）</option>
+          </select>
+        </label>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;font-size:13px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="gsz_diff" checked>帧差分（无损）</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="gsz_dedupe">合并重复帧</label>
+      </div>
+      <div class="hint" id="gsz_head" style="margin-top:8px"></div>
+    </div>
+    <button class="btn btn-primary" id="gsz_btn" style="width:100%;margin-top:10px;display:none" onclick="gszRun()">开始缩减</button>
+    <div class="result" id="gsz_result" style="display:none">
+      <div id="gsz_list"></div>
+    </div>
+  </div>
+</details>
 <script>
+/* ================== GIF 缩减工具（前缀 gsz_） ================== */
+var gszJobs=[], gszOut=[], gszBusy=false;
+
+function gszFmt(n){
+  if(!n && n!==0) return '-';
+  if(n<1024) return n+' B';
+  if(n<1040000) return (n/1024).toFixed(1)+' KB';
+  return (n/1000000).toFixed(2)+' MB';
+}
+function gszSec(ms){
+  if(!ms) return '0 秒';
+  var s2=ms/1000;
+  if(s2<60) return s2.toFixed(1)+' 秒';
+  var m=Math.floor(s2/60), r2=s2-m*60;
+  return m+' 分 '+r2.toFixed(0)+' 秒';
+}
+function gszPct(a,b){
+  if(!b) return '';
+  var d=(1-a/b)*100;
+  return (d>=0? '减 '+d.toFixed(1)+'%' : '反而大了 '+(-d).toFixed(1)+'%');
+}
+
+/* 最近邻缩放索引帧 */
+function gfResampleIdx(idx,w,h,nw,nh){
+  var out=new Uint8Array(nw*nh), x, y, sy, sx;
+  for(y=0;y<nh;y++){
+    sy=Math.min(h-1, Math.floor(y*h/nh));
+    for(x=0;x<nw;x++){
+      sx=Math.min(w-1, Math.floor(x*w/nw));
+      out[y*nw+x]=idx[sy*w+sx]&255;
+    }
+  }
+  return out;
+}
+
+/* 调色板贪心合并到 target 个颜色；透明索引单独占 0 号位，不参与合并 */
+function gfMergePal(pal, palLen, target, transSet){
+  var list=[], lut=new Int32Array(256), i, j, tk, firstT=-1, tIdx=-1;
+  if(transSet){
+    for(tk in transSet){ if(firstT<0) firstT=parseInt(tk,10); lut[parseInt(tk,10)]=0; }
+  }
+  if(firstT>=0){
+    tIdx=0;
+    list.push({c:[pal[firstT*3]||0,pal[firstT*3+1]||0,pal[firstT*3+2]||0], src:[], lock:true});
+  }
+  for(i=0;i<palLen;i++){
+    if(transSet && transSet[i]) continue;
+    list.push({c:[pal[i*3]||0,pal[i*3+1]||0,pal[i*3+2]||0], src:[i], lock:false});
+  }
+  var budget=target-(tIdx>=0?1:0);
+  if(budget<1) budget=1;
+  var guard=0;
+  while(list.length>budget && guard<600){
+    guard++;
+    var bi=-1, bj=-1, bd=1e18, d, dr, dg, db;
+    for(i=0;i<list.length;i++){
+      if(list[i].lock) continue;
+      for(j=i+1;j<list.length;j++){
+        if(list[j].lock) continue;
+        dr=list[i].c[0]-list[j].c[0]; dg=list[i].c[1]-list[j].c[1]; db=list[i].c[2]-list[j].c[2];
+        d=dr*dr+dg*dg+db*db;
+        if(d<bd){ bd=d; bi=i; bj=j; }
+      }
+    }
+    if(bi<0 || bj<0) break;
+    var mm=[0,0,0], k2;
+    for(k2=0;k2<3;k2++) mm[k2]=Math.round((list[bi].c[k2]+list[bj].c[k2])/2);
+    list[bi].c=mm;
+    list[bi].src=list[bi].src.concat(list[bj].src);
+    list.splice(bj,1);
+  }
+  for(i=0;i<list.length;i++){
+    for(j=0;j<list[i].src.length;j++) lut[list[i].src[j]]=i;
+  }
+  var n=list.length, nb=1;
+  while((1<<nb)<n) nb++;
+  if(nb<2) nb=2;
+  if(nb>8) nb=8;
+  var cap=1<<nb, out=new Uint8Array(cap*3);
+  for(i=0;i<cap;i++){
+    var cc=list[i]? list[i].c : [0,0,0];
+    out[i*3]=cc[0]; out[i*3+1]=cc[1]; out[i*3+2]=cc[2];
+  }
+  return {pal:out, bits:nb, trans:tIdx, used:n, lut:lut};
+}
+
+/* 核心：重建 GIF */
+function gfRebuildGif(u8, opt){
+  window.__gszT={st:'parse',i:-1,t:Date.now()};
+  var g=gfParse(u8);
+  if(!g || !g.frames || !g.frames.length) return {err:'不是能解析的 GIF'};
+  var W=g.w, H=g.h, fr0=g.frames, N=fr0.length, i, j;
+  window.__gszT={st:'parsed',i:-1,N:N,t:Date.now()};
+  var sc=(opt && opt.scale>0 && opt.scale<=1)? opt.scale : 1;
+  var nw=Math.max(1,Math.round(W*sc)), nh=Math.max(1,Math.round(H*sc));
+  var fpsPct=(opt && opt.fps>0 && opt.fps<=100)? opt.fps : 100;
+  var wantC=(opt && opt.colors>=2 && opt.colors<=256)? opt.colors : 256;
+  var doDiff=!!(opt && opt.diff);
+  var doDedupe=!!(opt && opt.dedupe);
+
+  /* 抽帧：按比例保留，跳过的帧延时累加到下一个保留帧，总时长不变 */
+  var picked=[], acc=0, keepF;
+  for(i=0;i<N;i++){
+    acc += (fr0[i].gce? fr0[i].gce.delay : 10);
+    keepF=(Math.floor((i+1)*fpsPct/100) > Math.floor(i*fpsPct/100));
+    if(i===N-1) keepF=true;
+    if(keepF){ picked.push({f:fr0[i], dly:acc}); acc=0; }
+  }
+  if(!picked.length) return {err:'没有可用帧'};
+  if(acc>0) picked[picked.length-1].dly += acc;
+
+  /* 是否统一色表 + 有没有透明 */
+  var localPal=false;
+  for(i=0;i<N;i++){ if(fr0[i].lct){ localPal=true; break; } }
+  var transSet=null, hasT=false, gce0, kt;
+  for(i=0;i<N;i++){
+    gce0=fr0[i].gce;
+    if(gce0 && gce0.transFlag){
+      if(!transSet) transSet={};
+      transSet[gce0.transIdx&255]=1;
+      hasT=true;
+    }
+  }
+
+  var qPal=null, qLut=null, qBits=8, qT=-1, qUsed=0;
+  if(!localPal && g.gct && g.gctLen){
+    var qq=gfMergePal(g.gct, g.gctLen, wantC, hasT? transSet : null);
+    qPal=qq.pal; qLut=qq.lut; qBits=qq.bits; qT=qq.trans; qUsed=qq.used;
+  }
+
+  var outFrames=[], canvas=null, cvW=nw, cvH=nh;
+  var srcDur=0;
+  for(i=0;i<N;i++) srcDur += (fr0[i].gce? fr0[i].gce.delay : 10)*10;
+
+  window.__gszT={st:'frames',i:0,N:picked.length,picked:picked.length,t:Date.now()};
+  for(i=0;i<picked.length;i++){
+    window.__gszT.i=i;
+    var pk=picked[i], fr=pk.f, fw=fr.w||1, fh=fr.h||1;
+    var ow=Math.max(1,Math.round(fw*sc)), oh=Math.max(1,Math.round(fh*sc));
+    var oleft=Math.round((fr.left||0)*sc), otop=Math.round((fr.top||0)*sc);
+    var src=fr.idx;
+    if(!src && fr.i) src=fr.i;
+    if(!src && fr.idxs) src=fr.idxs;
+    if(!src) src=new Uint8Array(fw*fh);
+    if(sc!==1) src=gfResampleIdx(src, fw, fh, ow, oh);
+    var fPal=null, fBits=0, fTrans=-1, idx2, j2;
+
+    if(qPal){
+      idx2=new Uint8Array(ow*oh);
+      for(j2=0;j2<idx2.length;j2++) idx2[j2]=qLut[src[j2]&255]&255;
+      fBits=qBits;
+      fTrans=((fr.gce && fr.gce.transFlag)? qT : -1);
+    } else {
+      var pl=fr.pal, plLen=fr.palLen||256, nb=1;
+      while((1<<nb)<plLen) nb++;
+      if(nb<2) nb=2;
+      if(nb>8) nb=8;
+      var capn=1<<nb, lst=new Uint8Array(capn*3);
+      if(pl) lst.set(pl.subarray(0, Math.min(pl.length, capn*3)));
+      fPal=lst; fBits=nb;
+      fTrans=((fr.gce && fr.gce.transFlag)? (fr.gce.transIdx&255) : -1);
+      idx2=new Uint8Array(ow*oh);
+      idx2.set(src.subarray? src.subarray(0, idx2.length) : src.slice(0, idx2.length));
+      if(localPal && wantC<256 && pl && plLen){
+        var ts2={}, useT=(fTrans>=0);
+        if(useT) ts2[fTrans]=1;
+        var q2=gfMergePal(pl, plLen, wantC, useT? ts2 : null);
+        for(j2=0;j2<idx2.length;j2++) idx2[j2]=q2.lut[idx2[j2]&255]&255;
+        fPal=q2.pal; fBits=q2.bits; fTrans=(useT? q2.trans : -1);
+      }
+    }
+
+    var disp=(fr.gce? (fr.gce.disposal||0) : 0);
+    var full=(oleft===0 && otop===0 && ow===cvW && oh===cvH);
+    var useLeft=oleft, useTop=otop, useW=ow, useH=oh, useIdx=idx2, outDisp=disp, empty=false;
+    var keyArr=null;
+
+    if(doDiff && full && (disp===0 || disp===1)){
+      keyArr=new Int32Array(ow*oh);
+      var kk3, v6, pp3, pl3;
+      for(kk3=0;kk3<keyArr.length;kk3++){
+        v6=idx2[kk3]&255;
+        if(fTrans>=0 && v6===fTrans){ keyArr[kk3]=-1; continue; }
+        if(qPal){ pp3=v6*3; keyArr[kk3]=((qPal[pp3]||0)<<16)|((qPal[pp3+1]||0)<<8)|(qPal[pp3+2]||0); }
+        else { pl3=fr.pal||[]; pp3=v6*3; keyArr[kk3]=((pl3[pp3]||0)<<16)|((pl3[pp3+1]||0)<<8)|(pl3[pp3+2]||0); }
+      }
+      if(!canvas){
+        canvas=new Int32Array(cvW*cvH);
+        for(j2=0;j2<canvas.length;j2++) canvas[j2]=-2;
+      }
+      {
+        var x0=cvW, y0=cvH, x1=-1, y1=-1, xx, yy, cvv;
+        for(yy=0;yy<cvH;yy++){
+          var rowo=yy*cvW;
+          for(xx=0;xx<cvW;xx++){
+            cvv=keyArr[rowo+xx];
+            if(canvas[rowo+xx]!==cvv){
+              if(xx<x0) x0=xx;
+              if(xx>x1) x1=xx;
+              if(yy<y0) y0=yy;
+              if(yy>y1) y1=yy;
+            }
+          }
+        }
+        if(x1<0){
+          if(doDedupe && outFrames.length){
+            outFrames[outFrames.length-1].dly += pk.dly;
+            empty=true;
+          } else {
+            useLeft=0; useTop=0; useW=1; useH=1;
+            useIdx=new Uint8Array([0]);
+            outDisp=1;
+          }
+        } else {
+          var bw=x1-x0+1, bh=y1-y0+1;
+          if(bw*bh < cvW*cvH*0.9){
+            var cr=new Uint8Array(bw*bh), cy, cx, srow, drow;
+            for(cy=0;cy<bh;cy++){
+              srow=(y0+cy)*cvW; drow=cy*bw;
+              for(cx=0;cx<bw;cx++) cr[drow+cx]=idx2[srow+x0+cx];
+            }
+            useLeft=x0; useTop=y0; useW=bw; useH=bh; useIdx=cr; outDisp=1;
+          }
+        }
+      }
+    }
+
+    /* 更新逻辑画布（供下一帧差分）；统一用 16 位色键比较，每帧各自色表也能对上 */
+    if(doDiff){
+      if(full && keyArr && canvas){
+        for(j2=0;j2<canvas.length;j2++) canvas[j2]=keyArr[j2];
+      } else if(!full && canvas){
+        var yy2, xx2, gx, gy, v7, pp4, pl4;
+        for(yy2=0;yy2<oh;yy2++){
+          for(xx2=0;xx2<ow;xx2++){
+            gx=oleft+xx2; gy=otop+yy2;
+            if(gx>=0 && gx<cvW && gy>=0 && gy<cvH){
+              v7=idx2[yy2*ow+xx2]&255;
+              if(fTrans>=0 && v7===fTrans){ canvas[gy*cvW+gx]=-1; continue; }
+              if(qPal){ pp4=v7*3; canvas[gy*cvW+gx]=((qPal[pp4]||0)<<16)|((qPal[pp4+1]||0)<<8)|(qPal[pp4+2]||0); }
+              else { pl4=fr.pal||[]; pp4=v7*3; canvas[gy*cvW+gx]=((pl4[pp4]||0)<<16)|((pl4[pp4+1]||0)<<8)|(pl4[pp4+2]||0); }
+            }
+          }
+        }
+      }
+      if(disp===2 || disp===3) canvas=null;
+    }
+
+    if(empty) continue;
+    outFrames.push({left:useLeft, top:useTop, w:useW, h:useH, idx:useIdx,
+                    dly:pk.dly, disp:outDisp, trans:fTrans, pal:fPal, bits:fBits});
+  }
+
+  /* 编码 */
+  window.__gszT={st:'encode',i:0,N:outFrames.length,t:Date.now()};
+  var parts=[], hd;
+  if(qPal){
+    hd=new Uint8Array(13+qPal.length);
+    hd.set(g.head.subarray(0,13));
+    hd[6]=nw&255; hd[7]=(nw>>8)&255; hd[8]=nh&255; hd[9]=(nh>>8)&255;
+    hd[10]=(0x80 | (((qBits-1)&7)<<4) | ((qBits-1)&7))&255;
+    hd[11]=0; hd[12]=1;
+    hd.set(qPal,13);
+  } else {
+    var gl=g.gct? g.gct : null;
+    hd=new Uint8Array(13+(gl? gl.length : 0));
+    hd.set(g.head.subarray(0,13));
+    hd[6]=nw&255; hd[7]=(nw>>8)&255; hd[8]=nh&255; hd[9]=(nh>>8)&255;
+    if(gl) hd.set(gl,13);
+  }
+  parts.push(hd);
+  for(i=0;i<g.loop.length;i++) parts.push(g.loop[i]);
+
+  var durOut=0;
+  for(i=0;i<outFrames.length;i++){
+    var of=outFrames[i];
+    var dly=of.dly; if(dly<0) dly=0; if(dly>65535) dly=65535;
+    durOut += dly*10;
+    var tf2=(of.trans>=0)? 1 : 0;
+    var dp2=(of.disp===2? 2 : (of.disp===3? 3 : 1));
+    parts.push(new Uint8Array([0x21,0xF9,0x04, ((dp2<<2)|tf2)&255,
+                               dly&255,(dly>>8)&255, (of.trans>=0? of.trans : 0)&255, 0x00]));
+    var hasLCT=!!of.pal;
+    var packed2=(hasLCT? (0x80 | (((of.bits-1)&7))) : 0)&255;
+    parts.push(new Uint8Array([0x2C, of.left&255,(of.left>>8)&255, of.top&255,(of.top>>8)&255,
+                               of.w&255,(of.w>>8)&255, of.h&255,(of.h>>8)&255, packed2]));
+    if(hasLCT) parts.push(of.pal);
+    var minCode=(qPal && !hasLCT)? qBits : (of.bits||8);
+    if(minCode<2) minCode=2;
+    if(minCode>8) minCode=8;
+    parts.push(new Uint8Array([minCode]));
+    var comp=gfLzwEncode(minCode, of.idx), p2;
+    for(p2=0;p2<comp.length;p2+=255){
+      var ln=Math.min(255, comp.length-p2);
+      parts.push(new Uint8Array([ln]));
+      parts.push(comp.subarray(p2, p2+ln));
+    }
+    parts.push(new Uint8Array([0]));
+  }
+  parts.push(new Uint8Array([0x3B]));
+  window.__gszT={st:'concat',t:Date.now()};
+  var bytes=gfConcat(parts);
+  window.__gszT={st:'done',t:Date.now()};
+  return {bytes:bytes, w:nw, h:nh, frames:outFrames.length, srcFrames:N,
+          durMs:durOut, srcDurMs:srcDur, colors:(qPal? qUsed : 0), localPal:localPal};
+}
+
+async function gszPick(files){
+  var raw=[], i;
+  for(i=0;i<files.length;i++) raw.push(files[i]);
+  var st=document.getElementById('gsz_status'), btn=document.getElementById('gsz_btn'),
+      opts=document.getElementById('gsz_opts'), list=document.getElementById('gsz_list'),
+      res=document.getElementById('gsz_result');
+  if(res) res.style.display='none';
+  if(list) list.innerHTML='';
+  gszOut=[]; gszJobs=[];
+  if(!raw.length){ if(st) st.textContent='尚未选择文件'; if(btn) btn.style.display='none'; if(opts) opts.style.display='none'; return; }
+  if(btn) btn.style.display='block';
+  if(st) st.textContent='正在读取 '+raw.length+' 个文件…';
+  var bad=[], okN=0;
+  for(i=0;i<raw.length;i++){
+    var f=raw[i], kind=gszKind(f.name, f.type);
+    if(!kind){ bad.push((f.name||'未命名')+'（不是图片）'); continue; }
+    try{
+      var ab=await f.arrayBuffer();
+      var u8=new Uint8Array(ab);
+      var mime=(f.type||'').toLowerCase();
+      if(!/^image\//.test(mime)) mime=({gif:'image/gif',png:'image/png',jpg:'image/jpeg',webp:'image/webp'})[kind]||'';
+      var ti=gszTailInfo(u8, kind);
+      var jo={file:f, name:f.name||('图片'+(i+1)), size:f.size, kind:kind, mime:mime,
+              u8:u8, tail:ti.tail, meta:ti.meta, cleanLen:ti.cleanLen};
+      if(kind==='gif'){
+        var g=gfParse(u8);
+        if(!g || !g.frames || !g.frames.length){ bad.push(jo.name+'（动图解析失败）'); continue; }
+        var d=0, k;
+        for(k=0;k<g.frames.length;k++) d+=(g.frames[k].gce? g.frames[k].gce.delay : 10);
+        jo.w=g.w; jo.h=g.h; jo.n=g.frames.length; jo.ms=d*10;
+      } else {
+        var dim=await gszDim(u8, jo.mime, jo.cleanLen);
+        if(!dim){ bad.push(jo.name+'（图片解码失败）'); continue; }
+        jo.w=dim.w; jo.h=dim.h; jo.n=0; jo.ms=0;
+      }
+      gszJobs.push(jo);
+      okN++;
+    }catch(e){ bad.push((f.name||'未命名')+'（读取失败）'); }
+  }
+  if(btn) btn.style.display=(okN? 'block':'none');
+  if(opts) opts.style.display=(okN? 'block':'none');
+  if(!okN){
+    if(st) st.textContent='没有可用的图片'+(bad.length? '：'+bad.slice(0,3).join('、') : '');
+    var hd0=document.getElementById('gsz_head'); if(hd0) hd0.textContent='';
+    return;
+  }
+  var lines=[], t=0, stashT=0;
+  for(i=0;i<gszJobs.length;i++){
+    var jo2=gszJobs[i];
+    t+=jo2.size;
+    stashT += (jo2.tail||0)+(jo2.meta||0);
+    lines.push(jo2.name+'（'+(jo2.kind==='gif'? (jo2.w+'×'+jo2.h+'，'+jo2.n+' 帧，'+gszSec(jo2.ms)) : (jo2.w+'×'+jo2.h+' '+gszFmtName(jo2.kind)))+'）');
+  }
+  if(st) st.textContent='已选 '+okN+' 个，共 '+gszFmt(t)+(bad.length? '；跳过 '+bad.length+' 个（'+bad.slice(0,2).join('、')+'）':'');
+  var hd=document.getElementById('gsz_head');
+  if(hd){
+    hd.textContent='原图：'+lines.join('；')+(stashT? ' ｜ 其中含附加/元数据 '+gszFmt(stashT)+'，缩完会清掉' : '');
+  }
+}
+
+async function gszRun(){
+  if(gszBusy) return;
+  var st=document.getElementById('gsz_status'), list=document.getElementById('gsz_list'),
+      res=document.getElementById('gsz_result');
+  if(!gszJobs.length){ if(st) st.textContent='先选图片'; return; }
+  gszBusy=true;
+  var opt={
+    scale: parseFloat(document.getElementById('gsz_scale').value)||1,
+    colors: parseInt(document.getElementById('gsz_colors').value,10)||256,
+    fps: parseInt(document.getElementById('gsz_fps').value,10)||100,
+    diff: !!document.getElementById('gsz_diff').checked,
+    dedupe: !!document.getElementById('gsz_dedupe').checked,
+    quality: parseFloat(document.getElementById('gsz_quality').value)||0.8
+  };
+  for(var z=0;z<gszOut.length;z++){ try{ URL.revokeObjectURL(gszOut[z].url); }catch(e){} }
+  gszOut=[];
+  if(list) list.innerHTML='';
+  if(res) res.style.display='block';
+  var i;
+  for(i=0;i<gszJobs.length;i++){
+    var jo=gszJobs[i];
+    if(st) st.textContent='正在缩减 '+(i+1)+' / '+gszJobs.length+'：'+jo.name+'…';
+    await new Promise(function(r){ setTimeout(r,0); });
+    var dirty=((jo.tail||0)+(jo.meta||0))>0;
+    var baseB=jo.u8;
+    if(dirty){
+      try{ var sb=gszStrip(jo.u8, jo.kind, jo.cleanLen); if(sb && sb.length>0) baseB=sb; }catch(e0){}
+    }
+    var rawOnly=(jo.kind!=='gif' && opt.quality>=1 && opt.scale>=1);
+    var t0=Date.now();
+    var r2=null;
+    try{
+      if(rawOnly) r2={bytes:baseB, w:jo.w, h:jo.h, outType:jo.mime||'image/png', raw:true};
+      else if(jo.kind==='gif') r2=gfRebuildGif(jo.u8, opt);
+      else r2=await gszStill(jo, opt);
+    }
+    catch(ee){ r2={err:'内部错误：'+(ee&&ee.message||ee)}; }
+    var cost=Date.now()-t0;
+    if(!r2 || r2.err){
+      if(list) list.innerHTML += '<div class="box" style="margin-bottom:10px;color:var(--err);font-size:12px">'+jo.name+'：'+(r2? r2.err : '处理失败')+'</div>';
+      continue;
+    }
+    var keptSrc=(r2.bytes.length>=baseB.length) && !(jo.kind!=='gif' && opt.scale<1);
+    var outB=keptSrc? baseB : r2.bytes;
+    var outExt=jo.kind;
+    if(!keptSrc){
+      if(jo.kind==='gif') outExt='gif';
+      else outExt=(r2.outType==='image/webp'? 'webp' : 'jpg');
+    }
+    var outMime= keptSrc? (jo.mime||'image/'+(outExt==='jpg'?'jpeg':outExt))
+                        : (r2.outType || 'image/'+(outExt==='jpg'?'jpeg':outExt));
+    var url=URL.createObjectURL(new Blob([outB], {type:outMime}));
+    gszOut.push({name:jo.name.replace(/\.[^.]+$/,'')+'_缩减.'+outExt, bytes:outB, url:url, meta:r2, src:jo, keptSrc:keptSrc});
+    var k=gszOut.length-1;
+    var dS=(r2.w===jo.w && r2.h===jo.h)? (jo.w+'×'+jo.h+'（不变）') : (jo.w+'×'+jo.h+' → '+r2.w+'×'+r2.h);
+    var dS0=(keptSrc? (jo.w+'×'+jo.h+'（原样）') : dS);
+    var fmtLine='';
+    if(jo.kind==='gif'){
+      var dF=(r2.frames===jo.n)? (r2.frames+'（不变）') : (jo.n+' → '+r2.frames);
+      var dT=(Math.abs(r2.durMs-jo.ms)<20)? (gszSec(jo.ms)+'（不变）') : (gszSec(jo.ms)+' → '+gszSec(r2.durMs));
+      var colInfo=(!keptSrc && r2.colors)? ('，合并到 '+r2.colors+' 色') : '';
+      fmtLine='<div style="color:var(--muted)">帧数：'+dF+' · 总时长：'+dT+'</div>'+
+              '<div style="color:var(--muted)">尺寸：'+dS0+colInfo+'</div>';
+    } else {
+      var fmtTxt;
+      if(keptSrc){ fmtTxt= rawOnly? (gszFmtName(jo.kind)+'（原格式，未重编码）') : gszFmtName(jo.kind); }
+      else if(gszFmtName(jo.kind)===gszFmtName(r2.outType)){ fmtTxt= gszFmtName(jo.kind)+'（无损重绘）'; }
+      else { fmtTxt= gszFmtName(jo.kind)+' → '+gszFmtName(r2.outType); }
+      fmtLine='<div style="color:var(--muted)">格式：'+fmtTxt+' · 尺寸：'+dS0+
+              (keptSrc? '' : (' · 画质 '+Math.round(opt.quality*100)+'%'))+'</div>';
+    }
+    var clr=[];
+    if((jo.tail||0)>0) clr.push('尾部附加数据 '+gszFmt(jo.tail));
+    if((jo.meta||0)>0) clr.push('注释/元数据 '+gszFmt(jo.meta));
+    var clrLine=(clr.length? '<div style="color:var(--muted)">清理：已丢掉 '+clr.join('、')+'</div>' : '');
+    if(list){
+      list.innerHTML +=
+        '<div class="box" style="margin-bottom:12px;font-size:12px;line-height:1.75;word-break:break-all">'+
+        '<div style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:4px">'+jo.name+'</div>'+
+        (keptSrc?
+          ((baseB.length<jo.size)
+            ? ('<div>'+gszFmt(jo.size)+' → <b>'+gszFmt(baseB.length)+'</b>（'+gszPct(baseB.length, jo.size)+'，只清掉藏的数据，画质一点没动）</div>'+
+               '<div style="color:var(--muted)">'+jo.size+' B → '+baseB.length+' B（没有重新编码）</div>'+
+               '<div style="color:var(--warn,#c9a227)">'+(rawOnly? '100% 档不重编码，只把藏进去的数据剥掉了，画质一点没动。想再小：把「画质」降到 92% 或 80%，或把「尺寸」调小（那样会用无损 PNG 重绘）。' : ('这张本来就压不动（重编码会比原图大），所以只做了无损剥离。想真的小：'+(jo.kind==='gif'? '把「颜色」降到 64 或 32，或「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。' : '把「画质」降到 92% 或 60% 再来一次（100% 画质相当于不压缩）；只缩尺寸的话，100% 档位下重编码反而更大，所以不会动尺寸。')))+'</div>')
+            : ('<div>'+gszFmt(jo.size)+' → <b>'+gszFmt(jo.size)+'</b>（没得缩，按原图给你）</div>'+
+               '<div style="color:var(--muted)">'+jo.size+' B（原样）</div>'+
+               '<div style="color:var(--warn,#c9a227)">'+(rawOnly? '100% 档不重编码、不换格式、不动画质，这张又没藏数据，所以体积就是原样。要变小：把「画质」降到 92% 或 80%。' : ('这张图重编码后不比原图小，所以直接沿用原文件。想真的小：'+(jo.kind==='gif'? '把「颜色」降到 64 或 32，或「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。' : '把「画质」降到 92% 或 60% 再来一次（100% 画质相当于不压缩）；只缩尺寸的话，100% 档位下重编码反而更大，所以不会动尺寸。'))) +'</div>'))
+          :
+          ('<div>'+gszFmt(jo.size)+' → <b>'+gszFmt(r2.bytes.length)+'</b>（'+gszPct(r2.bytes.length, jo.size)+'）</div>'+
+           '<div style="color:var(--muted)">'+jo.size+' B → '+r2.bytes.length+' B</div>'+
+           fmtLine))+
+        clrLine+
+        '<div style="color:var(--muted)">耗时 '+cost+' ms'+((jo.kind==='gif' && r2.localPal && opt.colors<256)? '；这张有局部色表，逐帧处理' : '')+'</div>'+
+        '<img src="'+url+'" alt="缩减预览" style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin-top:8px">'+
+        '<button class="btn btn-primary" style="margin-top:8px" onclick="gszSave('+k+')">保存这一张（'+gszFmt(outB.length)+'）</button>'+
+        '</div>';
+    }
+  }
+  if(st) st.textContent='完成：'+gszOut.length+' 张；预览满意再点保存';
+  gszBusy=false;
+}
+
+function gszSave(k){
+  var o=gszOut[k];
+  if(!o) return;
+  var a=document.createElement('a');
+  a.href=o.url;
+  a.download=o.name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ try{ document.body.removeChild(a); }catch(e){} }, 800);
+}
+
+/* 按名字/MIME 判断图片类型 */
+function gszKind(name, type){
+  var t=(type||'').toLowerCase(), n=(name||'').toLowerCase();
+  if(t==='image/gif' || /\.gif$/.test(n)) return 'gif';
+  if(t==='image/png' || /\.png$/.test(n)) return 'png';
+  if(t==='image/jpeg' || /\.jpe?g$/.test(n)) return 'jpg';
+  if(t==='image/webp' || /\.webp$/.test(n)) return 'webp';
+  return '';
+}
+function gszFmtName(t){
+  if(t==='image/webp'||t==='webp') return 'WebP';
+  if(t==='image/jpeg'||t==='jpg') return 'JPG';
+  if(t==='image/png'||t==='png') return 'PNG';
+  if(t==='image/gif'||t==='gif') return 'GIF';
+  return (t||'图片');
+}
+
+/* 统计"藏在图里"的数据：文件尾部附加 + 注释/元数据；顺带给出干净有效长度 */
+function gszTailInfo(u8, kind){
+  var r={tail:0, meta:0, cleanLen:u8 ? u8.length : 0};
+  if(!u8 || !u8.length) return r;
+  var p=0, i, L, q, ip, ty, m;
+  if(kind==='gif'){
+    if(!(u8[0]===0x47 && u8[1]===0x49 && u8[2]===0x46)) return r;
+    p=13;
+    if(u8[10]&0x80) p+=(1<<((u8[10]&7)+1))*3;
+    while(p<u8.length){
+      var b=u8[p];
+      if(b===0x3B){ r.tail=u8.length-(p+1); r.cleanLen=p+1; return r; }
+      if(b===0x21){
+        var lab=u8[p+1];
+        q=p+2;
+        var appName='';
+        if(lab===0xFF && q+11<=u8.length) appName=String.fromCharCode(u8[q],u8[q+1],u8[q+2],u8[q+3],u8[q+4],u8[q+5],u8[q+6],u8[q+7],u8[q+8]);
+        while(q<u8.length){ L=u8[q]; if(L===0){ q++; break; } q+=1+L; }
+        if(lab!==0xF9 && !(lab===0xFF && appName==='NETSCAPE')) r.meta += (q-p);
+        p=q; continue;
+      }
+      if(b===0x2C){
+        q=p+1; ip=u8[q+8]; q+=9;
+        if(ip&0x80) q+=(1<<((ip&7)+1))*3;
+        q+=1;
+        while(q<u8.length){ L=u8[q]; if(L===0){ q++; break; } q+=1+L; }
+        p=q; continue;
+      }
+      p++;
+    }
+    return r;
+  }
+  if(kind==='png'){
+    if(!(u8[0]===0x89 && u8[1]===0x50)) return r;
+    p=8;
+    while(p+8<=u8.length){
+      L=u8[p]*16777216 + (u8[p+1]<<16) + (u8[p+2]<<8) + u8[p+3];
+      ty=String.fromCharCode(u8[p+4],u8[p+5],u8[p+6],u8[p+7]);
+      var end=p+12+L;
+      if(end>u8.length) return r;
+      if(ty==='tEXt'||ty==='zTXt'||ty==='iTXt'||ty==='eXIf') r.meta += (end-p);
+      if(ty==='IEND'){ r.cleanLen=end; r.tail=u8.length-end; return r; }
+      p=end;
+    }
+    return r;
+  }
+  if(kind==='jpg'){
+    if(!(u8[0]===0xFF && u8[1]===0xD8)) return r;
+    p=2;
+    while(p+1<u8.length){
+      if(u8[p]!==0xFF){ p++; continue; }
+      m=u8[p+1];
+      if(m===0xD9){ r.cleanLen=p+2; r.tail=u8.length-(p+2); return r; }
+      if(m===0xDA){
+        q=p+2;
+        while(q+1<u8.length){ if(u8[q]===0xFF && u8[q+1]===0xD9){ r.cleanLen=q+2; r.tail=u8.length-(q+2); return r; } q++; }
+        return r;
+      }
+      if(m===0x01 || (m>=0xD0 && m<=0xD8)){ p+=2; continue; }
+      L=(u8[p+2]<<8) + u8[p+3];
+      if((m>=0xE1 && m<=0xEF) || m===0xFE) r.meta += (2+L);
+      p+=2+L;
+    }
+    return r;
+  }
+  if(kind==='webp'){
+    if(!(u8[0]===0x52 && u8[1]===0x49 && u8[2]===0x46 && u8[3]===0x46)) return r;
+    L=u8[4] + (u8[5]<<8) + (u8[6]<<16) + u8[7]*16777216;
+    r.cleanLen=Math.min(u8.length, 8+L);
+    r.tail=Math.max(0, u8.length-r.cleanLen);
+    return r;
+  }
+  return r;
+}
+
+/* 读静态图尺寸 */
+async function gszDim(u8, mime, cleanLen){
+  try{
+    var blob=new Blob([u8.subarray(0, cleanLen||u8.length)], {type:mime||'image/png'});
+    var bmp=await createImageBitmap(blob);
+    var r={w:bmp.width, h:bmp.height};
+    if(bmp.close) bmp.close();
+    return r;
+  }catch(e){ return null; }
+}
+
+/* canvas 出 blob（老浏览器回退到 toDataURL） */
+function gszCanvasBlob(cv, type, q){
+  return new Promise(function(res){
+    if(cv.toBlob){
+      cv.toBlob(function(b){ res(b||null); }, type, q);
+    } else {
+      try{
+        var d=cv.toDataURL(type,q), s=d.split(',')[1], n=new Uint8Array(s.length);
+        for(var i=0;i<s.length;i++) n[i]=s.charCodeAt(i);
+        res(new Blob([n], {type:type}));
+      }catch(e){ res(null); }
+    }
+  });
+}
+
+/* 静态图重编码：重绘一遍，天然丢掉所有附加数据和元数据 */
+async function gszStill(jo, opt){
+  var sc=(opt && opt.scale>0 && opt.scale<=1)? opt.scale : 1;
+  var q=(opt && opt.quality>0 && opt.quality<=1)? opt.quality : 0.8;
+  var src=jo.u8.subarray(0, jo.cleanLen||jo.u8.length);
+  var blob=new Blob([src], {type:jo.mime||'image/png'});
+  var bmp=null, url=null;
+  try{ bmp=await createImageBitmap(blob); }
+  catch(e1){
+    url=URL.createObjectURL(blob);
+    bmp=await new Promise(function(res,rej){
+      var im=new Image();
+      im.onload=function(){ res(im); };
+      im.onerror=function(){ rej(new Error('这张图片浏览器解不开（可能已损坏）')); };
+      im.src=url;
+    });
+  }
+  var sw=(bmp.width||bmp.naturalWidth||0), sh=(bmp.height||bmp.naturalHeight||0);
+  if(!sw || !sh) throw new Error('读不出图片尺寸');
+  var ow=Math.max(1,Math.round(sw*sc)), oh=Math.max(1,Math.round(sh*sc));
+  var cv=document.createElement('canvas');
+  cv.width=ow; cv.height=oh;
+  var ctx=cv.getContext('2d');
+  ctx.imageSmoothingEnabled=true;
+  try{ ctx.imageSmoothingQuality='high'; }catch(e){}
+  ctx.drawImage(bmp,0,0,ow,oh);
+  if(bmp.close) bmp.close();
+  if(url) URL.revokeObjectURL(url);
+  var px=ctx.getImageData(0,0,ow,oh).data;
+  var hasT=false;
+  for(var i3=3;i3<px.length;i3+=4){ if(px[i3]<250){ hasT=true; break; } }
+  var type= (q>=1)? 'image/png' : (hasT? 'image/webp' : 'image/jpeg');
+  var out=await gszCanvasBlob(cv, type, q);
+  if(!out){
+    type='image/png';
+    out=await gszCanvasBlob(cv, 'image/png', 1);
+  }
+  if(!out) throw new Error('这个浏览器不支持输出图片');
+  var ab=await out.arrayBuffer();
+  return {bytes:new Uint8Array(ab), w:ow, h:oh, outType:type, hasAlpha:hasT, srcW:sw, srcH:sh};
+}
+
+/* 无损剥离：只删尾部附加数据与注释/元数据段，图像数据一字节不动 */
+function gszStrip(u8, kind, cleanLen){
+  var end=(cleanLen>0 && cleanLen<=u8.length)? cleanLen : u8.length;
+  if(kind==='jpg') return gszJpgStrip(u8, end);
+  if(kind==='png') return gszPngStrip(u8, end);
+  if(kind==='gif') return gszGifStrip(u8, end);
+  return u8.subarray(0, end);
+}
+
+function gszJpgStrip(u8, end){
+  if(!(u8[0]===0xFF && u8[1]===0xD8)) return null;
+  var out=[0xFF,0xD8], p=2, i, m, L, segEnd, drop;
+  while(p+1<end){
+    if(u8[p]!==0xFF){ out.push(u8[p]); p++; continue; }
+    m=u8[p+1];
+    if(m===0xDA){
+      for(i=p;i<end;i++) out.push(u8[i]);
+      break;
+    }
+    if(m===0x01 || (m>=0xD0 && m<=0xD8)){ out.push(0xFF,m); p+=2; continue; }
+    if(p+3>=end) break;
+    L=(u8[p+2]<<8) + u8[p+3];
+    segEnd=p+2+L;
+    drop=((m>=0xE1 && m<=0xEF) || m===0xFE);
+    if(!drop){ for(i=p;i<segEnd && i<end;i++) out.push(u8[i]); }
+    p=segEnd;
+  }
+  return new Uint8Array(out);
+}
+
+function gszPngStrip(u8, end){
+  if(!(u8[0]===0x89 && u8[1]===0x50)) return null;
+  var out=[], i, p=8, L, ty, e, drop;
+  for(i=0;i<8;i++) out.push(u8[i]);
+  while(p+8<=end){
+    L=u8[p]*16777216 + (u8[p+1]<<16) + (u8[p+2]<<8) + u8[p+3];
+    ty=String.fromCharCode(u8[p+4],u8[p+5],u8[p+6],u8[p+7]);
+    e=p+12+L;
+    if(e>end) break;
+    drop=(ty==='tEXt'||ty==='zTXt'||ty==='iTXt'||ty==='eXIf');
+    if(!drop){ for(i=p;i<e;i++) out.push(u8[i]); }
+    if(ty==='IEND') break;
+    p=e;
+  }
+  return new Uint8Array(out);
+}
+
+function gszGifStrip(u8, end){
+  if(!(u8[0]===0x47 && u8[1]===0x49 && u8[2]===0x46)) return null;
+  var out=[], i, p=13, L, q, lab, appName, keep;
+  for(i=0;i<13;i++) out.push(u8[i]);
+  if(u8[10]&0x80){
+    var n=(1<<((u8[10]&7)+1))*3;
+    for(i=13;i<13+n && i<end;i++) out.push(u8[i]);
+    p=13+n;
+  }
+  while(p<end){
+    var b=u8[p];
+    if(b===0x3B){ out.push(0x3B); break; }
+    if(b===0x21){
+      lab=u8[p+1]; q=p+2; keep=true; appName='';
+      if(lab===0xFF && q+11<=end) appName=String.fromCharCode(u8[q],u8[q+1],u8[q+2],u8[q+3],u8[q+4],u8[q+5],u8[q+6],u8[q+7],u8[q+8]);
+      if(lab!==0xF9 && !(lab===0xFF && appName==='NETSCAPE')) keep=false;
+      while(q<end){ L=u8[q]; if(L===0){ q++; break; } q+=1+L; }
+      if(keep){ for(i=p;i<q && i<end;i++) out.push(u8[i]); }
+      p=q; continue;
+    }
+    if(b===0x2C){
+      q=p+1;
+      var ip=u8[q+8];
+      q+=9;
+      if(ip&0x80) q+=(1<<((ip&7)+1))*3;
+      q+=1;
+      while(q<end){ L=u8[q]; if(L===0){ q++; break; } q+=1+L; }
+      for(i=p;i<q && i<end;i++) out.push(u8[i]);
+      p=q; continue;
+    }
+    p++;
+  }
+  return new Uint8Array(out);
+}
+
+/* 拖拽 / 粘贴 */
+(function(){
+  var d=document.getElementById('gsz_drop');
+  if(!d) return;
+  d.addEventListener('dragover', function(e){ e.preventDefault(); d.style.borderColor='var(--accent)'; });
+  d.addEventListener('dragleave', function(){ d.style.borderColor=''; });
+  d.addEventListener('drop', function(e){
+    e.preventDefault();
+    d.style.borderColor='';
+    var fs=e.dataTransfer && e.dataTransfer.files;
+    if(fs && fs.length) gszPick(fs);
+  });
+  window.addEventListener('paste', function(e){
+    var app=document.getElementById('gsz-app');
+    if(!app || !app.open) return;
+    var fs=e.clipboardData && e.clipboardData.files;
+    if(!fs || !fs.length) return;
+    var hasImg=false, i;
+    for(i=0;i<fs.length;i++){ if(gszKind(fs[i].name, fs[i].type)) hasImg=true; }
+    if(hasImg){ e.preventDefault(); gszPick(fs); }
+  });
+})();
 /* ================== TS 转 MP4 分支工具（前缀 tsm_） ================== */
 var tsmFile=null, tsmUrl=null;
 function tsmMB(n){ return (n/1048576).toFixed(n>=10485760?0:1)+' MB'; }
@@ -3404,7 +4222,10 @@ function gfLzwEncode(minCode, idx){
   var clear=1<<minCode, eoi=clear+1, codeSize=minCode+1, next=eoi+1;
   var dict=new Map(), buf=0, bitcnt=0, bytes=[], i;
   function flush(){ while(bitcnt>=8){ bytes.push(buf&255); buf>>>=8; bitcnt-=8; } }
-  function emit(code){ buf|=code<<bitcnt; bitcnt+=codeSize; flush(); }
+  function emit(code){
+    buf|=code<<bitcnt; bitcnt+=codeSize; flush();
+    if(next>((1<<codeSize)-1) && codeSize<12) codeSize++;
+  }
   function resetDict(){ dict=new Map(); codeSize=minCode+1; next=eoi+1; }
   resetDict();
   emit(clear);
@@ -3417,7 +4238,6 @@ function gfLzwEncode(minCode, idx){
     emit(prefix);
     if(next<4096){
       dict.set(key,next); next++;
-      if(next-1===(1<<codeSize) && codeSize<12) codeSize++;
     } else {
       emit(clear);
       resetDict();
@@ -3472,13 +4292,13 @@ function gfParse(u8){
         for(var o=0;o<order.length;o++){ var row=order[o]; for(var x=0;x<iw;x++){ flat[row*iw+x]=idx[cur]||0; cur++; } }
         idx=flat;
       }
-      frames.push({left:left,top:top,w:iw,h:ih,idx:idx,pal:pal,palLen:palLen,gce:gce});
+      frames.push({left:left,top:top,w:iw,h:ih,idx:idx,pal:pal,palLen:palLen,gce:gce,lct:!!(ip&0x80)});
       gce=null;
       continue;
     }
     pos++;
   }
-  return {w:w,h:h,head:head,packed:packed,frames:frames,loop:loop};
+  return {w:w,h:h,head:head,packed:packed,frames:frames,loop:loop,gct:gct,gctLen:gctLen};
 }
 
 /* 调色板配对：把 palLen 个颜色合并到 (256>>bpc) 个基色，需要透明时留最后一个做透明位 */
@@ -4172,7 +4992,7 @@ function setMode(m){
   // 下载区只在取图页显示
   document.getElementById('download-area').style.display='';
   // 取图页只保留光棱图、混淆图两个分支，其余工具不跟过来
-  var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details'];
+  var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app'];
   for(var i=0;i<embOnly.length;i++){
     var el=document.getElementById(embOnly[i]);
     if(el) el.style.display=(m==='extract')?'none':'';
@@ -5884,7 +6704,7 @@ var GP_SEG_TAG=[0x8C,0xF3,0x2A,0x5E,0x91,0x49];
 var GP_SEG_TAG_OLD=[0x5A,0x5A,0x53,0x45,0x47,0x31];
 /* core */ /* 核心算法模块（运行时还原） */
 var GPC=(function(){
-  var D='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';
+  var D='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';
   var K='zzsys-core-2026-11';
   var s=atob(D), n=s.length, u=new Uint8Array(n), i=0;
   for(i=0;i<n;i++){ u[i]=(s.charCodeAt(i)^K.charCodeAt(i%K.length))&255; }
@@ -5907,6 +6727,20 @@ function gpSegFileName(s){
   return (s.name||'视频').replace(/\.[^.]+$/,'')+'_段'+('00'+(s.idx+1)).slice(-3)+'.mp4';
 }
 
+/* 载体若本身是旧成品（内含本工具数据块），先剥掉再参与体积/分段计算 */
+function gpCarrierClean(F){
+  try{
+    if(!F||!F.bytes) return F;
+    var b=F.bytes, out=null;
+    if(F.fmt==='png') out=gpStripPngPayload(b);
+    else if(b[0]===0x47&&b[1]===0x49&&b[2]===0x46) out=gpStripComments(b);
+    if(out && out.length && out.length!==b.length){
+      return {fmt:F.fmt, ext:F.ext, mime:F.mime, bytes:out, cleaned:b.length-out.length};
+    }
+  }catch(e){}
+  return F;
+}
+
 /* 切段并生成多张 GIF；返回 'done' / 'fallback' / 'stop' */
 async function gpBuildSegs(list, mb){
   var hint=document.getElementById('gpHint'), out=document.getElementById('gpOut');
@@ -5916,6 +6750,28 @@ async function gpBuildSegs(list, mb){
   await gpPayDropOld();
   var F=await gpCarrierOut();
   if(!F){ say('载体读取失败，先选一张载体再试',1); return; }
+  /* v459：旧成品当载体时先把旧数据剥掉，否则按含数据体积算分段会被撑爆 */
+  var __clnNote=0, __ci2, __cv3, __c4;
+  if(_gpSegCovers.length){
+    for(__ci2=0;__ci2<_gpSegCovers.length;__ci2++){
+      __cv3=_gpSegCovers[__ci2];
+      if(!__cv3||!__cv3.bytes) continue;
+      var __cl1=gpCarrierClean(__cv3);
+      if(__cl1.cleaned){ __cv3.bytes=__cl1.bytes; if(__cv3.orig) __cv3.orig=__cl1.bytes; __clnNote+=__cl1.cleaned; }
+    }
+  }
+  if(gpSt && gpSt.bytes){
+    __c4=gpCarrierClean({fmt:'gif', ext:'.gif', mime:'image/gif', bytes:gpSt.bytes});
+    if(__c4.cleaned){ gpSt.bytes=__c4.bytes; __clnNote+=__c4.cleaned; }
+  }
+  if(gpSt && gpSt.png && gpSt.png.length){
+    __c4=gpCarrierClean({fmt:'png', ext:'.png', mime:'image/png', bytes:gpSt.png});
+    if(__c4.cleaned){ gpSt.png=__c4.bytes; __clnNote+=__c4.cleaned; }
+  }
+  if(__clnNote){
+    try{ F=await gpCarrierOut(); }catch(e9){}
+    if(gpStOrig && gpSt && gpSt.bytes) gpStOrig=gpSt.bytes;
+  }
   var limit=Math.floor(mb*1000000);
   var gifScaled=null, __shNote='';
   /* v456：原始字节记在 orig 上，每次生成都按当前百分比从原图重算，上一轮的缩小不会叠加，
@@ -5975,6 +6831,15 @@ async function gpBuildSegs(list, mb){
   var baseName=((gpSt.name||'成品').replace(/\.(gif|png)$/i,''))+'_seg';
   var reserve=Math.max(180000, Math.floor(space*0.06));
   var budget=Math.max(524288, space-reserve);
+  /* v463：每段按「这一张实际要用的载体」算预算。以前所有段共用最大那张载体的余量，
+     小载体的段会白白少装一两 MB。
+     v464：预留 100 KB = 首帧重写增量（实测约 31 KB）+ 封装/注释块 + VBR 音频估算误差。 */
+  var __segCaps=[], __nCap, __cq, __capLead=100000;
+  __nCap=(_gpSegCovers.length? _gpSegCovers.length : 1);
+  for(__cq=0;__cq<__nCap;__cq++){
+    var __cbq=(_gpSegCovers.length? _gpSegCovers[__cq].bytes.length : cb.length);
+    __segCaps.push(Math.max(524288, Math.floor(limit-__cbq-__capLead)));
+  }
   var jobs=[], maxSeg=0, attempt, v, k, r;
   var calcJobs=function(bd){
     var jl=[], ms=0, vv, kk, rr;
@@ -5990,13 +6855,22 @@ async function gpBuildSegs(list, mb){
     }
     return {jobs:jl, maxSeg:ms};
   };
+  var __bdCur=__segCaps.slice();
   for(attempt=0;attempt<4;attempt++){
-    r=calcJobs(budget);
+    r=calcJobs(__bdCur);
     if(r.err){ say(r.err+'。请换一个标准 MP4/MOV 文件再试',1); return 'stop'; }
     jobs=r.jobs; maxSeg=r.maxSeg;
-    if(cb.length+320+maxSeg<=limit) break;
-    var scale=Math.max(0.35, (limit-cb.length-320)/maxSeg)*0.97;
-    budget=Math.max(393216, Math.floor(budget*scale));
+    var __ovK=-1, __kk2, __cbi2, __limK;
+    for(__kk2=0;__kk2<jobs.length;__kk2++){
+      __cbi2=(_gpSegCovers.length? _gpSegCovers[__kk2 % _gpSegCovers.length].bytes.length : cb.length);
+      if(jobs[__kk2].chunk.length+__cbi2+320>limit){ __ovK=__kk2; break; }
+    }
+    if(__ovK<0) break;
+    __limK=limit-((_gpSegCovers.length? _gpSegCovers[__ovK % _gpSegCovers.length].bytes.length : cb.length))-320;
+    var scale=Math.max(0.35, __limK/Math.max(1,jobs[__ovK].chunk.length))*0.97;
+    var __nb=[], __q2;
+    for(__q2=0;__q2<__bdCur.length;__q2++) __nb.push(Math.max(393216, Math.floor(__bdCur[__q2]*scale)));
+    __bdCur=__nb;
   }
   /* 单张 GIF 载体：视频分段时把载体动图也按帧切成同样段数，每张成品用其中一段。
      段数与每段载体大小互相影响，用二分逼近：预算 ≤ 上限 − 最长动图段 − 320，
@@ -6094,10 +6968,21 @@ async function gpBuildSegs(list, mb){
       }
     }
   }
+  /* v462：单个关键帧区间本身就超过上限时，怎么切都会超，直接给出需要调到多少 MB */
+  if(maxSeg+400>limit){
+    var __needMb=Math.ceil((maxSeg+400+cbMax)/1000000*2)/2;
+    say('这个视频单个关键帧区间就有 '+gpFmt(maxSeg)+'，'+mb+' MB 上限装不下一整段（无损切只能落在关键帧上）；请把上限调到 '+__needMb+' MB 以上，或换一个关键帧更密的视频',1);
+    return 'stop';
+  }
   if(jobs.length>64){
     var totSeg=0;
     for(var i3=0;i3<sources.length;i3++) totSeg+=sources[i3].u8.length;
-    say('按这个上限要切出 '+jobs.length+' 张，最多 64 张；请把上限至少调到 '+gpSuggestMb(totSeg, cb.length, 64, 0)+' MB 再试',1);
+    var needMb=gpSuggestMb(totSeg, cb.length, 64, 0);
+    if(needMb<=mb){
+      say('按这个上限要切出 '+jobs.length+' 张，最多 64 张：载体本身 '+gpFmt(cbMax)+'，在 '+mb+' MB 上限下每张只剩 '+gpFmt(Math.max(0,space))+' 空间。请换小一点的载体（或把上限调到 '+(needMb+1)+' MB 以上）再试',1);
+    }else{
+      say('按这个上限要切出 '+jobs.length+' 张，最多 64 张；请把上限至少调到 '+needMb+' MB 再试',1);
+    }
     return 'stop';
   }
   var items=[];
@@ -6105,7 +6990,7 @@ async function gpBuildSegs(list, mb){
     say('正在生成第 '+(j+1)+' / '+jobs.length+' 张…');
     var plainSeg=gpPackSeg(jobs[j]);
     var payload=await gpEncPayload(plainSeg, gpCurPw);
-    var lb=(jobs.length>1?((j+1)+'/'+jobs.length):'');
+    var lb='';   /* v460：不再在成品右下角画「第N/共M」张数标记 */
     if(gpCurPw) lb+=(lb?' · ':'')+gpCurPw;
     var metaObj={kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total};
     var rcBuf=null;
@@ -6124,10 +7009,21 @@ async function gpBuildSegs(list, mb){
     if(!Fcur || !Fcur.bytes || !Fcur.bytes.length){ say('载体读取失败，先选一张载体再试',1); return 'stop'; }
     var FC=await gpStampCarrier(Fcur,lb||'', metaObj, rcBuf);
     var res=gpWrap(FC,payload);
+    /* v461：首帧会被重写重编码，载体可能涨几十 KB；成品实际字节超上限时把这张的载体缩小重做 */
+    var __ovTry=0;
+    while(res && res.length>limit && __ovTry<2 && Fcur && Fcur.fmt==='gif' && Fcur.bytes && Fcur.bytes.length){
+      __ovTry++;
+      var __gs2=gpGifScale(Fcur.bytes,(__ovTry===1?0.85:0.7));
+      if(!__gs2 || !__gs2.bytes || !__gs2.bytes.length) break;
+      Fcur={fmt:'gif', ext:'.gif', mime:'image/gif', bytes:__gs2.bytes};
+      FC=await gpStampCarrier(Fcur,lb||'', metaObj, rcBuf);
+      res=gpWrap(FC,payload);
+    }
     var payH=await gpPayKeep(payload);
+    var __over=(res && res.length>limit) ? res.length : 0;
     items.push({url:URL.createObjectURL(new Blob([res],{type:(FC&&FC.mime)||F.mime})),
                 bytes:res.length, raw:res, name:baseName+('00'+(j+1)).slice(-3)+((FC&&FC.ext)||F.ext),
-                pay:payH, stamp:{label:(lb||''), meta:metaObj, rcBuf:rcBuf}});
+                pay:payH, over:__over, stamp:{label:(lb||''), meta:metaObj, rcBuf:rcBuf}});
   }
   _gpPartUrls=items;
   var prevEl=document.getElementById('gpPrev'), dlEl=document.getElementById('gpDl');
@@ -6137,7 +7033,10 @@ async function gpBuildSegs(list, mb){
   parts.style.display='';
   var totalDur=0;
   for(j=0;j<jobs.length;j++) totalDur+=jobs[j].durMs||0;
-  var nh='<div style="font-size:12px;color:var(--text);margin:2px 0 6px">共 '+items.length+' 张成品，每张 ≤ '+mb+' MB（含载体）；视频被切成 '+sources.length+' 个文件共 '+jobs.length+' 段，合计 '+gpDurTxt(totalDur)+(gifScaled?('；动图已缩：'+__shNote):'')+(autoGifSegs?('；载体动图也切成了 '+autoGifSegs.length+' 段，每张成品用其中一段，动图各不相同'):'')+(multiGifSegs?multiGifNote:'')+'</div>';
+  var __ovN=0, __ovMax=0;
+  for(j=0;j<items.length;j++){ if(items[j].over){ __ovN++; if(items[j].over>__ovMax) __ovMax=items[j].over; } }
+  var __ovMb=Math.ceil(__ovMax/1000000*2)/2;
+  var nh='<div style="font-size:12px;color:var(--text);margin:2px 0 6px">共 '+items.length+' 张成品，'+(__ovN?('<span style="color:#e0663f">其中 '+__ovN+' 张超过 '+mb+' MB 上限（最大 '+gpFmt(__ovMax)+'），建议把上限调到 '+__ovMb+' MB 以上再重做</span>'):('每张 ≤ '+mb+' MB（含载体）'))+'；视频被切成 '+sources.length+' 个文件共 '+jobs.length+' 段，合计 '+gpDurTxt(totalDur)+(gifScaled?('；动图已缩：'+__shNote):'')+(autoGifSegs?('；载体动图也切成了 '+autoGifSegs.length+' 段，每张成品用其中一段，动图各不相同'):'')+(multiGifSegs?multiGifNote:'')+'</div>';
   for(j=0;j<items.length;j++){
     nh+=gpPartCard(j, items, jobs);
   }
@@ -6146,7 +7045,7 @@ async function gpBuildSegs(list, mb){
   out.style.display='';
   document.getElementById('gpAfter').textContent='还原方法：切到「取图」页，把这几张一起选中——每张单独就能播放那一段；全部选上会自动合成一个完整视频并给保存按钮。';
   var tails2=gpPngAnimNote();
-  say('完成：切成 '+items.length+' 张，每张一段（每段都能单独播放），集齐可无损合成完整视频；缺哪段取图页会直接标出来'
+  say('完成：切成 '+items.length+' 张，每张一段（每段都能单独播放），集齐可无损合成完整视频；缺哪段取图页会直接标出来'+(__ovN?('。⚠ 有 '+__ovN+' 张超过 '+mb+' MB 上限（最大 '+gpFmt(__ovMax)+'），请把上限调到 '+__ovMb+' MB 以上再重做'):'')
       +(autoGifSegs?('。载体动图也按段切成了 '+autoGifSegs.length+' 段，每张成品用的是其中一段'+(autoGifRisk?'（原动图含局部更新帧，个别段可能有残影）':'')):'')+(multiGifSegs?multiGifNote:'')
       +(gifScaled?('。动图太大，已缩：'+__shNote):'')
       +(tails2?('。'+tails2):''),'ok');
@@ -6237,6 +7136,34 @@ function gpFpBytes(){
   /* 成品不再写入任何署名/版本/ID/时间指纹；旧成品里的 ZZFP1 块仍可在读端识别并跳过 */
   return new Uint8Array(0);
 }
+/* 生成成品前剥掉 PNG 里已有的本工具数据块（zzTp）：旧成品当表图不会再摞出第二个块 */
+function gpStripPngPayload(png){
+  if(!(png[0]===0x89&&png[1]===0x50&&png[2]===0x4E&&png[3]===0x47)) return png;
+  var p=8, len, cuts=[], t;
+  while(p+8<=png.length){
+    len=((png[p]<<24)>>>0)+(png[p+1]<<16)+(png[p+2]<<8)+png[p+3];
+    t=png.subarray(p+4,p+8);
+    if(t[0]===0x49&&t[1]===0x45&&t[2]===0x4E&&t[3]===0x44) break;
+    if(t[0]===0x7A&&t[1]===0x7A&&t[2]===0x54&&t[3]===0x70){
+      var e0=p, e1=Math.min(p+12+len, png.length);
+      if(e1>e0) cuts.push([e0,e1]);
+    }
+    p+=12+len;
+  }
+  if(!cuts.length) return png;
+  var drop=0, i;
+  for(i=0;i<cuts.length;i++) drop+=cuts[i][1]-cuts[i][0];
+  if(drop<=0) return png;
+  var out=new Uint8Array(png.length-drop), src=0, dst=0;
+  for(i=0;i<cuts.length;i++){
+    var c0=cuts[i][0], c1=cuts[i][1];
+    if(c0>src){ out.set(png.subarray(src,c0),dst); dst+=c0-src; }
+    src=c1;
+  }
+  if(src<png.length){ out.set(png.subarray(src),dst); }
+  return out;
+}
+
 /* core */ function gpInjectPng(){ return GPC.gpInjectPng.apply(null,arguments); }
 /* core */ function gpReadPngChunk(){ return GPC.gpReadPngChunk.apply(null,arguments); }
 /* 按成品格式封装：GIF 插注释块，PNG 插私有辅助块（只带格式标识，不带署名指纹） */
@@ -7839,6 +8766,53 @@ function gpGifEncode(data,w,h){
 /* 按 GIF 结构遍历，找到真正的 trailer(0x3B) 位置（尾部若已带别家的隐藏数据也不会找错） */
 /* core */ function gpFindTrailer(){ return GPC.gpFindTrailer.apply(null,arguments); }
 
+/* 注释块是否本工具的数据块：新魔数前 4 字节 8C F3 2A 5E（含加密/分包变体），旧成品以 "ZZ" 开头 */
+function gpIsOursCommentHead(u8,off){
+  if(!u8||u8.length<off+2) return false;
+  if(off+4<=u8.length && u8[off]===0x8C && u8[off+1]===0xF3 && u8[off+2]===0x2A && u8[off+3]===0x5E) return true;
+  return u8[off]===0x5A && u8[off+1]===0x5A;
+}
+
+/* 生成成品前剥掉载体自带的注释块：否则成品里会同时存在载体注释和数据块，取图会读错 */
+function gpStripComments(u8){
+  if(!(u8[0]===0x47&&u8[1]===0x49&&u8[2]===0x46&&u8[3]===0x38)) return u8;
+  var packed=u8[10];
+  var base=13+(packed&0x80?3*(1<<((packed&7)+1)):0);
+  var p=base, cuts=[];
+  while(p<u8.length){
+    var b=u8[p];
+    if(b===0x3B) break;
+    if(b===0x21){
+      var lab=u8[p+1], st=p, q=p+2;
+      while(q<u8.length){ var L=u8[q]; q+=1; if(L===0) break; q+=L; }
+      if(q>u8.length) q=u8.length;
+      if(lab===0xFE) cuts.push([st,q]);
+      p=q; continue;
+    }
+    if(b===0x2C){
+      var ip=u8[p+9];
+      var q2=p+10+(ip&0x80?3*(1<<((ip&7)+1)):0);
+      q2+=1;
+      while(q2<u8.length){ var L2=u8[q2]; q2+=1; if(L2===0) break; q2+=L2; }
+      if(q2>u8.length) q2=u8.length;
+      p=q2; continue;
+    }
+    p+=1;
+  }
+  if(!cuts.length) return u8;
+  var drop=0, i;
+  for(i=0;i<cuts.length;i++) drop+=cuts[i][1]-cuts[i][0];
+  if(drop<=0) return u8;
+  var out=new Uint8Array(u8.length-drop), src=0, dst=0;
+  for(i=0;i<cuts.length;i++){
+    var c0=cuts[i][0], c1=cuts[i][1];
+    if(c0>src){ out.set(u8.subarray(src,c0),dst); dst+=c0-src; }
+    src=c1;
+  }
+  if(src<u8.length){ out.set(u8.subarray(src),dst); }
+  return out;
+}
+
 /* 在 GIF 的 trailer(0x3B) 之前插入一个注释扩展块（0x21 0xFE） */
 /* core */ function gpInject(){ return GPC.gpInject.apply(null,arguments); }
 
@@ -7942,7 +8916,7 @@ async function gpBuildParts(list, mb){
       say('正在生成第 '+(j+1)+' / '+jobs.length+' 张…');
       var plainPart=gpPackPart(jobs[j]);
       var payload=await gpEncPayload(plainPart, gpCurPw);
-      var lb=(jobs.length>1?((j+1)+'/'+jobs.length):'');
+      var lb='';   /* v460：分包路径同样不画张数标记 */
       if(gpCurPw) lb+=(lb?' · ':'')+gpCurPw;
       var metaObj={kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total};
       var rcBuf=null;
@@ -8225,7 +9199,12 @@ async function gpBigGifCommentStart(file){
     if(b===0x3B) return -1;
     if(b===0x21){
       var lab=(await c.next(1))[0];
-      if(lab===0xFE) return c.pos;
+      if(lab===0xFE){
+        var hd=await gpBigPeek(file,c.pos,8);
+        if(gpIsOursCommentHead(hd,0)) return c.pos;
+        while(true){ var L0=(await c.next(1))[0]; if(L0===0) break; c.skip(L0); }
+        continue;
+      }
       while(true){ var L=(await c.next(1))[0]; if(L===0) break; c.skip(L); }
       continue;
     }
@@ -10277,23 +11256,40 @@ function mmgDownloadApk(){
     if (!keys.length) return { ok: false, err: '找不到关键帧' };
     if (keys[0] !== 0) keys.unshift(0);
 
-    var budget = Math.max(1024, budgetBytes | 0);
-    var groups = [], idx = 0;
+    /* v464：音频字节必须计入预算。以前只按视频采样累加，但每段封包时音频是额外带进去的，
+       实测每段实际比预算多出 0.3~0.8 MB —— 有的段看着没满，有的段直接顶穿上限。 */
+    var aPerMs = 0, ai4;
+    if (a && a.samples && a.samples.length) {
+      var aTot4 = 0;
+      for (ai4 = 0; ai4 < a.samples.length; ai4++) aTot4 += a.samples[ai4].size;
+      var vMsAll4 = (v.duration / v.timescale) * 1000;
+      if (vMsAll4 > 0) aPerMs = aTot4 / vMsAll4;
+    }
+    var gopMs4 = function (s4, e4) {
+      var d4 = 0, q4;
+      for (q4 = s4; q4 < e4; q4++) { if (vs[q4] && vs[q4].dur) d4 += vs[q4].dur; }
+      return d4 / v.timescale * 1000;
+    };
+    /* v463：budgetBytes 可传数组，第 i 段用 caps[i % len]，让每段按自己那张载体的余量切 */
+    var budgetArr = Array.isArray(budgetBytes) ? budgetBytes : null;
+    var budget = Math.max(1024, (budgetArr ? budgetArr[0] : budgetBytes) | 0);
+    var groups = [], idx = 0, giB = 0;
     while (idx < keys.length) {
+      var bdCur = budgetArr ? Math.max(1024, budgetArr[giB % budgetArr.length] | 0) : budget;
       var start = keys[idx];
       var end = (idx + 1 < keys.length) ? keys[idx + 1] : n;
-      var bytes = 0, k;
+      var bytes = Math.round(gopMs4(start, end) * aPerMs), k;
       for (k = start; k < end; k++) bytes += vs[k].size;
       var j = idx + 1;
       while (j < keys.length) {
         var nxt = (j + 1 < keys.length) ? keys[j + 1] : n;
-        var add = 0;
+        var add = Math.round(gopMs4(keys[j], nxt) * aPerMs);
         for (k = keys[j]; k < nxt; k++) add += vs[k].size;
-        if (bytes + add > budget) break;
+        if (bytes + add > bdCur) break;
         bytes += add; end = nxt; j++;
       }
       groups.push({ s: start, e: end });
-      idx = j;
+      idx = j; giB++;
     }
 
     var vts = v.timescale, segs = [], totalMs = 0;
