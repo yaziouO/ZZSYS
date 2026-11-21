@@ -1,1 +1,1 @@
-{"code":80,"name":"4.44","url":"https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk","note":"新增：GIF 表图随视频一起分段；动图过大自动缩分辨率，画面按自定义百分比缩放；表图是动图时成品自动切 GIF；APP 内新增更新公告按钮\n修复：动图分段预算异常导致成品张数不对；APP 右上检测更新按钮与更新公告按钮重叠"}
+{"code":81,"name":"4.44","url":"https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk","note":"新增：GIF 表图随视频分段；动图过大自动缩分辨率，画面按自定义百分比缩放；表图是动图时成品自动切 GIF；APP 内新增更新公告按钮\n修复：动图分段预算异常导致张数不对；APP 下载更新包后不弹安装器，现改为授权引导、返回自动续装"}
