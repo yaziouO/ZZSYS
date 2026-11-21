@@ -154,11 +154,51 @@
     font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
     font-size:15px;line-height:1.5}
   body{max-width:520px;margin:0 auto;padding:18px 16px 48px}
-  header{padding:8px 0 16px;text-align:center}
+  header{padding:8px 0 16px;text-align:center;position:relative}
   header h1{font-size:20px;font-weight:700;letter-spacing:.5px;position:relative;display:inline-block}
-  header h1 .zz-ver{position:absolute;right:-19px;top:-1px;font-size:5.5px;font-weight:600;letter-spacing:.2px;
-    line-height:1;color:var(--muted);-webkit-text-fill-color:var(--muted);background:none;
-    -webkit-background-clip:border-box;background-clip:border-box;opacity:.22;user-select:none}
+  header h1 .zz-ver{position:absolute;right:-34px;top:-3px;font-size:12px;font-weight:700;letter-spacing:.3px;
+    line-height:1;color:var(--accent);-webkit-text-fill-color:var(--accent);background:none;
+    -webkit-background-clip:border-box;background-clip:border-box;
+    border:0;border-radius:0;padding:0;opacity:1;user-select:none}
+  /* ---- 更新公告按钮与弹窗 ---- */
+  .upd-btn{position:absolute;right:0;top:-3px;display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--border);background:var(--card);color:var(--text);
+    font-family:inherit;font-size:12px;font-weight:600;line-height:1;
+    padding:7px 11px;border-radius:9px;cursor:pointer}
+  .upd-btn:hover{border-color:var(--accent);filter:brightness(1.06)}
+  .upd-btn i{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none;display:block}
+  .upd-mask{position:fixed;inset:0;z-index:10000;background:rgba(6,8,12,.62);display:none;
+    align-items:center;justify-content:center;padding:18px 12px}
+  .upd-mask.on{display:flex}
+  .upd-card{width:100%;max-width:470px;max-height:80vh;display:flex;flex-direction:column;
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    box-shadow:0 18px 48px rgba(0,0,0,.45);overflow:hidden}
+  .upd-head{position:relative;padding:15px 16px 11px;border-bottom:1px solid var(--border);background:var(--card2)}
+  .upd-kicker{font-size:10px;letter-spacing:1.4px;color:var(--muted);font-weight:700}
+  .upd-title{margin-top:5px;font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:9px}
+  .upd-pill{font-size:11px;font-weight:700;color:var(--accent);border:1px solid var(--accent);
+    border-radius:999px;padding:2px 8px}
+  .upd-x{position:absolute;right:9px;top:9px;width:30px;height:30px;border:0;background:transparent;
+    color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+  .upd-x:hover{color:var(--text)}
+  .upd-body{padding:13px 13px 4px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .upd-sec{border-left:3px solid var(--accent);border-radius:10px;background:var(--card2);
+    padding:11px 12px 9px;margin-bottom:10px}
+  .upd-ver{font-size:13.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;margin-bottom:2px}
+  .upd-ver em{font-style:normal;font-size:10px;font-weight:700;color:#1a1408;background:var(--accent);
+    border-radius:999px;padding:2px 7px}
+  .upd-line{display:flex;gap:8px;align-items:flex-start;margin-top:7px;font-size:13px;line-height:1.55;color:var(--text)}
+  .upd-tag{flex:none;font-size:10px;font-weight:700;border-radius:5px;padding:2px 5px;margin-top:2px;
+    border:1px solid currentColor}
+  .upd-tag.add{color:#63c193}
+  .upd-tag.fix{color:#d39450}
+  .upd-foot{padding:9px 16px 13px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--card2)}
+  @media (max-width:480px){
+    header h1{font-size:18px}
+    header h1 .zz-ver{font-size:11px;right:-28px;top:-2px}
+    .upd-btn{position:absolute;right:0;top:-4px;font-size:11px;padding:6px 9px;gap:0}
+    .upd-btn i{display:none}
+  }
   header p{color:var(--muted);font-size:13px;margin-top:4px}
 
   .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;
@@ -403,6 +443,20 @@ details>summary{position:relative}
   /* 未捕获的脚本异常 */
   window.addEventListener('error', function(ev){
     try{
+      var tg=ev&&ev.target;
+      /* 资源加载/解码失败（img/video/audio/script/link）不是脚本异常：
+         没有 message 和文件名，只有个元素，别弹红条吓人，只记一条并就地提示 */
+      if(tg && tg.nodeType===1 && tg!==window &&
+         (tg.tagName==='IMG'||tg.tagName==='VIDEO'||tg.tagName==='AUDIO'||tg.tagName==='SOURCE'||tg.tagName==='SCRIPT'||tg.tagName==='LINK')){
+        var vd=tg.tagName==='SOURCE'?(tg.parentNode||null):tg;
+        try{
+          (window.__zzResErr=window.__zzResErr||[]).push(tg.tagName+' '+
+            String(tg.currentSrc||tg.src||'').slice(0,90));
+          if(window.__zzResErr.length>40) window.__zzResErr.shift();
+        }catch(_){}
+        if(vd&&vd.tagName==='VIDEO'&&typeof gpSegVideoErr==='function'){ try{ gpSegVideoErr(vd); }catch(_){ } }
+        return;
+      }
       var m=(ev&&ev.message)?ev.message:'未知脚本错误';
       var f=(ev&&ev.filename)?String(ev.filename).split('/').pop():'';
       var ln=(ev&&ev.lineno)?ev.lineno:'';
@@ -535,9 +589,51 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 
 <header>
   <!-- 版本号：每次发版只改下面这个 v404 -->
-  <h1>作战实验室<span class="zz-ver">4.40</span></h1>
+  <h1>作战实验室<span class="zz-ver">4.44</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
+  <button type="button" class="upd-btn" onclick="updOpen()" title="查看最近几个版本的更新内容"><i></i>更新公告</button>
   </header>
+
+<div class="upd-mask" id="updMask" onclick="if(event.target===this)updClose()">
+  <div class="upd-card">
+    <div class="upd-head">
+      <div class="upd-kicker">RELEASE NOTES</div>
+      <div class="upd-title">更新公告<span class="upd-pill">4.44</span></div>
+      <button type="button" class="upd-x" onclick="updClose()" aria-label="关闭">×</button>
+    </div>
+    <div class="upd-body">
+      <section class="upd-sec">
+        <div class="upd-ver">4.44<em>本次</em></div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>GIF 表图随视频一起分段（可勾选，默认开）；动图过大时自动缩分辨率；表图是动图时成品格式自动切 GIF。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>动图分段预算计算异常导致成品张数不对。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.40</div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>图种载体图多选轮转、分段成品单张「换表图」；成品 PNG 无损直通 / GIF 保动画；取图内存直取；更新弹窗改暗色卡片。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>分段成品「保存全部」没反应；非图片文件提示含糊；版本号与安装包不一致。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.39</div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>载体图逐张追加与单独移除，多张按段轮换；错误码扩到 143 条，页面底部显示运行环境。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>「保存全部」同名 id 冲突；页面角标与安装包不一致。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.38</div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>光棱图没生成就点保存或显形测试，改为直接报错误码，不再默默存空白画布。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>光棱图未生成时存空白画布；清理 8 处无调用死代码。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.35</div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>取图页与折叠行的问号位置错位，不再飘到按钮区、不再压住折叠行；App 多选多张成品时每张都能原生直读，不再只读第一张。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.33</div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>「TS 转 MP4」独立工具：只换容器不转码，支持图种/分卷剥出的 .ts，分卷合成的也能一键转。</span></div>
+      </section>
+    </div>
+    <div class="upd-foot">网页版刷新即可生效；APP 覆盖安装不丢原有图片与设置。更早的版本说明见 GitHub 提交记录。</div>
+  </div>
+</div>
 
 <div class="tabs">
   <button id="tabEmbed" class="active" onclick="setMode('embed')">藏图</button>
@@ -558,7 +654,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
       <div id="gpDropPair" style="display:flex;gap:10px;margin-top:10px;align-items:stretch;flex-wrap:nowrap">
       <div class="mmg-drop" id="gpDropCarrier" onclick="document.getElementById('gpFile').click()" style="flex:1 1 0;min-width:0">
         <div class="t"><span class="gpL">① 选载体图（任意图片）</span><span class="gpS">① 载体图</span></div>
-        <div class="s" id="gpCarrierTip"><span class="gpL">GIF 原样使用（动画保留）；PNG/JPG 按成品格式承载——成品选 PNG 就无损直通，不做 256 色量化；可多选，也能一张一张加，多张按段轮换</span><span class="gpS">点选或拖入，可多选（多张按段轮换）</span></div>
+        <div class="s" id="gpCarrierTip"><span class="gpL">GIF 原样使用（动画保留）；PNG/JPG 按成品格式承载——成品选 PNG 就无损直通，不做 256 色量化；可多选，也能一张一张加，多张按段轮换；填了「单个成品上限」后，勾选下面的「GIF 表图也一起分段」，单张动图就会跟着视频切成同样段数，每张成品用其中一段（默认勾选）</span><span class="gpS">可多选；勾选后单张动图跟着分段</span></div>
         <div id="gpCarrierBox" onclick="event.stopPropagation()" style="display:none;flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);text-align:left">
           <img id="gpCarrierImg" alt="载体预览" style="display:none">
           <div id="gpCarrier" style="display:none">未选</div>
@@ -587,13 +683,21 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
       <div id="gpEst" style="display:none;font-size:12px;color:var(--muted);margin-top:8px"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--muted);flex:none">单个成品上限</span>
-        <input id="gpMaxMB" type="number" min="0" step="0.5" placeholder="留空不切" onchange="gpRcReloadCarrier()" style="width:110px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:12px">
+        <input id="gpMaxMB" type="number" min="0" step="0.5" placeholder="留空不切" onchange="gpRcReloadCarrier();gpSegGifRowUpd();gpShrinkGifRowUpd()" oninput="gpSegGifRowUpd();gpShrinkGifRowUpd()" style="width:110px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:12px">
         <span style="font-size:12px;color:var(--muted);flex:none">MB</span>
         <button type="button" id="gpLimitBtn" onclick="gpToggleLimit()" style="display:inline-flex;align-items:center;gap:5px;width:auto;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-size:12px;line-height:1.4;cursor:pointer">? 上限说明</button>
       </div>
       <div id="gpLimitBox" style="display:none;font-size:12px;color:var(--muted);line-height:1.7;margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card2)">
         各平台上限说明：频道 30MB，B站 20MB，贴吧 10MB<br>输入数字会自动切为单图不超过该 MB（按 1MB=1000KB 保守算）。<br>留空则整包装一张，成品可能超过平台上限被压坏；视频被分切后取图时全选会自动合成完整视频，单图也可播放。
       </div>
+      <label id="gpSegGifRow" style="display:none;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);cursor:pointer">
+        <input id="gpSegGif" type="checkbox" checked onchange="gpSegGifChanged()" style="width:auto;margin:0;flex:none">
+        <span>GIF 表图也一起分段：每张成品用动图的一段；取消勾选则每张都带整张动图</span>
+      </label>
+      <label id="gpShrinkGifRow" style="display:none;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);cursor:pointer">
+        <input id="gpShrinkGif" type="checkbox" onchange="gpShrinkGifChanged()" style="width:auto;margin:0;flex:none">
+        <span>动图太大时自动缩分辨率：重压 GIF 到上限的 35% 左右（画面变小，但不再挤占视频段数）</span>
+      </label>
       <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--muted);cursor:pointer">
         <input id="gpEncOn" type="checkbox" onchange="gpEncToggle()" style="width:auto;margin:0;flex:none">
         <span>加密：密码印在成品右下角，取图时要输入</span>
@@ -4041,6 +4145,19 @@ let currentPickTarget=null;
   }
 })();
 
+function updOpen(){
+  var m=document.getElementById('updMask'); if(!m) return;
+  m.classList.add('on'); try{ document.body.style.overflow='hidden'; }catch(e){}
+}
+function updClose(){
+  var m=document.getElementById('updMask'); if(!m) return;
+  m.classList.remove('on'); try{ document.body.style.overflow=''; }catch(e){}
+}
+try{
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' || e.keyCode===27){ updClose(); }
+  });
+}catch(e){}
 function setMode(m){
   mode=m;
   document.getElementById('tabEmbed').classList.toggle('active',m==='embed');
@@ -5783,9 +5900,14 @@ async function gpBuildSegs(list, mb){
   await gpPayDropOld();
   var F=await gpCarrierOut();
   if(!F){ say('载体读取失败，先选一张载体再试',1); return; }
+  var limit=Math.floor(mb*1000000);
+  var gifScaled=null;
+  if(gpShrinkGifOn() && F.fmt==='gif' && !(gpSegGifOn() && _gpSegCovers.length<=1 && gpGifFrameCount(F.bytes)>2)){
+    var __shP=gpShrinkGifToLimit(F, limit);
+    if(__shP){ say('动图太大，正在缩分辨率…'); F=__shP; gifScaled=__shP.scaled; }
+  }
   var cb=F.bytes;
   var cbMax=gpSegCoverMaxBytes(cb.length);
-  var limit=Math.floor(mb*1000000);
   var space=limit-cbMax-400;
   if(space<16384){ say('载体本身 '+gpFmt(cbMax)+' 已接近或超过上限，请把上限调大或换小一点的载体',1); return 'stop'; }
   var im0=await gpImgFromBytes(F.bytes,F.mime);
@@ -5809,24 +5931,72 @@ async function gpBuildSegs(list, mb){
   var reserve=Math.max(180000, Math.floor(space*0.06));
   var budget=Math.max(524288, space-reserve);
   var jobs=[], maxSeg=0, attempt, v, k, r;
-  for(attempt=0;attempt<3;attempt++){
-    jobs=[]; maxSeg=0;
-    for(v=0;v<sources.length;v++){
-      r=mzmp4.split(sources[v].u8, budget);
-      if(!r.ok){
-        say('「'+sources[v].name+'」不能无损切：'+r.err+'。请换一个标准 MP4/MOV 文件再试',1);
-        return 'stop';
-      }
+  var calcJobs=function(bd){
+    var jl=[], ms=0, vv, kk, rr;
+    for(vv=0;vv<sources.length;vv++){
+      rr=mzmp4.split(sources[vv].u8, bd);
+      if(!rr.ok) return {err:'「'+sources[vv].name+'」不能无损切：'+rr.err};
       var gid=[(Math.random()*256)|0,(Math.random()*256)|0,(Math.random()*256)|0,(Math.random()*256)|0];
-      for(k=0;k<r.segs.length;k++){
-        jobs.push({gid:gid, idx:k, total:r.segs.length, durMs:r.segs[k].durMs,
-                   origTotal:sources[v].u8.length, name:sources[v].name, chunk:r.segs[k].bytes});
-        if(r.segs[k].bytes.length>maxSeg) maxSeg=r.segs[k].bytes.length;
+      for(kk=0;kk<rr.segs.length;kk++){
+        jl.push({gid:gid, idx:kk, total:rr.segs.length, durMs:rr.segs[kk].durMs,
+                 origTotal:sources[vv].u8.length, name:sources[vv].name, chunk:rr.segs[kk].bytes});
+        if(rr.segs[kk].bytes.length>ms) ms=rr.segs[kk].bytes.length;
       }
     }
+    return {jobs:jl, maxSeg:ms};
+  };
+  for(attempt=0;attempt<4;attempt++){
+    r=calcJobs(budget);
+    if(r.err){ say(r.err+'。请换一个标准 MP4/MOV 文件再试',1); return 'stop'; }
+    jobs=r.jobs; maxSeg=r.maxSeg;
     if(cb.length+320+maxSeg<=limit) break;
     var scale=Math.max(0.35, (limit-cb.length-320)/maxSeg)*0.97;
     budget=Math.max(393216, Math.floor(budget*scale));
+  }
+  /* 单张 GIF 载体：视频分段时把载体动图也按帧切成同样段数，每张成品用其中一段。
+     段数与每段载体大小互相影响，用二分逼近：预算 ≤ 上限 − 最长动图段 − 320，
+     在候选里挑「每段都不超上限、且段数最少（预算最大）」的一组。 */
+  var autoGifSegs=null, autoGifRisk=false;
+  if(jobs.length>1 && _gpSegCovers.length<=1 && F && F.fmt==='gif' && gpGifFrameCount(F.bytes)>1 && gpSegGifOn() && gpSegGifMB()>0){
+    var tryB=Math.max(393216, limit-cb.length-400-reserve);
+    var cands=[], gi, it, kx, pick=null;
+    for(it=0;it<5;it++){
+      var jr=calcJobs(tryB);
+      if(jr.err || jr.jobs.length<=1 || jr.jobs.length>64) break;
+      var wts=[], kw;
+      for(kw=0;kw<jr.jobs.length;kw++){ wts.push(Math.max(1, jr.jobs[kw].durMs||0)); }
+      var gx=gpGifSplitN(F.bytes, jr.jobs.length, wts);
+      if(!gx) break;
+      var worstGif=0, over=false, oi;
+      for(gi=0;gi<gx.segs.length;gi++){
+        if(gx.segs[gi].length>worstGif) worstGif=gx.segs[gi].length;
+        if(jr.jobs[gi].chunk.length+gx.segs[gi].length+320>limit) over=true;
+      }
+      cands.push({jobs:jr.jobs, maxSeg:jr.maxSeg, gif:gx, budget:tryB, fit:!over});
+      var nb=Math.max(393216, limit-worstGif-320-reserve);
+      var nextB=Math.round((tryB+nb)/2);
+      if(Math.abs(nextB-tryB)<Math.max(8192, tryB*0.02)) break;
+      tryB=nextB;
+    }
+    for(it=0;it<cands.length;it++){ if(cands[it].fit && (!pick || cands[it].budget>pick.budget)) pick=cands[it]; }
+    if(!pick){ for(it=0;it<cands.length;it++){ if(!pick || cands[it].budget<pick.budget) pick=cands[it]; } }
+    if(pick){
+      for(var pass=0;pass<2 && !pick.fit;pass++){
+        var shrink=Math.max(393216, Math.round(pick.budget*0.8));
+        var jr2=calcJobs(shrink);
+        if(jr2.err || jr2.jobs.length<=1 || jr2.jobs.length>64) break;
+        var w2=[], k3;
+        for(k3=0;k3<jr2.jobs.length;k3++){ w2.push(Math.max(1, jr2.jobs[k3].durMs||0)); }
+        var g2=gpGifSplitN(F.bytes, jr2.jobs.length, w2);
+        if(!g2) break;
+        var fit2=true, wi;
+        for(wi=0;wi<g2.segs.length;wi++){ if(jr2.jobs[wi].chunk.length+g2.segs[wi].length+320>limit){ fit2=false; break; } }
+        pick={jobs:jr2.jobs, maxSeg:jr2.maxSeg, gif:g2, budget:shrink, fit:fit2};
+        if(fit2) break;
+      }
+      jobs=pick.jobs; maxSeg=pick.maxSeg;
+      autoGifSegs=pick.gif.segs; autoGifRisk=pick.gif.risky;
+    }
   }
   if(jobs.length>64){
     var totSeg=0;
@@ -5844,7 +6014,9 @@ async function gpBuildSegs(list, mb){
     var metaObj={kind:(jobs[j].durMs?2:1), name:jobs[j].name, total:jobs[j].origTotal||0, count:1, idx:jobs[j].idx, ptotal:jobs[j].total};
     var rcBuf=null;
     if(!(gpCurPw||!GP_RC_ON)){ try{ rcBuf=await gpRsMake([{name:jobs[j].name||'成品', size:jobs[j].origTotal||0, arr:jobs[j].arr, mime:jobs[j].mime}], gpRcCap(imW,imH)); }catch(erc){ rcBuf=null; } }
-    var Fcur=gpSegCoverAt(j,F);
+    var Fcur=autoGifSegs
+      ? {fmt:'gif', ext:'.gif', mime:'image/gif', bytes:autoGifSegs[j]}
+      : gpSegCoverAt(j,F);
     if(Fcur && gpOutFmt()==='gif' && Fcur.fmt!=='gif'){
       try{ var __gifC=await gpPngBytesToGif(Fcur.bytes); if(__gifC) Fcur={fmt:'gif', ext:'.gif', mime:'image/gif', bytes:__gifC}; }catch(e0){}
     }
@@ -5863,7 +6035,7 @@ async function gpBuildSegs(list, mb){
   parts.style.display='';
   var totalDur=0;
   for(j=0;j<jobs.length;j++) totalDur+=jobs[j].durMs||0;
-  var nh='<div style="font-size:12px;color:var(--text);margin:2px 0 6px">共 '+items.length+' 张成品，每张 ≤ '+mb+' MB（含载体）；视频被切成 '+sources.length+' 个文件共 '+jobs.length+' 段，合计 '+gpDurTxt(totalDur)+'</div>';
+  var nh='<div style="font-size:12px;color:var(--text);margin:2px 0 6px">共 '+items.length+' 张成品，每张 ≤ '+mb+' MB（含载体）；视频被切成 '+sources.length+' 个文件共 '+jobs.length+' 段，合计 '+gpDurTxt(totalDur)+(gifScaled?('；动图已缩到 '+gifScaled.toW+'×'+gifScaled.toH              +'（原 '+gifScaled.fromW+'×'+gifScaled.fromH+'）'):'')+(autoGifSegs?('；载体动图也切成了 '+autoGifSegs.length+' 段，每张成品用其中一段，动图各不相同'):'')+'</div>';
   for(j=0;j<items.length;j++){
     nh+=gpPartCard(j, items, jobs);
   }
@@ -5872,7 +6044,10 @@ async function gpBuildSegs(list, mb){
   out.style.display='';
   document.getElementById('gpAfter').textContent='还原方法：切到「取图」页，把这几张一起选中——每张单独就能播放那一段；全部选上会自动合成一个完整视频并给保存按钮。';
   var tails2=gpPngAnimNote();
-  say('完成：切成 '+items.length+' 张，每张一段（每段都能单独播放），集齐可无损合成完整视频；缺哪段取图页会直接标出来'+(tails2?('。'+tails2):''),'ok');
+  say('完成：切成 '+items.length+' 张，每张一段（每段都能单独播放），集齐可无损合成完整视频；缺哪段取图页会直接标出来'
+      +(autoGifSegs?('。载体动图也按段切成了 '+autoGifSegs.length+' 段，每张成品用的是其中一段'+(autoGifRisk?'（原动图含局部更新帧，个别段可能有残影）':'')):'')
+      +(gifScaled?('。动图帧数太大，已缩到 '+gifScaled.toW+'×'+gifScaled.toH+'（原 '+gifScaled.fromW+'×'+gifScaled.fromH+'）'):'')
+      +(tails2?('。'+tails2):''),'ok');
   gpUpdEst();
   return 'done';
 }
@@ -6014,6 +6189,26 @@ function gpRcToggle(){
     if(gpSt.file){ try{ gpAddCarrier(gpSt.file); }catch(e2){} }
   }catch(e){}
   try{ gpRcApplyDens(); }catch(e){}
+  try{ gpUpdEst(); }catch(e){}
+}
+function gpSegGifMB(){
+  var el=document.getElementById('gpMaxMB');
+  var v=parseFloat((el&&el.value)||'');
+  return (isFinite(v)&&v>0)?v:0;
+}
+function gpSegGifOn(){
+  var el=document.getElementById('gpSegGif');
+  return !el || !!el.checked;
+}
+function gpSegGifRowUpd(){
+  var row=document.getElementById('gpSegGifRow');
+  if(!row) return;
+  var fmtGif=true;
+  try{ fmtGif=(gpOutFmt()==='gif'); }catch(e){}
+  row.style.display=(gpSegGifMB()>0&&fmtGif)?'flex':'none';
+}
+function gpSegGifChanged(){
+  try{ gpSegGifRowUpd(); }catch(e){}
   try{ gpUpdEst(); }catch(e){}
 }
 function gpRcReloadCarrier(){ if(GP_RC_ON&&gpSt.file){ try{ gpAddCarrier(gpSt.file); }catch(e){} } }
@@ -6651,6 +6846,163 @@ function gpGifFrameCount(u8){
   }
   return frames;
 }
+function gpConcatU8(list){
+  var n=0,i; for(i=0;i<list.length;i++) n+=list[i].length;
+  var o=new Uint8Array(n), off=0;
+  for(i=0;i<list.length;i++){ o.set(list[i],off); off+=list[i].length; }
+  return o;
+}
+/* 载体动图跟着分段：把一张 GIF 按帧切成 n 个完整 GIF（帧字节原样，不动画面）
+   weights 用每段视频的时长，让动图段长与视频段长成比例；每段至少 1 帧。
+   返回 {segs:[Uint8Array], counts:[帧数], risky:bool}；帧数不够或结构异常返回 null。 */
+function gpGifSplitN(u8, n, weights){
+  if(!u8 || u8.length<20 || n<2) return null;
+  if(!(u8[0]===0x47&&u8[1]===0x49&&u8[2]===0x46)) return null;
+  var W=u8[6]|(u8[7]<<8), H=u8[8]|(u8[9]<<8), g=u8[10];
+  var pfxEnd=13; if(g&0x80) pfxEnd=13+3*(1<<((g&7)+1));
+  var p=pfxEnd, frames=[], extras=[], lastExt=null, closed=false;
+  while(p<u8.length){
+    var b=u8[p];
+    if(b===0x3B){ closed=true; break; }
+    if(b===0x21){
+      var st=p, lab=u8[p+1];
+      p+=2;
+      while(p<u8.length && u8[p]!==0){ p+=u8[p]+1; }
+      p++;
+      var en=p;
+      if(lab===0xF9){ lastExt={start:st,end:en,delay:(u8[st+4]|(u8[st+5]<<8))}; }
+      else if(lab===0x01||lab===0xFF){ extras.push([st,en]); }
+      continue;
+    }
+    if(b===0x2C){
+      var left=u8[p+1]|(u8[p+2]<<8), top=u8[p+3]|(u8[p+4]<<8),
+          iw=u8[p+5]|(u8[p+6]<<8), ih=u8[p+7]|(u8[p+8]<<8);
+      var packed=u8[p+9];
+      var q=p+10;
+      if(packed&0x80){ q+=3*(1<<((packed&7)+1)); }
+      q++;
+      while(q<u8.length && u8[q]!==0){ q+=u8[q]+1; }
+      if(q>=u8.length) return null;
+      q++;
+      frames.push({start:(lastExt?lastExt.start:p), end:q,
+                   delay:(lastExt?lastExt.delay:10),
+                   full:(left===0&&top===0&&iw===W&&ih===H)});
+      lastExt=null; p=q;
+      continue;
+    }
+    return null;
+  }
+  if(!closed || frames.length<n) return null;
+  var totW=0, i;
+  for(i=0;i<n;i++){ totW+=(weights&&weights[i]>0?weights[i]:1); }
+  var bounds=[0], acc=0;
+  for(i=0;i<n;i++){
+    acc+=(weights&&weights[i]>0?weights[i]:1);
+    var cut=Math.round(acc/totW*frames.length);
+    if(cut<bounds[bounds.length-1]+1) cut=bounds[bounds.length-1]+1;
+    bounds.push(cut);
+  }
+  for(i=bounds.length-1;i>0;i--){ if(bounds[i]>frames.length) bounds[i]=frames.length; }
+  for(i=bounds.length-2;i>=0;i--){ if(bounds[i]>=bounds[i+1]) bounds[i]=bounds[i+1]-1; }
+  if(bounds[0]<0) return null;
+  var pfx=u8.subarray(0,pfxEnd), segs=[], counts=[], risky=false;
+  for(i=0;i<n;i++){
+    var s=bounds[i], e=bounds[i+1], parts=[pfx], k, f;
+    for(k=0;k<extras.length;k++){ parts.push(u8.subarray(extras[k][0], extras[k][1])); }
+    for(f=s;f<e;f++){ parts.push(u8.subarray(frames[f].start, frames[f].end)); }
+    parts.push(new Uint8Array([0x3B]));
+    segs.push(gpConcatU8(parts)); counts.push(e-s);
+    if(!frames[s].full) risky=true;
+  }
+  return {segs:segs, counts:counts, risky:risky};
+}
+function gpShrinkGifOn(){
+  var el=document.getElementById('gpShrinkGif');
+  return !!(el&&el.checked);
+}
+function gpShrinkGifRowUpd(){
+  var row=document.getElementById('gpShrinkGifRow');
+  if(!row) return;
+  var show=false;
+  try{
+    show = !!(gpSegGifMB()>0 && gpOutFmt()==='gif' && gpSt && gpSt.bytes
+              && gpGifFrameCount(gpSt.bytes)>1);
+  }catch(e){ show=false; }
+  row.style.display=show?'flex':'none';
+}
+function gpShrinkGifChanged(){ try{ gpShrinkGifRowUpd(); }catch(e){} }
+/* 把一张多帧 GIF 整体按比例最近邻缩小并重新编码（每帧保留自己的调色板与延时） */
+function gpGifScale(u8, scale){
+  try{
+    if(!u8 || u8.length<20 || scale<=0 || scale>=1) return null;
+    if(!(u8[0]===0x47&&u8[1]===0x49&&u8[2]===0x46)) return null;
+    var g=gfParse(u8);
+    if(!g || !g.frames || !g.frames.length) return null;
+    var sf=scale;
+    var nw=Math.max(1,Math.round(g.w*sf)), nh=Math.max(1,Math.round(g.h*sf));
+    var head=new Uint8Array(g.head.length); head.set(g.head);
+    head[6]=nw&255; head[7]=(nw>>8)&255; head[8]=nh&255; head[9]=(nh>>8)&255;
+    var out=[head], li, fi;
+    for(li=0;li<g.loop.length;li++) out.push(g.loop[li]);
+    for(fi=0;fi<g.frames.length;fi++){
+      var fr=g.frames[fi];
+      var fw=Math.max(1,fr.w||1), fh=Math.max(1,fr.h||1);
+      var W=Math.max(1,Math.round(fw*sf)), H=Math.max(1,Math.round(fh*sf));
+      var n2=W*H, idx=new Uint8Array(n2), pi;
+      for(pi=0;pi<n2;pi++){
+        var yy=Math.floor(pi/W), xx=pi-yy*W;
+        var sy=Math.min(fh-1, Math.floor(yy*fh/H));
+        var sx=Math.min(fw-1, Math.floor(xx*fw/W));
+        idx[pi]=fr.idx[sy*fw+sx]&255;
+      }
+      var palLen=fr.palLen||256, nbits=0;
+      while(nbits<7 && (1<<(nbits+1))<palLen) nbits++;
+      var pal=fr.pal;
+      if(!pal || !pal.length) return null;
+      var tabLen=(1<<(nbits+1))*3, tab=new Uint8Array(tabLen);
+      tab.set(pal.subarray(0, Math.min(pal.length, tabLen)));
+      var left=Math.round((fr.left||0)*sf), top=Math.round((fr.top||0)*sf);
+      var delay=fr.gce?fr.gce.delay:10, disp=fr.gce?(fr.gce.disposal||0):0;
+      var tf=fr.gce?!!fr.gce.transFlag:false, ti=fr.gce?(fr.gce.transIdx&255):0;
+      out.push(new Uint8Array([0x21,0xF9,0x04,((disp<<2)|(tf?1:0))&255,
+                               delay&255,(delay>>8)&255,ti,0x00]));
+      out.push(new Uint8Array([0x2C,left&255,(left>>8)&255,top&255,(top>>8)&255,
+                               W&255,(W>>8)&255,H&255,(H>>8)&255,0x80|nbits]));
+      out.push(tab);
+      out.push(new Uint8Array([8]));
+      var comp=gfLzwEncode(8, idx), p2;
+      for(p2=0;p2<comp.length;p2+=255){
+        var len=Math.min(255, comp.length-p2);
+        out.push(new Uint8Array([len]));
+        out.push(comp.subarray(p2,p2+len));
+      }
+      out.push(new Uint8Array([0]));
+    }
+    out.push(new Uint8Array([0x3B]));
+    return {bytes:gfConcat(out), w:nw, h:nh};
+  }catch(e){ return null; }
+}
+/* 按「单张成品上限」把过大的动图缩到合适大小；返回新的载体对象或 null（不需要缩） */
+function gpShrinkGifToLimit(F, limit){
+  try{
+    if(!F || F.fmt!=='gif' || !F.bytes || !(limit>0)) return null;
+    if(gpGifFrameCount(F.bytes)<=1) return null;
+    var target=Math.floor(limit*0.35);
+    if(F.bytes.length<=target) return null;
+    var fromW=F.bytes[6]|(F.bytes[7]<<8), fromH=F.bytes[8]|(F.bytes[9]<<8);
+    var scales=[0.9,0.8,0.7,0.6,0.5,0.42,0.34,0.26,0.2,0.15], i, o;
+    for(i=0;i<scales.length;i++){
+      o=gpGifScale(F.bytes, scales[i]);
+      if(!o) continue;
+      if(o.bytes.length<=target || i===scales.length-1){
+        return {fmt:'gif', ext:'.gif', mime:'image/gif', bytes:o.bytes,
+                scaled:{fromW:fromW, fromH:fromH, toW:o.w, toH:o.h,
+                        fromBytes:F.bytes.length, toBytes:o.bytes.length}};
+      }
+    }
+    return null;
+  }catch(e){ return null; }
+}
 function gpPngAnimNote(){
   if(gpOutFmt()!=='png') return '';
   var f=gpSt.bytes?gpGifFrameCount(gpSt.bytes):0;
@@ -6827,13 +7179,41 @@ async function gpAppendCarriers(files){
   }
 }
 async function gpSegCoversSet(files){ return gpAppendCarriers(files); }
+/* 表图是动图 → 成品格式自动切 GIF；换成静态图时，若格式是自动设的，自动退回 PNG */
+var _gpFmtAutoGif=false;
+function gpSetOutFmt(v){
+  try{
+    var sel=document.getElementById('gpOutFmt');
+    if(!sel || sel.value===v) return false;
+    sel.value=v;
+    try{ gpSegGifRowUpd(); }catch(e){}
+    try{ gpShrinkGifRowUpd(); }catch(e){}
+    try{ gpUpdEst(); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
+function gpSyncFmtForGif(){
+  if(gpOutFmt()==='gif') return false;
+  if(!gpSetOutFmt('gif')) return false;
+  _gpFmtAutoGif=true;
+  try{ gpSegSay('表图是动图，成品格式已自动切成 GIF','ok'); }catch(e){}
+  return true;
+}
+function gpSyncFmtForStill(){
+  if(!_gpFmtAutoGif) return false;
+  _gpFmtAutoGif=false;
+  if(gpOutFmt()==='png') return false;
+  gpSetOutFmt('png');
+  return true;
+}
 function gpAddCarrier(f){
   if(!f) return;
   gpSt.file=f;
   var isGif=/gif/i.test(f.type||'')||/\.gif$/i.test(f.name||'');
   if(GP_RC_ON){ gpCarrierAsPng(f, isGif); return; }
-  if(isGif){ gpSt.png=null; gpUseRawGif(f); return; }
+  if(isGif){ gpSt.png=null; try{ gpSyncFmtForGif(); }catch(e){} gpUseRawGif(f); return; }
   /* 静态图：按成品格式承载。成品选 PNG 时直接用 PNG，不做 256 色量化；只有成品要 GIF 才转 GIF */
+  try{ gpSyncFmtForStill(); }catch(e){}
   if(gpOutFmt()==='png'){ gpSt.bytes=null; gpCarrierToPng(f); }
   else { gpSt.png=null; gpConvertToGif(f); }
 }
@@ -6870,7 +7250,9 @@ async function gpCarrierToPng(f){
   }catch(e){ alert('读取载体失败：'+((e&&e.message)||e)); }
 }
 /* 成品格式切换：按当前格式补齐载体字节 */
-function gpFmtChanged(){
+function gpFmtChanged(fromAuto){
+  if(!fromAuto) _gpFmtAutoGif=false;
+  try{ gpSegGifRowUpd(); }catch(e){}
   gpUpdEst();
   var f=gpSt.file; if(!f) return;
   var isGif=/gif/i.test(f.type||'')||/\.gif$/i.test(f.name||'');
@@ -7155,6 +7537,7 @@ function gpRenderSecrets(){
 }
 
 function gpUpdEst(){
+  try{ gpShrinkGifRowUpd(); }catch(e){}
   var est=document.getElementById('gpEst'), btn=document.getElementById('gpBuildBtn');
   if(!est||!btn) return;
   est.style.display='';
@@ -8063,6 +8446,21 @@ function gpStorageGuard(needBytes){
   }
 }
 
+/* 独立段视频放不出来时：只在这一张卡片里提示，不再冒全局红条 */
+function gpSegVideoErr(v){
+  try{
+    var card=(v&&v.closest)?v.closest('.box'):null;
+    if(!card||card.querySelector('.gp-seg-warn')) return;
+    var d=document.createElement('div');
+    d.className='gp-seg-warn';
+    d.style.cssText='margin:8px 0 0;padding:8px 10px;font-size:12px;line-height:1.6;color:#e0c06b;border:1px solid rgba(224,192,107,.35);border-radius:8px;background:rgba(224,192,107,.06)';
+    d.textContent='这一段在当前浏览器里放不出来：可能段首没有关键帧，或这段数据不完整。先点「保存这一段」存下来到相册/电脑上看；App 里可以点「用系统播放器打开」试试。';
+    var cap=card.querySelector('.cap')||card.firstElementChild;
+    if(cap&&cap.parentNode) cap.parentNode.insertBefore(d,cap.nextElementSibling||null);
+    else card.insertBefore(d,card.firstChild);
+  }catch(e){}
+}
+
 async function gpOpenInSystemPlayer(url,name,mime,btn){
   if(window.Android && Android.playBegin){ return await gpPlayTemp(url,name,mime,btn); }
   if(!(window.Android && Android.fileBegin)) return;
@@ -8418,8 +8816,9 @@ async function doExtract(){
         var sg=r.gpSeg, sgu=URL.createObjectURL(new Blob([sg.bytes],{type:'video/mp4'}));
         item.setAttribute('data-seg', sg.gid.join('-'));
         item.innerHTML='<div class="cap">第 '+(i+1)+' 张 ✓ 独立段 '+(sg.idx+1)+' / '+sg.total+'（'+gpEsc(sg.name)+'，'+gpDurTxt(sg.durMs)+'）</div>'
-          +'<video src="'+sgu+'" controls preload="metadata" playsinline style="max-width:100%;max-height:46vh;border-radius:8px;background:#000;margin:6px 0"></video>'
-          +'<a class="btn btn-primary" href="'+sgu+'" download="'+gpEsc(gpSegFileName(sg))+'" style="display:flex;align-items:center;justify-content:center">保存这一段</a>';
+          +'<video src="'+sgu+'" controls preload="metadata" playsinline onerror="gpSegVideoErr(this)" style="max-width:100%;max-height:46vh;border-radius:8px;background:#000;margin:6px 0"></video>'
+          +'<a class="btn btn-primary" href="'+sgu+'" download="'+gpEsc(gpSegFileName(sg))+'" style="display:flex;align-items:center;justify-content:center">保存这一段</a>'
+          +((window.Android&&Android.fileBegin)?('<button class="btn btn-ghost" style="margin-top:6px" onclick="gpOpenInSystemPlayer(\''+sgu+'\',\''+gpEsc(gpSegFileName(sg))+'\',\'video/mp4\',this)">画面不出来？用系统播放器打开</button>'):'');
         mmgSetProg('mmgExtractProg',(i+1)/list.length);
         continue;
       }
