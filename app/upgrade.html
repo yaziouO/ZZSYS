@@ -69,18 +69,18 @@ transition:opacity .2s}
 <div class="label">不想再装 APP？直接用网页版（工具一样）</div>
 <div class="site">
   <div class="sitename">GitHub Pages 主站</div>
-  <div class="siturl">https://yaziouo.github.io/ZZSYS/</div>
-  <a class="btn2" href="https://yaziouo.github.io/ZZSYS/">打开网页版</a>
+  <div class="siturl" id="site0">https://yaziouo.github.io/ZZSYS/</div>
+  <button class="btn2" type="button" onclick="copySite('site0')">复制这条网址</button>
 </div><div class="site">
   <div class="sitename">ArtiDrop 镜像</div>
-  <div class="siturl">https://artidrop.ai/a/FqKOBoeNX3</div>
-  <a class="btn2" href="https://artidrop.ai/a/FqKOBoeNX3">打开网页版</a>
+  <div class="siturl" id="site1">https://artidrop.ai/a/FqKOBoeNX3</div>
+  <button class="btn2" type="button" onclick="copySite('site1')">复制这条网址</button>
 </div><div class="site">
   <div class="sitename">妙搭镜像</div>
-  <div class="siturl">https://4macmghw1kte0.doubao.link/app/app_17gg34s6cgg</div>
-  <a class="btn2" href="https://4macmghw1kte0.doubao.link/app/app_17gg34s6cgg">打开网页版</a>
+  <div class="siturl" id="site2">https://4macmghw1kte0.doubao.link/app/app_17gg34s6cgg</div>
+  <button class="btn2" type="button" onclick="copySite('site2')">复制这条网址</button>
 </div>
-<p class="hint">点「打开网页版」没反应，就长按上面的网址 →「全选」→「复制」，粘贴到 Chrome / Edge / QQ 浏览器打开。网页版建议用新版浏览器，老系统自带浏览器的内核太旧，大文件会吃力。</p>
+<p class="hint">点「复制这条网址」后，粘贴到 Chrome / Edge / QQ 浏览器打开即可，不用装 APP。按钮没反应就长按上面的网址 →「全选」→「复制」。网页版建议用新版浏览器，老系统自带浏览器内核太旧，大文件会吃力。</p>
 </div>
 
 <p class="foot">腾讯频道号 592962059Q ｜ BUG 反馈 QQ 群 592941563</p>
@@ -93,19 +93,25 @@ function msg(s){
   if(tId) clearTimeout(tId);
   tId=setTimeout(function(){ t.style.opacity=0; },1800);
 }
-function copyUrl(){
-  var box=document.getElementById('urltext');
-  var text=(box.innerText||box.textContent||'').replace(/^\s+|\s+$/g,'');
+function copyText(text, okMsg){
   try{
     var ta=document.createElement('textarea');
     ta.value=text; ta.style.position='fixed'; ta.style.top='-1000px';
     document.body.appendChild(ta); ta.focus(); ta.select();
     var ok=document.execCommand('copy');
     document.body.removeChild(ta);
-    msg(ok ? '已复制，去浏览器粘贴打开' : '复制失败，请长按网址手动复制');
+    msg(ok ? okMsg : '复制失败，请长按网址手动复制');
   }catch(e){
     msg('复制失败，请长按网址手动复制');
   }
+}
+function copyUrl(){
+  var box=document.getElementById('urltext');
+  copyText((box.innerText||box.textContent||'').replace(/^\s+|\s+$/g,''), '已复制，去浏览器粘贴打开');
+}
+function copySite(id){
+  var box=document.getElementById(id);
+  copyText((box.innerText||box.textContent||'').replace(/^\s+|\s+$/g,''), '已复制，粘贴到浏览器打开');
 }
 </script>
 </body>
