@@ -514,6 +514,33 @@ details>summary{position:relative}
   else bootEnv();
 })();
 </script>
+<script>
+/* v490 页签兜底（独立脚本块）：主脚本块里 setMode 没注册时，切页签照样能用 */
+(function(){
+  var EMB=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app'];
+  function apply(m){
+    var pairs=[['tabEmbed','embed'],['tabExtract','extract'],['paneEmbed','embed'],['paneExtract','extract']];
+    for(var i=0;i<pairs.length;i++){
+      var el=document.getElementById(pairs[i][0]);
+      if(el) el.classList.toggle('active', m===pairs[i][1]);
+    }
+    var d=document.getElementById('download-area');
+    if(d) d.style.display='';
+    for(var j=0;j<EMB.length;j++){
+      var e2=document.getElementById(EMB[j]);
+      if(e2) e2.style.display=(m==='extract')?'none':'';
+    }
+  }
+  window.zzTab=function(m){
+    m=(m==='extract')?'extract':'embed';
+    try{
+      if(typeof window.setMode==='function'){ window.setMode(m); return; }
+    }catch(e){}
+    apply(m);
+    try{ if(window.tipsHide) window.tipsHide(); }catch(e){}
+  };
+})();
+</script>
 </head>
 <body>
 <button type="button" class="float-btn theme-toggle" id="themeToggle" aria-label="切换皮肤">
@@ -589,7 +616,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 
 <header>
   <!-- 版本号：每次发版只改下面这个 v404 -->
-  <h1>作战实验室<span class="zz-ver">4.45</span></h1>
+  <h1>作战实验室<span class="zz-ver">4.46</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   <button type="button" class="upd-btn" onclick="updOpen()" title="查看最近几个版本的更新内容"><i></i>更新公告</button>
   </header>
@@ -598,12 +625,17 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   <div class="upd-card">
     <div class="upd-head">
       <div class="upd-kicker">RELEASE NOTES</div>
-      <div class="upd-title">更新公告<span class="upd-pill">4.45</span></div>
+      <div class="upd-title">更新公告<span class="upd-pill">4.46</span></div>
       <button type="button" class="upd-x" onclick="updClose()" aria-label="关闭">×</button>
     </div>
     <div class="upd-body">
       <section class="upd-sec">
-        <div class="upd-ver">4.45<em>本次</em></div>
+        <div class="upd-ver">4.46<em>本次</em></div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>新增「MP4去片头片尾/去广告（无损不转码）」，片头片尾可填、中间广告边播边点，接缝不转码；「TS/FLV/MKV转 MP4视频」新增 FLV、MKV，仍只换壳不转码。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>修偶发点「取图」弹 E001 报错；缩减工具能剥掉 PNG 私有块藏的图数据，体积能真降；多张载体图各用自己画幅，不再被第一张裁成横条；修 TS 转 MP4 偶发少一半帧、时长变长。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.45</div>
         <div class="upd-line"><span class="upd-tag add">新增</span><span>GIF 缩减工具：动图/静态图都能压小，缩完先看体积再保存；多选拖拽粘贴都行；GIF 可缩尺寸、减色、降帧，静态图四档画质；顺带清掉图里藏的附加数据、注释、EXIF，写明清掉多少。</span></div>
         <div class="upd-line"><span class="upd-tag fix">修复</span><span>成品总有一张取不出（载体自带注释块）：生成时剥旧注释、取图按工具标记认块，旧成品免重生成；旧成品当载体残留旧数据会撑爆分段，生成前先剥净；分段预算按每张载体各算并计入音频，超上限缩载体重做，放不下提示该调到多少 MB。</span></div>
       </section>
@@ -641,8 +673,8 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 </div>
 
 <div class="tabs">
-  <button id="tabEmbed" class="active" onclick="setMode('embed')">藏图</button>
-  <button id="tabExtract" onclick="setMode('extract')">取图</button>
+  <button id="tabEmbed" class="active" onclick="zzTab('embed')">藏图</button>
+  <button id="tabExtract" onclick="zzTab('extract')">取图</button>
 </div>
 
 <!-- ============ 藏图 ============ -->
@@ -735,7 +767,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
         <span style="font-size:12px;color:var(--muted);flex:none">成品格式</span>
         <select id="gpOutFmt" onchange="gpFmtChanged()" style="flex:1;min-width:150px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:12px">
           <option value="png" selected>PNG（频道/B站用，贴吧选GIF）</option>
-          <option value="gif">GIF（贴吧用防压缩）</option>
+          <option value="gif">GIF（贴吧用,PNG表图也可转为GIF）</option>
         </select>
       </div>
       <div id="gpFmtNote" style="display:none;font-size:12px;color:var(--muted);margin-top:6px">救生网格已开启：静态图不再转 GIF，成品固定 PNG</div>
@@ -1743,7 +1775,7 @@ function tjpToPng(file){
 /* ---------- 取图 ---------- */
 window.tjpDoExtract=function(){
   /* 取图已统一到主「取图」页：图夹成品在那里会被自动识别，可批量剥出 */
-  setMode && setMode('extract');
+  try{ if(typeof window.zzTab==='function') window.zzTab('extract'); }catch(e){}
 };
 
 /* 拖拽接入 */
@@ -2030,17 +2062,18 @@ window.tjpDoExtract=function(){
   </div>
 </details>
 <details id="tsm-app" style="margin-top:12px">
-  <summary style="position:relative;padding-right:42px">TS 转 MP4（只换容器不转码）<button type="button" class="zzq" data-q="TS 转 MP4：把 .ts 里的原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
-为什么需要：浏览器和手机默认放不了 .ts，转成 .mp4 就能直接播、能拖进度、能传平台。
+  <summary style="position:relative;padding-right:42px">TS/FLV/MKV转 MP4视频（只换容器不转码）<button type="button" class="zzq" data-q="TS/FLV/MKV转 MP4视频：把原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
+支持三种容器：MPEG-TS（.ts/.m2ts/.mts）、FLV（.flv）、MKV（.mkv/.webm 里的 H.264+AAC）。
+为什么需要：浏览器和手机默认放不了 .ts / .flv / .mkv，转成 .mp4 就能直接播、能拖进度、能传平台。
 速度：纯搬运，68MB 约 1 秒；文件越大越慢，但远快于重新压缩。
-限制：只认 MPEG-TS 里的 H.264 + AAC；HEVC(H.265)、AC3/MP2 音频会直接报不支持。
-TS 原文件不会被改动，转换结果另存为新文件。">?</button></summary>
+限制：只认 H.264 + AAC；HEVC(H.265)、VP9/AV1 视频和 AC3/MP2/Opus 音频会直接报不支持（换编码必须重编码）。
+原文件不会被改动，转换结果另存为新文件。">?</button></summary>
   <div style="margin-top:14px">
     <div class="drop" id="tsm_drop" onclick="document.getElementById('tsm_file').click()">
-      <div class="label">选 TS 视频（.ts）</div>
-      <div class="sub">点这里选、拖进来，或 Ctrl+V 粘贴文件；只换容器，不转码</div>
+      <div class="label">选 TS / FLV / MKV 视频</div>
+      <div class="sub">点这里选、拖进来，或 Ctrl+V 粘贴文件；.ts / .flv / .mkv，只换容器不转码</div>
     </div>
-    <input type="file" id="tsm_file" accept=".ts,.m2ts,.mts,video/mp2t,video/*" hidden onchange="tsmPick(this.files[0])">
+    <input type="file" id="tsm_file" accept=".ts,.m2ts,.mts,.flv,.mkv,video/*" hidden onchange="tsmPick(this.files[0])">
     <div class="hint" id="tsm_status" style="margin-top:8px">尚未选择文件</div>
     <button class="btn btn-primary" id="tsm_btn" style="width:100%;margin-top:10px;display:none" onclick="tsmRun()">开始转换</button>
     <div class="result" id="tsm_result" style="display:none">
@@ -2050,8 +2083,48 @@ TS 原文件不会被改动，转换结果另存为新文件。">?</button></sum
     </div>
   </div>
 </details>
+<details id="vc-app" style="margin-top:12px">
+  <summary style="position:relative;padding-right:42px">MP4视频去片头片尾 / 去广告（无损不转码）<button type="button" class="zzq" data-q="MP4视频去片头片尾 / 去广告：只按关键帧无损剪切 + 重新封装，不重编码、不解码，画质和原片完全一样。
+① 两条路：片头片尾直接填秒数；中间插播的广告可以边播边打点——播到广告开始按「标起点」、播到结束按「标终点」，自动加一段删除，可标多段。
+② 切点只能落在关键帧：删除段之后的第一帧必须重新从关键帧起算，所以实际会多留零点几秒，界面会直接写出实际切点。
+③ 中间挖掉后前后自动拼起来，接缝不重编码；接缝处偶尔有一帧时间戳抖动（B 帧），肉眼看不出来。
+④ 音轨跟着同一时间窗一起取，不会音画不同步。
+⑤ 输出是标准 MP4，可以直接选进图种式当里图，再去分段。
+⑥ 原文件不会被改动，成品另存。">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="vc_drop" onclick="document.getElementById('vc_file').click()">
+      <div class="label">选一个 MP4（点选 / 拖入）</div>
+      <div class="sub">只按关键帧无损剪切、重新封装，不重编码；片头片尾手填，中间广告边播边打点</div>
+    </div>
+    <input type="file" id="vc_file" accept="video/mp4,.mp4" hidden onchange="vcPick(this.files)">
+    <div class="hint" id="vc_status" style="margin-top:8px">尚未选择视频</div>
+    <div id="vc_opts" style="display:none;margin-top:10px">
+      <video id="vc_prev" controls preload="metadata" playsinline style="width:100%;max-height:46vh;border-radius:8px;background:#000;display:block"></video>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost" style="flex:1 1 40%;font-size:13px" onclick="vcMark('s')">标起点（当前时间）</button>
+        <button type="button" class="btn btn-ghost" style="flex:1 1 40%;font-size:13px" onclick="vcMark('e')">标终点</button>
+      </div>
+      <div class="hint" id="vc_now" style="margin-top:6px">播到广告开始点「标起点」，播到广告结束点「标终点」</div>
+      <div id="vc_rows" style="margin-top:10px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <label style="flex:1 1 40%;min-width:120px;font-size:12px;color:var(--muted)">去片头（秒）
+          <input id="vc_head" type="number" min="0" step="0.1" value="0" oninput="vcCalc()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px">
+        </label>
+        <label style="flex:1 1 40%;min-width:120px;font-size:12px;color:var(--muted)">去片尾（秒）
+          <input id="vc_tail" type="number" min="0" step="0.1" value="0" oninput="vcCalc()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px">
+        </label>
+      </div>
+      <div class="hint" id="vc_line" style="margin-top:8px"></div>
+    </div>
+    <button class="btn btn-primary" id="vc_btn" style="width:100%;margin-top:10px;display:none" onclick="vcRun()">开始裁剪</button>
+    <div class="result" id="vc_result" style="display:none">
+      <div id="vc_list"></div>
+    </div>
+  </div>
+</details>
+
 <details id="gsz-app" style="margin-top:12px">
-  <summary style="position:relative;padding-right:42px">GIF 缩减工具<button type="button" class="zzq" data-q="GIF 缩减：把过大的动图压小，顺带也能缩 PNG / JPG / WebP 静态图；先看预览和体积，满意再保存。
+  <summary style="position:relative;padding-right:42px">GIF/PNG图缩减工具(可缩小图/清除里图数据)<button type="button" class="zzq" data-q="GIF/PNG 图缩减：把过大的动图压小，顺带也能缩 PNG / JPG / WebP 静态图；先看预览和体积，满意再保存。
 ① 选图：可多选，拖进来、点选、Ctrl+V 都行；GIF 按下面的颜色/帧率调，静态图按「画质」重编码；原文件不会被改动。
 ② 尺寸：按百分比缩小分辨率，100% = 不动尺寸。
 ③ 颜色：256 = 全彩不量化；128/64/32 会把相近颜色合并，越小越省，渐变会有台阶。
@@ -2119,8 +2192,9 @@ TS 原文件不会被改动，转换结果另存为新文件。">?</button></sum
     </div>
   </div>
 </details>
+
 <script>
-/* ================== GIF 缩减工具（前缀 gsz_） ================== */
+/* ================== GIF/PNG 图缩减工具（前缀 gsz_） ================== */
 var gszJobs=[], gszOut=[], gszBusy=false;
 
 function gszFmt(n){
@@ -2450,7 +2524,8 @@ async function gszPick(files){
       if(!/^image\//.test(mime)) mime=({gif:'image/gif',png:'image/png',jpg:'image/jpeg',webp:'image/webp'})[kind]||'';
       var ti=gszTailInfo(u8, kind);
       var jo={file:f, name:f.name||('图片'+(i+1)), size:f.size, kind:kind, mime:mime,
-              u8:u8, tail:ti.tail, meta:ti.meta, cleanLen:ti.cleanLen};
+              u8:u8, tail:ti.tail, meta:ti.meta, cleanLen:ti.cleanLen,
+              stash:ti.stash||[], zz:ti.zz||0};
       if(kind==='gif'){
         var g=gfParse(u8);
         if(!g || !g.frames || !g.frames.length){ bad.push(jo.name+'（动图解析失败）'); continue; }
@@ -2473,17 +2548,18 @@ async function gszPick(files){
     var hd0=document.getElementById('gsz_head'); if(hd0) hd0.textContent='';
     return;
   }
-  var lines=[], t=0, stashT=0;
+  var lines=[], t=0, stashT=0, zzT=0;
   for(i=0;i<gszJobs.length;i++){
     var jo2=gszJobs[i];
     t+=jo2.size;
     stashT += (jo2.tail||0)+(jo2.meta||0);
+    zzT += (jo2.zz||0);
     lines.push(jo2.name+'（'+(jo2.kind==='gif'? (jo2.w+'×'+jo2.h+'，'+jo2.n+' 帧，'+gszSec(jo2.ms)) : (jo2.w+'×'+jo2.h+' '+gszFmtName(jo2.kind)))+'）');
   }
   if(st) st.textContent='已选 '+okN+' 个，共 '+gszFmt(t)+(bad.length? '；跳过 '+bad.length+' 个（'+bad.slice(0,2).join('、')+'）':'');
   var hd=document.getElementById('gsz_head');
   if(hd){
-    hd.textContent='原图：'+lines.join('；')+(stashT? ' ｜ 其中含附加/元数据 '+gszFmt(stashT)+'，缩完会清掉' : '');
+    hd.textContent='原图：'+lines.join('；')+(zzT? (' ｜ 含本工具图种里图 '+gszFmt(zzT)+'（缩减会把它剥掉，里图随之取不出来）') : (stashT? ' ｜ 其中含附加/元数据 '+gszFmt(stashT)+'，缩完会清掉' : ''));
   }
 }
 
@@ -2558,9 +2634,11 @@ async function gszRun(){
       fmtLine='<div style="color:var(--muted)">格式：'+fmtTxt+' · 尺寸：'+dS0+
               (keptSrc? '' : (' · 画质 '+Math.round(opt.quality*100)+'%'))+'</div>';
     }
+    var zzNote=(jo.zz? ('这张带本工具图种里图 '+gszFmt(jo.zz)+'，已整块剥掉：表图照常显示，但图种数据没了，取图会取不出来。') : '');
     var clr=[];
     if((jo.tail||0)>0) clr.push('尾部附加数据 '+gszFmt(jo.tail));
-    if((jo.meta||0)>0) clr.push('注释/元数据 '+gszFmt(jo.meta));
+    if((jo.zz||0)>0) clr.push('图种里图 zzTp '+gszFmt(jo.zz));
+    if(((jo.meta||0)-(jo.zz||0))>0) clr.push('注释/元数据 '+gszFmt((jo.meta||0)-(jo.zz||0)));
     var clrLine=(clr.length? '<div style="color:var(--muted)">清理：已丢掉 '+clr.join('、')+'</div>' : '');
     if(list){
       list.innerHTML +=
@@ -2570,10 +2648,10 @@ async function gszRun(){
           ((baseB.length<jo.size)
             ? ('<div>'+gszFmt(jo.size)+' → <b>'+gszFmt(baseB.length)+'</b>（'+gszPct(baseB.length, jo.size)+'，只清掉藏的数据，画质一点没动）</div>'+
                '<div style="color:var(--muted)">'+jo.size+' B → '+baseB.length+' B（没有重新编码）</div>'+
-               '<div style="color:var(--warn,#c9a227)">'+(rawOnly? '100% 档不重编码，只把藏进去的数据剥掉了，画质一点没动。想再小：把「画质」降到 92% 或 80%，或把「尺寸」调小（那样会用无损 PNG 重绘）。' : ('这张本来就压不动（重编码会比原图大），所以只做了无损剥离。想真的小：'+(jo.kind==='gif'? '把「颜色」降到 64 或 32，或「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。' : '把「画质」降到 92% 或 60% 再来一次（100% 画质相当于不压缩）；只缩尺寸的话，100% 档位下重编码反而更大，所以不会动尺寸。')))+'</div>')
+               '<div style="color:var(--warn,#c9a227)">'+zzNote+(rawOnly? '100% 档不重编码，只把藏进去的数据剥掉了，画质一点没动。想再小：把「画质」降到 92% 或 80%，或把「尺寸」调小（那样会用无损 PNG 重绘）。' : ('这张本来就压不动（重编码会比原图大），所以只做了无损剥离。想真的小：'+(jo.kind==='gif'? '把「颜色」降到 64 或 32，或「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。' : '把「画质」降到 92% 或 60% 再来一次（100% 画质相当于不压缩）；只缩尺寸的话，100% 档位下重编码反而更大，所以不会动尺寸。')))+'</div>')
             : ('<div>'+gszFmt(jo.size)+' → <b>'+gszFmt(jo.size)+'</b>（没得缩，按原图给你）</div>'+
                '<div style="color:var(--muted)">'+jo.size+' B（原样）</div>'+
-               '<div style="color:var(--warn,#c9a227)">'+(rawOnly? '100% 档不重编码、不换格式、不动画质，这张又没藏数据，所以体积就是原样。要变小：把「画质」降到 92% 或 80%。' : ('这张图重编码后不比原图小，所以直接沿用原文件。想真的小：'+(jo.kind==='gif'? '把「颜色」降到 64 或 32，或「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。' : '把「画质」降到 92% 或 60% 再来一次（100% 画质相当于不压缩）；只缩尺寸的话，100% 档位下重编码反而更大，所以不会动尺寸。'))) +'</div>'))
+               '<div style="color:var(--warn,#c9a227)">'+(rawOnly? '100% 档不重编码、不换格式、不动画质，这张没有可剥离的附加数据，所以体积就是原样。要变小：把「画质」降到 92% 或 80%。' : ('这张图重编码后不比原图小，所以直接沿用原文件。想真的小：'+(jo.kind==='gif'? '把「颜色」降到 64 或 32，或「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。' : '把「画质」降到 92% 或 60% 再来一次（100% 画质相当于不压缩）；只缩尺寸的话，100% 档位下重编码反而更大，所以不会动尺寸。'))) +'</div>'))
           :
           ('<div>'+gszFmt(jo.size)+' → <b>'+gszFmt(r2.bytes.length)+'</b>（'+gszPct(r2.bytes.length, jo.size)+'）</div>'+
            '<div style="color:var(--muted)">'+jo.size+' B → '+r2.bytes.length+' B</div>'+
@@ -2617,9 +2695,16 @@ function gszFmtName(t){
   return (t||'图片');
 }
 
-/* 统计"藏在图里"的数据：文件尾部附加 + 注释/元数据；顺带给出干净有效长度 */
+/* PNG 白名单：这些块是图像本体。白名单之外（tEXt/zTXt/iTXt/eXIf/tIME/zzTp/别家私有块）一律算「藏在图里的数据」 */
+function gszPngDrop(ty){
+  return !(ty==='IHDR'||ty==='PLTE'||ty==='IDAT'||ty==='IEND'||ty==='tRNS'||ty==='gAMA'||
+           ty==='cHRM'||ty==='sRGB'||ty==='iCCP'||ty==='sBIT'||ty==='bKGD'||ty==='pHYs'||
+           ty==='sPLT'||ty==='hIST'||ty==='acTL'||ty==='fcTL'||ty==='fdAT');
+}
+
+/* 统计"藏在图里"的数据：文件尾部附加 + 注释/元数据 + PNG 私有块；顺带给出干净有效长度 */
 function gszTailInfo(u8, kind){
-  var r={tail:0, meta:0, cleanLen:u8 ? u8.length : 0};
+  var r={tail:0, meta:0, cleanLen:u8 ? u8.length : 0, stash:[], zz:0};
   if(!u8 || !u8.length) return r;
   var p=0, i, L, q, ip, ty, m;
   if(kind==='gif'){
@@ -2657,7 +2742,11 @@ function gszTailInfo(u8, kind){
       ty=String.fromCharCode(u8[p+4],u8[p+5],u8[p+6],u8[p+7]);
       var end=p+12+L;
       if(end>u8.length) return r;
-      if(ty==='tEXt'||ty==='zTXt'||ty==='iTXt'||ty==='eXIf') r.meta += (end-p);
+      if(gszPngDrop(ty)){
+        r.meta += (end-p);
+        if(r.stash.length<5) r.stash.push(ty);
+        if(ty==='zzTp') r.zz += (L+12);
+      }
       if(ty==='IEND'){ r.cleanLen=end; r.tail=u8.length-end; return r; }
       p=end;
     }
@@ -2799,7 +2888,7 @@ function gszPngStrip(u8, end){
     ty=String.fromCharCode(u8[p+4],u8[p+5],u8[p+6],u8[p+7]);
     e=p+12+L;
     if(e>end) break;
-    drop=(ty==='tEXt'||ty==='zTXt'||ty==='iTXt'||ty==='eXIf');
+    drop=gszPngDrop(ty);
     if(!drop){ for(i=p;i<e;i++) out.push(u8[i]); }
     if(ty==='IEND') break;
     p=e;
@@ -2885,12 +2974,12 @@ async function tsmRun(){
   try{
     var buf=await tsmFile.arrayBuffer();
     btn.textContent='解析中…';
-    var r=await window.tsRemuxToMp4(new Uint8Array(buf), function(t,p){ btn.textContent=t+' '+Math.round(p*100)+'%'; });
+    var r=await window.tsmRemuxAny(new Uint8Array(buf), function(t,p){ btn.textContent=t+' '+Math.round(p*100)+'%'; });
     var blob=new Blob([r.bytes],{type:'video/mp4'});
     if(tsmUrl) URL.revokeObjectURL(tsmUrl);
     tsmUrl=URL.createObjectURL(blob);
     var info=r.info;
-    document.getElementById('tsm_info').innerHTML='<b style="color:var(--text)">'+info.width+'×'+info.height+' · '+info.videoFrames+' 帧 · '+info.videoSec.toFixed(2)+' 秒 · '+info.codec+'</b><br>MP4 体积 '+tsmMB(info.size)+'（原 TS '+tsmMB(tsmFile.size)+'）';
+    document.getElementById('tsm_info').innerHTML='<b style="color:var(--text)">'+info.width+'×'+info.height+' · '+info.videoFrames+' 帧 · '+info.videoSec.toFixed(2)+' 秒 · '+info.codec+'</b><br>MP4 体积 '+tsmMB(info.size)+'（原文件 '+tsmMB(tsmFile.size)+'）';
     document.getElementById('tsm_play').innerHTML='<video src="'+tsmUrl+'" controls playsinline style="width:100%;max-height:60vh;border-radius:10px;background:#000;display:block"></video>';
     var base=(tsmFile.name||'视频').replace(/\.[^.]+$/,'');
     document.getElementById('tsm_dl').innerHTML='<a class="btn btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none" download="'+base+'.mp4" href="'+tsmUrl+'">保存 MP4</a>';
@@ -4984,21 +5073,26 @@ try{
   });
 }catch(e){}
 function setMode(m){
-  mode=m;
-  document.getElementById('tabEmbed').classList.toggle('active',m==='embed');
-  document.getElementById('tabExtract').classList.toggle('active',m==='extract');
-  document.getElementById('paneEmbed').classList.toggle('active',m==='embed');
-  document.getElementById('paneExtract').classList.toggle('active',m==='extract');
-  // 下载区只在取图页显示
-  document.getElementById('download-area').style.display='';
-  // 取图页只保留光棱图、混淆图两个分支，其余工具不跟过来
-  var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app'];
-  for(var i=0;i<embOnly.length;i++){
-    var el=document.getElementById(embOnly[i]);
-    if(el) el.style.display=(m==='extract')?'none':'';
-  }
+  try{
+    mode=m;
+    var t1=document.getElementById('tabEmbed'), t2=document.getElementById('tabExtract');
+    var p1=document.getElementById('paneEmbed'), p2=document.getElementById('paneExtract');
+    if(t1) t1.classList.toggle('active',m==='embed');
+    if(t2) t2.classList.toggle('active',m==='extract');
+    if(p1) p1.classList.toggle('active',m==='embed');
+    if(p2) p2.classList.toggle('active',m==='extract');
+    // 下载区只在取图页显示
+    var d=document.getElementById('download-area'); if(d) d.style.display='';
+    // 取图页只保留光棱图、混淆图两个分支，其余工具不跟过来
+    var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app'];
+    for(var i=0;i<embOnly.length;i++){
+      var el=document.getElementById(embOnly[i]);
+      if(el) el.style.display=(m==='extract')?'none':'';
+    }
+  }catch(e){}
   try{ if(window.tipsHide) window.tipsHide(); }catch(e){}
 }
+try{ window.setMode=setMode; }catch(e){}
 
 
 function pick(t){ currentPickTarget=t; const fi=document.getElementById('fileInput'); fi.value=''; fi.click(); }
@@ -5548,6 +5642,496 @@ function parsePes(buf){
   return {pts:pts, dts:(dts===null?pts:dts), data:buf.subarray(p)};
 }
 
+/* ================== 重封装公共层（TS / FLV / MKV 共用，不重编码） ================== */
+function rmxU24(b,o){ return (b[o]<<16)|(b[o+1]<<8)|b[o+2]; }
+function rmxParseAvcC(rec){
+  if(!rec || rec.length<7) throw new Error('AVC 配置(avcC)不完整，读不出 SPS/PPS');
+  var ls=(rec[4]&0x03)+1, nsps=rec[5]&0x1F, p=6, sps=null, pps=null;
+  for(var i=0;i<nsps;i++){ var ln=(rec[p]<<8)|rec[p+1]; if(!sps) sps=rec.subarray(p+2,p+2+ln); p+=2+ln; }
+  var npps=rec[p]; p++;
+  for(var j=0;j<npps;j++){ var ln2=(rec[p]<<8)|rec[p+1]; if(!pps) pps=rec.subarray(p+2,p+2+ln2); p+=2+ln2; }
+  if(!sps||!pps) throw new Error('AVC 配置里没有 SPS/PPS');
+  return {ls:ls, sps:sps, pps:pps};
+}
+function rmxAscInfo(asc){
+  if(!asc || asc.length<2) return {obj:2, rate:48000, chan:2};
+  var obj=(asc[0]>>3)&0x1F, sfi=((asc[0]&0x07)<<1)|((asc[1]>>7)&0x01), chan=(asc[1]>>3)&0x0F;
+  var SF=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350];
+  return {obj:obj||2, rate:SF[sfi]||48000, chan:chan||2};
+}
+/* lengthSize 前缀的 NALU 统一重写成 4 字节前缀（ls=4 原样返回） */
+function rmxNormNalu(d, ls){
+  if(ls===4) return d;
+  var o=0, sz=0, i, total=0, parts=[];
+  while(o+ls<=d.length){
+    sz=0;
+    for(i=0;i<ls;i++) sz=(sz*256)+d[o+i];
+    if(o+ls+sz>d.length) break;
+    parts.push(d.subarray(o+ls, o+ls+sz));
+    total += 4+sz;
+    o += ls+sz;
+  }
+  if(!parts.length) return d;
+  var r=new Uint8Array(total), k=0;
+  for(i=0;i<parts.length;i++){
+    r[k]=parts[i].length>>>24; r[k+1]=(parts[i].length>>>16)&255; r[k+2]=(parts[i].length>>>8)&255; r[k+3]=parts[i].length&255;
+    k+=4; r.set(parts[i],k); k+=parts[i].length;
+  }
+  return r;
+}
+/* 统一组装 ftyp + mdat + moov（视频 H.264，音频 AAC） */
+async function rmxBuildMp4(P, prog){
+  prog=prog||function(){};
+  var vSamples=P.vSamples||[], aSamples=P.aSamples||[];
+  var SPS=P.sps||null, PPS=P.pps||null;
+  var W=P.w||0, H=P.h||0;
+  var TSV=P.vScale||90000;
+  var aRate=P.aRate||48000, aChan=P.aChan||2, aObj=P.aObj||2;
+  var i;
+
+  /* ---------- 时间轴 ---------- */
+  var vDurs=[];
+  for(i=0;i<vSamples.length;i++){
+    var dcur=vSamples[i].dts;
+    var dnext=(i+1<vSamples.length)? vSamples[i+1].dts : dcur;
+    var dd=dnext-dcur;
+    if(!(dd>0) || dd>TSV*3) dd=(i>0? vDurs[i-1] : Math.round(TSV/30));
+    if(!(dd>0)) dd=Math.round(TSV/30);
+    vDurs.push(dd);
+  }
+  var vTotal=0; for(i=0;i<vDurs.length;i++) vTotal+=vDurs[i];
+  var aTotal=aSamples.length*1024;
+  var audioScale=aRate||48000;
+  var audioTotalMs=(aSamples.length*1024/audioScale)*1000;
+  var videoTotalMs=(vTotal/TSV)*1000;
+  var totalMs=Math.max(videoTotalMs, audioTotalMs, 1);
+
+  /* ---------- 组 box ---------- */
+  if(vSamples.length && (!SPS||!PPS)) throw new Error('找不到 SPS/PPS，无法封装 H.264');
+  if(vSamples.length && (!W||!H)) { W=W||1280; H=H||720; }
+
+  var matrix=[tu32(0x00010000),tu32(0),tu32(0),tu32(0),tu32(0x00010000),tu32(0),tu32(0),tu32(0),tu32(0x40000000)];
+
+  function makeTkhd(tid, durMs, isVideo, w, h){
+    var parts=[tu32(0),tu32(0),tu32(tid),tu32(0),tu32(durMs),tu32(0),tu32(0),tu16(0),tu16(0),
+      tu16(isVideo?0:0x0100),tu16(0)];
+    parts=parts.concat(matrix);
+    parts.push(tu32(isVideo? (w*65536):0), tu32(isVideo? (h*65536):0));
+    return tfull('tkhd',0,0x000007, parts);
+  }
+  function makeMdhd(scale, dur, lang){
+    return tfull('mdhd',0,0,[tu32(0),tu32(0),tu32(scale),tu32(dur),tu16(lang||0x55C4),tu16(0)]);
+  }
+  function makeHdlr(kind, name){
+    return tfull('hdlr',0,0,[tu32(0), tstr(kind), tu32(0),tu32(0),tu32(0), tstr(name), new Uint8Array([0])]);
+  }
+  function makeDinf(){
+    return tbox('dinf',[ tfull('dref',0,0,[tu32(1), tfull('url ',0,1,[])]) ]);
+  }
+  function makeStts(durs){
+    var ents=[], i, last=null;
+    for(i=0;i<durs.length;i++){
+      if(last && last.d===durs[i]) last.n++;
+      else { last={n:1,d:durs[i]}; ents.push(last); }
+    }
+    var parts=[tu32(ents.length)];
+    for(i=0;i<ents.length;i++){ parts.push(tu32(ents[i].n)); parts.push(tu32(ents[i].d)); }
+    return tfull('stts',0,0,parts);
+  }
+  function makeCtts(offs){
+    var ents=[], i, last=null;
+    for(i=0;i<offs.length;i++){
+      if(last && last.o===offs[i]) last.n++;
+      else { last={n:1,o:offs[i]}; ents.push(last); }
+    }
+    var parts=[tu32(ents.length)];
+    for(i=0;i<ents.length;i++){ parts.push(tu32(ents[i].n)); parts.push(tu32(ents[i].o)); }
+    return tfull('ctts',1,0,parts);
+  }
+  function makeStsz(sizes){
+    var parts=[tu32(0),tu32(sizes.length)];
+    for(var i=0;i<sizes.length;i++) parts.push(tu32(sizes[i]));
+    return tfull('stsz',0,0,parts);
+  }
+  function makeStscOne(){
+    return tfull('stsc',0,0,[tu32(1), tu32(1), tu32(1), tu32(1)]);
+  }
+  function makeStco(offs){
+    var parts=[tu32(offs.length)];
+    for(var i=0;i<offs.length;i++) parts.push(tu32(offs[i]));
+    return tfull('stco',0,0,parts);
+  }
+  function makeStss(v){
+    var n=[]; for(var i=0;i<v.length;i++) if(v[i].key) n.push(i+1);
+    if(!n.length || n.length===v.length) return null;
+    var parts=[tu32(n.length)];
+    for(var k=0;k<n.length;k++) parts.push(tu32(n[k]));
+    return tfull('stss',0,0,parts);
+  }
+
+  function makeAvcC(sps,pps){
+    return tbox('avcC',[ new Uint8Array([1, sps[1], sps[2], sps[3], 0xFF, 0xE1]), tu16(sps.length), sps, new Uint8Array([1]), tu16(pps.length), pps ]);
+  }
+  function makeAvc1(sps,pps,w,h){
+    var cn=new Uint8Array(32);
+    var parts=[new Uint8Array(6), tu16(1), new Uint8Array(16),
+      tu16(w),tu16(h),tu32(0x00480000),tu32(0x00480000),tu32(0),tu16(1), cn, tu16(0x0018), tu16(0xFFFF), makeAvcC(sps,pps)];
+    return tbox('avc1',parts);
+  }
+  function makeEsds(rate, chan, obj){
+    var sfi=0;
+    var SF=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350];
+    for(var i=0;i<SF.length;i++) if(SF[i]===rate){ sfi=i; break; }
+    var asc=new Uint8Array([ ((obj||2)<<3)|(sfi>>1), ((sfi&1)<<7)|((chan||2)<<3), 0 ]);
+    function desc(tag, body){
+      var len=body.length, lh;
+      if(len<128) lh=[len];
+      else lh=[(0x80|((len>>>21)&0x7F)),(0x80|((len>>>14)&0x7F)),(0x80|((len>>>7)&0x7F)),(len&0x7F)];
+      return tcat([new Uint8Array([tag]), new Uint8Array(lh), body]);
+    }
+    var dcd=desc(0x04, tcat([new Uint8Array([0x40]), new Uint8Array([0x15]), new Uint8Array(3), tu32(0), tu32(0), desc(0x05, asc)]));
+    var es=desc(0x03, tcat([tu16(0), new Uint8Array([0]), dcd, desc(0x06, new Uint8Array([2]))]));
+    return tfull('esds',0,0,[es]);
+  }
+  function makeMp4a(rate, chan, obj){
+    var parts=[new Uint8Array(6), tu16(1), tu32(0),tu32(0), tu16(chan||2), tu16(16), tu16(0),tu16(0),
+      tu32((rate||48000)*65536), makeEsds(rate,chan,obj)];
+    return tbox('mp4a',parts);
+  }
+
+  var vBytes=0, aBytes=0;
+  for(i=0;i<vSamples.length;i++) vBytes+=vSamples[i].d.length;
+  for(i=0;i<aSamples.length;i++) aBytes+=aSamples[i].d.length;
+  var mdatSize=8+vBytes+aBytes;
+
+  var ftyp=tbox('ftyp',[ tstr('isom'), tu32(512), tstr('isom'), tstr('iso2'), tstr('avc1'), tstr('mp41') ]);
+  var ftypLen=ftyp.length;
+  var mdatStart=ftypLen;
+  var vDataStart=mdatStart+8, aDataStart=vDataStart+vBytes;
+
+  var vOffs=[], off2=vDataStart;
+  for(i=0;i<vSamples.length;i++){ vOffs.push(off2); off2+=vSamples[i].d.length; }
+  var aOffs=[], off3=aDataStart;
+  for(i=0;i<aSamples.length;i++){ aOffs.push(off3); off3+=aSamples[i].d.length; }
+
+  var vSizes=[], aSizes=[], aDurs=[];
+  for(i=0;i<vSamples.length;i++) vSizes.push(vSamples[i].d.length);
+  for(i=0;i<aSamples.length;i++){ aSizes.push(aSamples[i].d.length); aDurs.push(1024); }
+
+  var traks=[];
+  if(vSamples.length){
+    var vCttsOffs=null, anyDiff=false;
+    for(i=0;i<vSamples.length;i++){ if(vSamples[i].pts!==vSamples[i].dts){ anyDiff=true; break; } }
+    if(anyDiff){ vCttsOffs=[]; for(i=0;i<vSamples.length;i++) vCttsOffs.push(vSamples[i].pts-vSamples[i].dts); }
+    var vStblParts=[ tfull('stsd',0,0,[tu32(1), makeAvc1(SPS,PPS,W,H)]), makeStts(vDurs) ];
+    if(vCttsOffs) vStblParts.push(makeCtts(vCttsOffs));
+    var stss=makeStss(vSamples);
+    if(stss) vStblParts.push(stss);
+    vStblParts.push(makeStscOne(), makeStsz(vSizes), makeStco(vOffs));
+    traks.push(tbox('trak',[
+      makeTkhd(1, Math.round(totalMs), true, W, H),
+      tbox('mdia',[
+        makeMdhd(TSV, vTotal, 0x55C4),
+        makeHdlr('vide', 'VideoHandler'),
+        tbox('minf',[ tfull('vmhd',0,1,[tu16(0),tu16(0),tu16(0),tu16(0)]), makeDinf(), tbox('stbl', vStblParts) ])
+      ])
+    ]));
+  }
+  if(aSamples.length){
+    traks.push(tbox('trak',[
+      makeTkhd(2, Math.round(totalMs), false, 0, 0),
+      tbox('mdia',[
+        makeMdhd(audioScale, aTotal, 0x55C4),
+        makeHdlr('soun', 'SoundHandler'),
+        tbox('minf',[ tfull('smhd',0,0,[tu16(0),tu16(0)]), makeDinf(),
+          tbox('stbl',[ tfull('stsd',0,0,[tu32(1), makeMp4a(audioScale,aChan,aObj)]), makeStts(aDurs), makeStscOne(), makeStsz(aSizes), makeStco(aOffs) ])
+        ])
+      ])
+    ]));
+  }
+  if(!traks.length) throw new Error('没解析出任何可封装的音视频帧');
+
+  var mvhd=tfull('mvhd',0,0,[tu32(0),tu32(0),tu32(1000),tu32(Math.round(totalMs)),tu32(0x00010000),tu16(0x0100),tu16(0),tu32(0),tu32(0)].concat(matrix).concat([tu32(0),tu32(0),tu32(0),tu32(0),tu32(0),tu32(0),tu32(traks.length+1)]));
+  var moov=tbox('moov',[mvhd].concat(traks));
+
+  var outTotal=ftyp.length+mdatSize+moov.length;
+  var out=new Uint8Array(outTotal);
+  out.set(ftyp,0);
+  out[mdatStart]=(mdatSize>>>24)&255; out[mdatStart+1]=(mdatSize>>>16)&255; out[mdatStart+2]=(mdatSize>>>8)&255; out[mdatStart+3]=mdatSize&255;
+  out[mdatStart+4]=0x6D; out[mdatStart+5]=0x64; out[mdatStart+6]=0x61; out[mdatStart+7]=0x74;
+  var w=vDataStart;
+  for(i=0;i<vSamples.length;i++){ out.set(vSamples[i].d,w); w+=vSamples[i].d.length; if((i&255)===0){ prog('写入视频…',0.6+0.3*(i/(vSamples.length||1))); if((i&511)===0) await tick(); } }
+  for(i=0;i<aSamples.length;i++){ out.set(aSamples[i].d,w); w+=aSamples[i].d.length; }
+  out.set(moov, ftyp.length+mdatSize);
+  prog('完成',1);
+
+  return {bytes:out, info:{width:W, height:H, videoFrames:vSamples.length, audioFrames:aSamples.length,
+    videoSec:(vTotal/TSV), audioRate:audioScale, size:outTotal, codec:(vSamples.length?'H.264':'')+(aSamples.length?'+AAC':'')}};
+}
+/* ================== FLV（H.264 + AAC） ================== */
+async function flvRemuxToMp4(input, onProg){
+  var prog=onProg||function(){};
+  var b=(input instanceof Uint8Array)?input:(input instanceof ArrayBuffer? new Uint8Array(input):null);
+  if(!b) throw new Error('没有可用的字节');
+  if(!(b[0]===0x46 && b[1]===0x4C && b[2]===0x56)) throw new Error('这不是 FLV：文件头没有 FLV 标识');
+  var hs=(b[5]<<24)|(b[6]<<16)|(b[7]<<8)|b[8];
+  if(!(hs>=9 && hs<=1024)) hs=9;
+  var o=hs+4, avcc=null, asc=null, vSamples=[], aSamples=[];
+  var n=0, sawAudio=false, badAudio=0;
+  prog('解析 FLV…',0.02);
+  while(o+11<=b.length){
+    var tt=b[o], dsz=rmxU24(b,o+1), tms=rmxU24(b,o+4)|(b[o+7]<<24);
+    var ds=o+11;
+    if(ds+dsz>b.length) break;
+    if(tt===0x09){
+      var cid=b[ds]&0x0F, pt=b[ds+1];
+      if(pt===0){ avcc=b.subarray(ds+5, ds+dsz); }
+      else if(pt===1){
+        if(cid!==7) throw new Error('FLV 里的视频不是 H.264（codecID '+cid+'）：换编码只能重编码，本工具不做');
+        var cto=rmxU24(b,ds+2); if(cto>=0x800000) cto-=0x1000000;
+        vSamples.push({d:b.subarray(ds+5,ds+dsz), dts:tms, pts:tms+cto, key:(b[ds]>>4)===1});
+      }
+    } else if(tt===0x08){
+      sawAudio=true;
+      var fmt=(b[ds]>>4)&0x0F;
+      if(fmt===10){
+        if(b[ds+1]===0){ asc=b.subarray(ds+2,ds+dsz); }
+        else aSamples.push({d:b.subarray(ds+2,ds+dsz)});
+      } else badAudio++;
+    }
+    o=ds+dsz+4;
+    n++;
+    if((n&2047)===0){ prog('解析 FLV…',0.02+0.3*Math.min(1,o/b.length)); await tick(); }
+  }
+  prog('切分视频帧…',0.35);
+  if(!vSamples.length) throw new Error('FLV 里没解析出视频帧');
+  if(!avcc) throw new Error('FLV 里没有 AVC 序列头，确认一下是不是 H.264');
+  var av=rmxParseAvcC(avcc);
+  var vScale=1000;
+  if(av.ls!==4){
+    for(var vi=0;vi<vSamples.length;vi++) vSamples[vi].d=rmxNormNalu(vSamples[vi].d, av.ls);
+  }
+  var ai=rmxAscInfo(asc);
+  if(badAudio && !aSamples.length) throw new Error('FLV 的音频不是 AAC（本工具只搬 AAC）');
+  var spsi=parseSps(av.sps);
+  return await rmxBuildMp4({vSamples:vSamples, aSamples:aSamples, sps:av.sps, pps:av.pps,
+    w:spsi?spsi.width:0, h:spsi?spsi.height:0, vScale:vScale, aRate:ai.rate, aChan:ai.chan, aObj:ai.obj}, prog);
+}
+
+/* ================== MKV / EBML（H.264 + AAC） ================== */
+function rmxIdLen(b,o){
+  var f=b[o], n=1, m=0x80;
+  while(n<=4 && !(f&m)){ m>>=1; n++; }
+  return (n<=4)? n : 0;
+}
+function rmxIdHex(b,o,n){
+  var s='';
+  for(var i=0;i<n;i++) s += ((b[o+i]<16)?'0':'') + b[o+i].toString(16);
+  return s.toUpperCase();
+}
+function rmxVintSize(b,o){
+  var f=b[o], n=1, m=0x80;
+  while(n<=8 && !(f&m)){ m>>=1; n++; }
+  if(n>8) return {v:-1,n:1};
+  var v = (n===8)? 0 : (f & ((1<<(8-n))-1));
+  for(var i=1;i<n;i++) v = v*256 + b[o+i];
+  return {v:v, n:n};
+}
+function rmxWalk(b, s, e, cb){
+  var o=s;
+  while(o+2<=e){
+    var n1=rmxIdLen(b,o);
+    if(!n1) return;
+    var id=rmxIdHex(b,o,n1);
+    var sz=rmxVintSize(b,o+n1);
+    if(sz.v<0) return;
+    var bs=o+n1+sz.n, be=bs+sz.v;
+    if(be>e) return;
+    if(cb(id, bs, be)===false) return;
+    o=be;
+  }
+}
+function rmxLaceFrames(b, start, end, flags){
+  var lacing=(flags&0x06)>>1;
+  if(lacing===0) return [{s:start,e:end}];
+  var p=start;
+  if(p>=end) return [];
+  var cnt=b[p]+1; p++;
+  var frames=[], sizes=[], i, j;
+  if(lacing===1){
+    for(i=0;i<cnt-1;i++){
+      var sz=0;
+      while(p<end && b[p]===0xFF){ sz+=255; p++; }
+      if(p>=end) return [];
+      sz+=b[p]; p++;
+      sizes.push(sz);
+    }
+    var q=p;
+    for(i=0;i<cnt-1;i++){ frames.push({s:q,e:q+sizes[i]}); q+=sizes[i]; }
+    frames.push({s:q,e:end});
+  } else if(lacing===2){
+    var per=Math.floor((end-p)/cnt);
+    for(i=0;i<cnt;i++) frames.push({s:p+i*per, e:(i===cnt-1)?end:(p+(i+1)*per)});
+  } else {
+    var v0=rmxVintSize(b,p); p+=v0.n;
+    var prev=v0.v;
+    sizes.push(prev);
+    for(i=1;i<cnt-1;i++){
+      var d=rmxVintSize(b,p); p+=d.n;
+      var bits=7*d.n-1;
+      var delta = (d.v >= Math.pow(2,bits)) ? (d.v - Math.pow(2,bits+1)) : d.v;
+      prev = prev + delta;
+      sizes.push(prev);
+    }
+    var q2=p;
+    for(i=0;i<cnt-1;i++){ frames.push({s:q2,e:q2+sizes[i]}); q2+=sizes[i]; }
+    frames.push({s:q2,e:end});
+  }
+  return frames;
+}
+async function mkvRemuxToMp4(input, onProg){
+  var prog=onProg||function(){};
+  var b=(input instanceof Uint8Array)?input:(input instanceof ArrayBuffer? new Uint8Array(input):null);
+  if(!b) throw new Error('没有可用的字节');
+  if(!(b[0]===0x1A && b[1]===0x45 && b[2]===0xDF && b[3]===0xA3)) throw new Error('这不是 MKV/WebM：没有 EBML 头');
+  prog('解析 MKV…',0.02);
+  var segS=-1, segE=-1;
+  rmxWalk(b, 0, b.length, function(id,s,e){
+    if(id==='18538067'){ segS=s; segE=e; return false; }
+  });
+  if(segS<0) throw new Error('MKV 里没找到 Segment');
+  var tcScale=1000000, tracks={}, vNum=-1, aNum=-1, vType=-1, aType=-1;
+  var vCodec='', aCodec='', vWidth=0, vHeight=0, vDefDur=0, aRate=0, aChan=0;
+  var vCpriv=null, aCpriv=null;
+  rmxWalk(b, segS, segE, function(id,s,e){
+    if(id==='1549A966'){
+      // TimecodeScale 是 uint 元素：按字节读大端
+      rmxWalk(b, s, e, function(id2,s2,e2){
+        if(id2==='2AD7B1'){
+          var v=0;
+          for(var i=s2;i<e2;i++) v=v*256+b[i];
+          tcScale=v||1000000;
+        }
+      });
+    } else if(id==='1654AE6B'){
+      rmxWalk(b, s, e, function(id2,s2,e2){
+        if(id2!=='AE') return;
+        var num=0, typ=0, codec='', cpriv=null, dw=0, dh=0, rate=0, ch=0, ddur=0;
+        rmxWalk(b, s2, e2, function(id3,s3,e3){
+          var v=0, i;
+          if(id3==='D7'){ for(i=s3;i<e3;i++) num=v=v*256+b[i]; }
+          else if(id3==='83'){ for(i=s3;i<e3;i++) typ=v=v*256+b[i]; }
+          else if(id3==='86'){ var cs=''; for(i=s3;i<e3;i++) cs+=String.fromCharCode(b[i]); codec=cs; }
+          else if(id3==='63A2'){ cpriv=b.subarray(s3,e3); }
+          else if(id3==='23E383'){ for(i=s3;i<e3;i++) ddur=v=v*256+b[i]; }
+          else if(id3==='E0'){
+            rmxWalk(b, s3, e3, function(id4,s4,e4){
+              var w=0,i;
+              if(id4==='B0'){ for(i=s4;i<e4;i++) w=w*256+b[i]; dw=w; }
+              else if(id4==='BA'){ for(i=s4;i<e4;i++) w=w*256+b[i]; dh=w; }
+            });
+          } else if(id3==='E1'){
+            rmxWalk(b, s3, e3, function(id4,s4,e4){
+              var i;
+              if(id4==='B5'){
+                if(e4-s4===4){ rate=Math.round(Math.pow(2,(b[s4]&0x7F)-127)*(1+((b[s4+1]*(1<<16)+(b[s4+2]<<8)+b[s4+3])/8388608))); }
+                else if(e4-s4===8){ rate=Math.round(Math.pow(2,(b[s4]&0x7F)-127)*(1+((b[s4+1]*(1<<16)+(b[s4+2]<<8)+b[s4+3])/8388608))); }
+              } else if(id4==='9F'){ var c=0; for(i=s4;i<e4;i++) c=c*256+b[i]; ch=c; }
+            });
+          }
+        });
+        if(typ===1){ vNum=num; vType=typ; vCodec=codec; vCpriv=cpriv; vWidth=dw; vHeight=dh; vDefDur=ddur; }
+        else if(typ===2){ aNum=num; aType=typ; aCodec=codec; aCpriv=cpriv; aRate=rate; aChan=ch; }
+      });
+    }
+  });
+  prog('解析轨道…',0.2);
+  if(vNum<0 && aNum<0) throw new Error('MKV 里没找到音视频轨道');
+  if(vNum>=0 && vCodec.indexOf('V_MPEG4/ISO/AVC')<0){
+    throw new Error('MKV 里的视频是 '+vCodec+'：本工具只搬 H.264(V_MPEG4/ISO/AVC)，换编码只能重编码');
+  }
+  if(aNum>=0 && aCodec.indexOf('A_AAC')<0){
+    throw new Error('MKV 里的音频是 '+aCodec+'：本工具只搬 AAC');
+  }
+  var av = vNum>=0 ? rmxParseAvcC(vCpriv) : null;
+  var ai = aNum>=0 ? rmxAscInfo(aCpriv) : {obj:2, rate:44100, chan:2};
+  if(aNum>=0 && (!aRate || !aChan)){ aRate=ai.rate; aChan=ai.chan; }
+
+  /* ---------- 收集 Cluster 里的块 ---------- */
+  var vBlocks=[], aBlocks=[];
+  var clusters=0, ncl=0;
+  var vidx=0;
+  rmxWalk(b, segS, segE, function(id,s,e){
+    if(id!=='1F43B675') return;
+    clusters++;
+    var cts=0;
+    rmxWalk(b, s, e, function(id2,s2,e2){
+      var i, t;
+      if(id2==='E7'){ t=0; for(i=s2;i<e2;i++) t=t*256+b[i]; cts=t; }
+      else if(id2==='A3' || id2==='A1'){
+        var tn=rmxVintSize(b,s2);
+        var p=s2+tn.n;
+        if(p+3>e2) return;
+        var rel=(b[p]<<8)|b[p+1];
+        if(rel & 0x8000) rel-=0x10000;
+        var flags=b[p+2];
+        var dstart=p+3;
+        var frames=rmxLaceFrames(b, dstart, e2, flags);
+        for(var k=0;k<frames.length;k++){
+          var fd=b.subarray(frames[k].s, frames[k].e);
+          if(tn.v===vNum) vBlocks.push({t:cts+rel, key:(flags&0x80)!==0, d:fd});
+          else if(tn.v===aNum) aBlocks.push({t:cts+rel, d:fd});
+        }
+        ncl++;
+        if((ncl&511)===0){ prog('解析 Cluster…',0.2+0.3*Math.min(1,clusters/20)); }
+      }
+    });
+  });
+  prog('切分视频帧…',0.5);
+  if(!vBlocks.length && !aBlocks.length) throw new Error('MKV 里没读到任何音视频块');
+  var vSamples=[], aSamples=[];
+  var vScale=1000;
+  if(vBlocks.length){
+    if(av && av.ls!==4){ for(var q=0;q<vBlocks.length;q++) vBlocks[q].d=rmxNormNalu(vBlocks[q].d, av.ls); }
+    var durMs = vDefDur>0 ? (vDefDur/1e6) : 0;
+    if(!durMs){
+      var diffs=[];
+      for(var q2=1;q2<vBlocks.length && q2<20;q2++){ var dt=vBlocks[q2].t - vBlocks[q2-1].t; if(dt>0) diffs.push(dt); }
+      durMs = diffs.length ? Math.round(diffs.sort(function(x,y){return x-y;})[Math.floor(diffs.length/2)]) : 40;
+      if(!(durMs>0)) durMs=40;
+    }
+    for(var q3=0;q3<vBlocks.length;q3++){
+      vSamples.push({d:vBlocks[q3].d, dts:Math.round(q3*durMs), pts:vBlocks[q3].t, key:vBlocks[q3].key});
+      if((q3&1023)===0){ if((q3&2047)===0) await tick(); }
+    }
+  }
+  for(var q4=0;q4<aBlocks.length;q4++) aSamples.push({d:aBlocks[q4].d});
+  var spsi = av ? parseSps(av.sps) : null;
+  var W=(spsi&&spsi.width) || vWidth || 0, H=(spsi&&spsi.height) || vHeight || 0;
+  prog('封装 MP4…',0.55);
+  return await rmxBuildMp4({vSamples:vSamples, aSamples:aSamples, sps:av?av.sps:null, pps:av?av.pps:null,
+    w:W, h:H, vScale:vScale, aRate:aRate||ai.rate, aChan:aChan||ai.chan, aObj:ai.obj}, prog);
+}
+
+/* ================== 容器自动识别 ================== */
+function tsmSniff(b){
+  if(!b || !b.length) return 'unknown';
+  if(b[0]===0x46 && b[1]===0x4C && b[2]===0x56) return 'flv';
+  if(b[0]===0x1A && b[1]===0x45 && b[2]===0xDF && b[3]===0xA3) return 'mkv';
+  if(b[0]===0x47 && (b.length>188 && b[188]===0x47)) return 'ts';
+  if(b[0]===0x47 && (b.length>376 && b[376]===0x47)) return 'ts';
+  return 'unknown';
+}
+async function tsmRemuxAny(input, onProg){
+  var b=(input instanceof Uint8Array)?input:(input instanceof ArrayBuffer? new Uint8Array(input):null);
+  if(!b) throw new Error('没有可用的字节');
+  var kind=tsmSniff(b);
+  if(kind==='flv') return await flvRemuxToMp4(b, onProg);
+  if(kind==='mkv') return await mkvRemuxToMp4(b, onProg);
+  if(kind==='ts') return await tsRemuxToMp4(b, onProg);
+  throw new Error('认不出这个文件：目前只支持 TS(.ts/.m2ts)、FLV、MKV');
+}
+
 async function tsRemuxToMp4(input, onProg){
   var prog=onProg||function(){};
   var b=(input instanceof Uint8Array)?input:(input instanceof ArrayBuffer? new Uint8Array(input) : null);
@@ -5675,12 +6259,12 @@ async function tsRemuxToMp4(input, onProg){
         if(ty===9) startNew=hasVcl;
         else if(ty===6||ty===7||ty===8) startNew=hasVcl;
         else if(ty>=1&&ty<=5){
-          if(hasVcl){ startNew=(firstMb([nal])===0); }
-          hasVcl=true;
+          if(hasVcl && cur.length){ startNew=(firstMb([nal])===0); }
         }
         if(startNew) flushV();
         if(!cur.length){ curDts=pe3.dts; curPts=pe3.pts; }
         cur.push(nal); curCount++;
+        if(ty>=1&&ty<=5) hasVcl=true;
       }
       if((vi&1023)===0){ prog('切分视频帧…',0.30+0.2*(vi/(vPes.length||1))); if((vi&2047)===0) await tick(); }
     }
@@ -5714,194 +6298,20 @@ async function tsRemuxToMp4(input, onProg){
   }
   prog('切分音频帧…',0.58);
 
-  /* ---------- 时间轴 ---------- */
-  var TSV=90000;
-  var vDurs=[], i;
-  for(i=0;i<vSamples.length;i++){
-    var dcur=vSamples[i].dts;
-    var dnext=(i+1<vSamples.length)? vSamples[i+1].dts : dcur;
-    var dd=dnext-dcur;
-    if(!(dd>0) || dd>TSV*3) dd=(i>0? vDurs[i-1] : Math.round(TSV/30));
-    if(!(dd>0)) dd=Math.round(TSV/30);
-    vDurs.push(dd);
-  }
-  var vTotal=0; for(i=0;i<vDurs.length;i++) vTotal+=vDurs[i];
-  var aTotal=aSamples.length*1024;
-  var audioScale=aRate||48000;
-  var audioTotalMs=(aSamples.length*1024/audioScale)*1000;
-  var videoTotalMs=(vTotal/TSV)*1000;
-  var totalMs=Math.max(videoTotalMs, audioTotalMs, 1);
-
-  /* ---------- 组 box ---------- */
+  /* ---------- 组装（TS / FLV / MKV 共用同一套写出逻辑） ---------- */
   var SPS=spsList[0]||null, PPS=ppsList[0]||null;
   var spsi=SPS? parseSps(SPS) : null;
   var W=spsi? spsi.width : 0, H=spsi? spsi.height : 0;
   if(vSamples.length && (!SPS||!PPS)) throw new Error('TS 里找不到 SPS/PPS，无法封装 H.264');
   if(vSamples.length && (!W||!H)) { W=W||1280; H=H||720; }
-
-  var matrix=[tu32(0x00010000),tu32(0),tu32(0),tu32(0),tu32(0x00010000),tu32(0),tu32(0),tu32(0),tu32(0x40000000)];
-
-  function makeTkhd(tid, durMs, isVideo, w, h){
-    var parts=[tu32(0),tu32(0),tu32(tid),tu32(0),tu32(durMs),tu32(0),tu32(0),tu16(0),tu16(0),
-      tu16(isVideo?0:0x0100),tu16(0)];
-    parts=parts.concat(matrix);
-    parts.push(tu32(isVideo? (w*65536):0), tu32(isVideo? (h*65536):0));
-    return tfull('tkhd',0,0x000007, parts);
-  }
-  function makeMdhd(scale, dur, lang){
-    return tfull('mdhd',0,0,[tu32(0),tu32(0),tu32(scale),tu32(dur),tu16(lang||0x55C4),tu16(0)]);
-  }
-  function makeHdlr(kind, name){
-    return tfull('hdlr',0,0,[tu32(0), tstr(kind), tu32(0),tu32(0),tu32(0), tstr(name), new Uint8Array([0])]);
-  }
-  function makeDinf(){
-    return tbox('dinf',[ tfull('dref',0,0,[tu32(1), tfull('url ',0,1,[])]) ]);
-  }
-  function makeStts(durs){
-    var ents=[], i, last=null;
-    for(i=0;i<durs.length;i++){
-      if(last && last.d===durs[i]) last.n++;
-      else { last={n:1,d:durs[i]}; ents.push(last); }
-    }
-    var parts=[tu32(ents.length)];
-    for(i=0;i<ents.length;i++){ parts.push(tu32(ents[i].n)); parts.push(tu32(ents[i].d)); }
-    return tfull('stts',0,0,parts);
-  }
-  function makeCtts(offs){
-    // version 1，允许负数
-    var ents=[], i, last=null;
-    for(i=0;i<offs.length;i++){
-      if(last && last.o===offs[i]) last.n++;
-      else { last={n:1,o:offs[i]}; ents.push(last); }
-    }
-    var parts=[tu32(ents.length)];
-    for(i=0;i<ents.length;i++){ parts.push(tu32(ents[i].n)); parts.push(tu32(ents[i].o)); }
-    return tfull('ctts',1,0,parts);
-  }
-  function makeStsz(sizes){
-    var parts=[tu32(0),tu32(sizes.length)];
-    for(var i=0;i<sizes.length;i++) parts.push(tu32(sizes[i]));
-    return tfull('stsz',0,0,parts);
-  }
-  function makeStscOne(){
-    return tfull('stsc',0,0,[tu32(1), tu32(1), tu32(1), tu32(1)]);
-  }
-  function makeStco(offs){
-    var parts=[tu32(offs.length)];
-    for(var i=0;i<offs.length;i++) parts.push(tu32(offs[i]));
-    return tfull('stco',0,0,parts);
-  }
-  function makeStss(v){
-    var n=[]; for(var i=0;i<v.length;i++) if(v[i].key) n.push(i+1);
-    if(!n.length || n.length===v.length) return null;
-    var parts=[tu32(n.length)];
-    for(var k=0;k<n.length;k++) parts.push(tu32(n[k]));
-    return tfull('stss',0,0,parts);
-  }
-
-  function makeAvcC(sps,pps){
-    return tbox('avcC',[ new Uint8Array([1, sps[1], sps[2], sps[3], 0xFF, 0xE1]), tu16(sps.length), sps, new Uint8Array([1]), tu16(pps.length), pps ]);
-  }
-  function makeAvc1(sps,pps,w,h){
-    var cn=new Uint8Array(32);
-    var parts=[new Uint8Array(6), tu16(1), new Uint8Array(16),
-      tu16(w),tu16(h),tu32(0x00480000),tu32(0x00480000),tu32(0),tu16(1), cn, tu16(0x0018), tu16(0xFFFF), makeAvcC(sps,pps)];
-    return tbox('avc1',parts);
-  }
-  function makeEsds(rate, chan, obj){
-    var sfi=0;
-    var SF=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350];
-    for(var i=0;i<SF.length;i++) if(SF[i]===rate){ sfi=i; break; }
-    var asc=new Uint8Array([ ((obj||2)<<3)|(sfi>>1), ((sfi&1)<<7)|((chan||2)<<3), 0 ]);
-    function desc(tag, body){
-      var len=body.length, lh;
-      if(len<128) lh=[len];
-      else lh=[(0x80|((len>>>21)&0x7F)),(0x80|((len>>>14)&0x7F)),(0x80|((len>>>7)&0x7F)),(len&0x7F)];
-      return tcat([new Uint8Array([tag]), new Uint8Array(lh), body]);
-    }
-    var dcd=desc(0x04, tcat([new Uint8Array([0x40]), new Uint8Array([0x15]), new Uint8Array(3), tu32(0), tu32(0), desc(0x05, asc)]));
-    var es=desc(0x03, tcat([tu16(0), new Uint8Array([0]), dcd, desc(0x06, new Uint8Array([2]))]));
-    return tfull('esds',0,0,[es]);
-  }
-  function makeMp4a(rate, chan, obj){
-    var parts=[new Uint8Array(6), tu16(1), tu32(0),tu32(0), tu16(chan||2), tu16(16), tu16(0),tu16(0),
-      tu32((rate||48000)*65536), makeEsds(rate,chan,obj)];
-    return tbox('mp4a',parts);
-  }
-
-  /* 计算样本区大小与偏移：mdat 里先视频后音频 */
-  var vBytes=0, aBytes=0, i;
-  for(i=0;i<vSamples.length;i++) vBytes+=vSamples[i].d.length;
-  for(i=0;i<aSamples.length;i++) aBytes+=aSamples[i].d.length;
-  var mdatSize=8+vBytes+aBytes;
-
-  var ftyp=tbox('ftyp',[ tstr('isom'), tu32(512), tstr('isom'), tstr('iso2'), tstr('avc1'), tstr('mp41') ]);
-  var ftypLen=ftyp.length;
-  var mdatStart=ftypLen;
-  var vDataStart=mdatStart+8, aDataStart=vDataStart+vBytes;
-
-  var vOffs=[], off2=vDataStart;
-  for(i=0;i<vSamples.length;i++){ vOffs.push(off2); off2+=vSamples[i].d.length; }
-  var aOffs=[], off3=aDataStart;
-  for(i=0;i<aSamples.length;i++){ aOffs.push(off3); off3+=aSamples[i].d.length; }
-
-  var vSizes=[], aSizes=[], aDurs=[];
-  for(i=0;i<vSamples.length;i++) vSizes.push(vSamples[i].d.length);
-  for(i=0;i<aSamples.length;i++){ aSizes.push(aSamples[i].d.length); aDurs.push(1024); }
-
-  var traks=[];
-  if(vSamples.length){
-    var vCttsOffs=null, anyDiff=false;
-    for(i=0;i<vSamples.length;i++){ if(vSamples[i].pts!==vSamples[i].dts){ anyDiff=true; break; } }
-    if(anyDiff){ vCttsOffs=[]; for(i=0;i<vSamples.length;i++) vCttsOffs.push(vSamples[i].pts-vSamples[i].dts); }
-    var vStblParts=[ tfull('stsd',0,0,[tu32(1), makeAvc1(SPS,PPS,W,H)]), makeStts(vDurs) ];
-    if(vCttsOffs) vStblParts.push(makeCtts(vCttsOffs));
-    var stss=makeStss(vSamples);
-    if(stss) vStblParts.push(stss);
-    vStblParts.push(makeStscOne(), makeStsz(vSizes), makeStco(vOffs));
-    traks.push(tbox('trak',[
-      makeTkhd(1, Math.round(totalMs), true, W, H),
-      tbox('mdia',[
-        makeMdhd(TSV, vTotal, 0x55C4),
-        makeHdlr('vide', 'VideoHandler'),
-        tbox('minf',[ tfull('vmhd',0,1,[tu16(0),tu16(0),tu16(0),tu16(0)]), makeDinf(), tbox('stbl', vStblParts) ])
-      ])
-    ]));
-  }
-  if(aSamples.length){
-    traks.push(tbox('trak',[
-      makeTkhd(2, Math.round(totalMs), false, 0, 0),
-      tbox('mdia',[
-        makeMdhd(audioScale, aTotal, 0x55C4),
-        makeHdlr('soun', 'SoundHandler'),
-        tbox('minf',[ tfull('smhd',0,0,[tu16(0),tu16(0)]), makeDinf(),
-          tbox('stbl',[ tfull('stsd',0,0,[tu32(1), makeMp4a(audioScale,aChan,aObj)]), makeStts(aDurs), makeStscOne(), makeStsz(aSizes), makeStco(aOffs) ])
-        ])
-      ])
-    ]));
-  }
-  if(!traks.length) throw new Error('没解析出任何可封装的音视频帧');
-
-  var mvhd=tfull('mvhd',0,0,[tu32(0),tu32(0),tu32(1000),tu32(Math.round(totalMs)),tu32(0x00010000),tu16(0x0100),tu16(0),tu32(0),tu32(0)].concat(matrix).concat([tu32(0),tu32(0),tu32(0),tu32(0),tu32(0),tu32(0),tu32(traks.length+1)]));
-  var moov=tbox('moov',[mvhd].concat(traks));
-
-  /* 写出：ftyp + mdat + moov */
-  var outTotal=ftyp.length+mdatSize+moov.length;
-  var out=new Uint8Array(outTotal);
-  out.set(ftyp,0);
-  out[mdatStart]=(mdatSize>>>24)&255; out[mdatStart+1]=(mdatSize>>>16)&255; out[mdatStart+2]=(mdatSize>>>8)&255; out[mdatStart+3]=mdatSize&255;
-  out[mdatStart+4]=0x6D; out[mdatStart+5]=0x64; out[mdatStart+6]=0x61; out[mdatStart+7]=0x74;
-  var w=vDataStart;
-  for(i=0;i<vSamples.length;i++){ out.set(vSamples[i].d,w); w+=vSamples[i].d.length; if((i&255)===0){ prog('写入视频…',0.6+0.3*(i/(vSamples.length||1))); if((i&511)===0) await tick(); } }
-  for(i=0;i<aSamples.length;i++){ out.set(aSamples[i].d,w); w+=aSamples[i].d.length; }
-  out.set(moov, ftyp.length+mdatSize);
-  prog('完成',1);
-
-  return {bytes:out, info:{width:W, height:H, videoFrames:vSamples.length, audioFrames:aSamples.length,
-    videoSec:(vTotal/TSV), audioRate:audioScale, size:outTotal, codec:(vSamples.length?'H.264':'')+(aSamples.length?'+AAC':'')}};
+  return await rmxBuildMp4({vSamples:vSamples, aSamples:aSamples, sps:SPS, pps:PPS, w:W, h:H,
+    vScale:90000, aRate:(aRate||48000), aChan:aChan, aObj:aObj}, prog);
 }
 
 window.tsRemuxToMp4=tsRemuxToMp4;
+window.tsmRemuxAny=tsmRemuxAny;
+window.flvRemuxToMp4=flvRemuxToMp4;
+window.mkvRemuxToMp4=mkvRemuxToMp4;
 
 /* ---------- 界面辅助 ---------- */
 window._tsFiles={};
@@ -6566,14 +6976,24 @@ function _gpSameBytes(a,b){
   for(var j=1;j<=64;j++){ if(a[a.length-j]!==b[b.length-j]) return false; }
   return true;
 }
+/* W/H 传 0（或空）= 用这张图自己的画幅：只把长边超过 1920 的等比缩小，不裁不拉；
+   W/H 有值 = 老行为（按给定画框 cover 裁切），只留给单张救生网格那条路 */
 async function gpCoverToPng(u8, mime, W, H){
   var im=await gpImgFromBytes(u8, mime||'image/*');
   var sw=im.naturalWidth||im.width, sh=im.naturalHeight||im.height;
   if(!sw||!sh) throw new Error('图片尺寸读不到');
-  var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
-  var cx=cv.getContext('2d');
-  var s=Math.max(W/sw, H/sh), dw=sw*s, dh=sh*s;
-  cx.drawImage(im, (W-dw)/2, (H-dh)/2, dw, dh);
+  var cv=document.createElement('canvas'), cx, s, dw, dh;
+  if(!W||!H){
+    s=(Math.max(sw,sh)>1920? 1920/Math.max(sw,sh) : 1);
+    W=Math.max(1,Math.round(sw*s)); H=Math.max(1,Math.round(sh*s));
+    cv.width=W; cv.height=H; cx=cv.getContext('2d');
+    cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality='high';
+    cx.drawImage(im,0,0,W,H);
+  }else{
+    cv.width=W; cv.height=H; cx=cv.getContext('2d');
+    s=Math.max(W/sw, H/sh); dw=sw*s; dh=sh*s;
+    cx.drawImage(im, (W-dw)/2, (H-dh)/2, dw, dh);
+  }
   var blob=await new Promise(function(r){ cv.toBlob(r,'image/png'); });
   if(!blob) throw new Error('转 PNG 失败');
   return {fmt:'png', ext:'.png', mime:'image/png', bytes:new Uint8Array(await blob.arrayBuffer())};
@@ -8105,14 +8525,23 @@ async function gpSyncCarrierNote(){
   var n=_gpSegCovers.length;
   if(!n){ el.style.display='none'; el.innerHTML=''; return; }
   var head='共 '+n+' 张';
-  try{
-    var b=await gpCarrierOut();
-    if(b&&b.bytes){
-      var im=await gpImgFromBytes(b.bytes, b.mime);
-      var W=im.naturalWidth||im.width, H=im.naturalHeight||im.height;
-      if(W&&H) head+=' · '+W+'×'+H;
-    }
-  }catch(e){}
+  var dims=[], sameDim=true, W0=0, H0=0, i2;
+  for(i2=0;i2<n;i2++){
+    try{
+      var it2=_gpSegCovers[i2];
+      var im2=await gpImgFromBytes(it2.bytes, it2.mime||'image/png');
+      var Wd=im2.naturalWidth||im2.width, Hd=im2.naturalHeight||im2.height;
+      if(Wd&&Hd){
+        if(i2===0){ W0=Wd; H0=Hd; }
+        else if(Wd!==W0||Hd!==H0){ sameDim=false; }
+        dims.push(Wd+'×'+Hd);
+      }
+    }catch(e2){}
+  }
+  if(dims.length){
+    if(sameDim) head+=' · '+W0+'×'+H0;
+    else head+=' · 各自画幅（'+dims.slice(0,3).join(' / ')+(dims.length>3? ' …':'')+'）';
+  }
   el.style.display='block';
   el.innerHTML=head
     +(n>1?' · 第1段用第1张，用完从头轮转':' · 全部段都用这张')
@@ -8162,7 +8591,7 @@ function gpWaitCarrierReady(ms){
     })();
   });
 }
-/* 一张一张往载体区里加：不覆盖已有的；第一张定画幅，后面的统一到它 */
+/* 一张一张往载体区里加：不覆盖已有的；每张都用自己原来的画幅（只缩超大图，不裁不拉） */
 async function gpAddCarriers(list){
   list=Array.prototype.slice.call(list||[]);
   if(!list.length) return;
@@ -8187,7 +8616,7 @@ async function gpAddCarriers(list){
       if(__fu8[0]===0x47&&__fu8[1]===0x49&&__fu8[2]===0x46 && gpGifFrameCount(__fu8)>1){ __gif0=__fu8; }
       if(!__gif0){
         var __im0=await gpImgFromBytes(base.bytes, base.mime);
-        __png0=await gpCoverToPng(__fu8, list[0].type||'', __im0.naturalWidth||__im0.width, __im0.naturalHeight||__im0.height);
+        __png0=await gpCoverToPng(__fu8, list[0].type||'', 0, 0);
       }
     }catch(e0){}
     if(__gif0) gpStOrig=__gif0;
@@ -8218,13 +8647,13 @@ async function gpAppendCarriers(files){
       var item=null;
       if(u8[0]===0x47&&u8[1]===0x49&&u8[2]===0x46 && gpGifFrameCount(u8)>1){
         var gw0=u8[6]|(u8[7]<<8), gh0=u8[8]|(u8[9]<<8), gb0=u8;
-        if(gw0&&gh0&&W&&H&&(gw0!==W||gh0!==H)){
-          var s0=Math.max(W/gw0, H/gh0);
-          if(s0<1){ var gs0=gpGifScale(u8, s0); if(gs0) gb0=gs0.bytes; }
+        if(gw0&&gh0&&Math.max(gw0,gh0)>1920){
+          var gs0=gpGifScale(u8, 1920/Math.max(gw0,gh0));
+          if(gs0) gb0=gs0.bytes;
         }
         item={name:files[i].name||'', bytes:gb0, orig:u8, fmt:'gif', ext:'.gif', mime:'image/gif'};
       } else {
-        item=await gpCoverToPng(u8, files[i].type||'', W, H);
+        item=await gpCoverToPng(u8, files[i].type||'', 0, 0);
         item.name=files[i].name||'';
       }
       var dup=false;
@@ -11461,6 +11890,284 @@ function mmgDownloadApk(){
   window.addEventListener('resize',hide);
   window.addEventListener('scroll',function(){ hide(); },true);
 })();
+
+/* ================== 视频去片头片尾 / 去广告（前缀 vc_；只按关键帧重封装，零重编码） ================== */
+var vcFile=null, vcParsed=null, vcRows=[], vcMarkS=null, vcNowMsg='', vcUrl=null;
+
+function vcFmt(n){
+  if(!n && n!==0) return '-';
+  if(n<1024) return n+' B';
+  if(n<1040000) return (n/1024).toFixed(1)+' KB';
+  return (n/1000000).toFixed(2)+' MB';
+}
+function vcSec(ms){
+  if(!ms && ms!==0) return '-';
+  var t=ms/1000;
+  if(t<60) return t.toFixed(2)+' 秒';
+  var m=Math.floor(t/60), r2=t-m*60;
+  return m+' 分 '+r2.toFixed(1)+' 秒';
+}
+function vcSay(id,txt,cls){
+  var el=document.getElementById(id);
+  if(!el) return;
+  el.className='hint'+(cls?(' '+cls):'');
+  el.textContent=txt||'';
+}
+function vcNowPaint(){
+  var v=document.getElementById('vc_prev');
+  var t=(v&&isFinite(v.currentTime))?v.currentTime:0;
+  vcSay('vc_now','当前 '+vcSec(t*1000)+(vcNowMsg?(' ｜ '+vcNowMsg):''));
+}
+
+function vcPick(fs){
+  var f=fs&&fs[0];
+  if(!f) return;
+  vcFile=f; vcParsed=null; vcRows=[]; vcMarkS=null; vcNowMsg='';
+  var res=document.getElementById('vc_result');
+  if(res) res.style.display='none';
+  document.getElementById('vc_opts').style.display='none';
+  document.getElementById('vc_btn').style.display='none';
+  vcSay('vc_status','正在解析「'+f.name+'」（'+vcFmt(f.size)+'）…','');
+  f.arrayBuffer().then(function(ab){
+    try{
+      var u8=new Uint8Array(ab);
+      var p=mzmp4.parse(u8);
+      if(!p.ok){ vcSay('vc_status','这个视频解析不了：'+p.err,'err'); return; }
+      var v=null, i;
+      for(i=0;i<p.tracks.length;i++){ if(p.tracks[i].handler==='vide' && !v) v=p.tracks[i]; }
+      if(!v){ vcSay('vc_status','这个文件里没有视频轨道','err'); return; }
+      if(!v.samples || !v.samples.length){ vcSay('vc_status','视频没有采样帧，没法切','err'); return; }
+      var a=null;
+      for(i=0;i<p.tracks.length;i++){ if(p.tracks[i].handler==='soun'){ a=p.tracks[i]; break; } }
+      vcParsed={p:p,u8:u8,v:v,a:a};
+      var kn=0;
+      for(i=0;i<v.samples.length;i++) if(v.samples[i].sync) kn++;
+      vcSay('vc_status','「'+f.name+'」· '+vcFmt(u8.length)+' · 原长 '+vcSec(Math.round(v.duration/v.timescale*1000))+' · 关键帧 '+kn+' 个'+(a?' · 带音频':' · 无音频')+(f.size>150000000?'（文件偏大，解析要等一会）':''),'ok');
+      if(vcUrl) { try{ URL.revokeObjectURL(vcUrl); }catch(e){} }
+      vcUrl=URL.createObjectURL(f);
+      var pv=document.getElementById('vc_prev');
+      pv.src=vcUrl;
+      document.getElementById('vc_opts').style.display='';
+      document.getElementById('vc_btn').style.display='';
+      document.getElementById('vc_head').value='0';
+      document.getElementById('vc_tail').value='0';
+      vcRenderRows();
+      vcNowPaint();
+      vcCalc();
+    }catch(e){
+      vcSay('vc_status','解析失败：'+(e&&e.message?e.message:e),'err');
+    }
+  }).catch(function(e){
+    vcSay('vc_status','读文件失败：'+(e&&e.message?e.message:e),'err');
+  });
+}
+
+/* ---- 打点：标起点 / 标终点 ---- */
+function vcMark(which){
+  if(!vcParsed){ vcSay('vc_status','先选一个 MP4','err'); return; }
+  var pv=document.getElementById('vc_prev');
+  var t=pv.currentTime;
+  if(!isFinite(t)) t=0;
+  if(which==='s'){
+    vcMarkS=t;
+    try{ pv.pause(); }catch(e){}
+    vcNowMsg='起点已标在 '+vcSec(t*1000)+'，播到广告结束再点「标终点」';
+    vcNowPaint();
+    return;
+  }
+  if(vcMarkS===null){ vcNowMsg='先点「标起点」'; vcNowPaint(); return; }
+  if(t<=vcMarkS+0.05){ vcNowMsg='终点必须点在起点之后'; vcNowPaint(); return; }
+  vcRows.push({s:vcMarkS, e:t});
+  var added='已加一段删除：'+vcSec(vcMarkS*1000)+' → '+vcSec(t*1000)+'（'+vcSec((t-vcMarkS)*1000)+'）';
+  vcMarkS=null;
+  vcNowMsg=added;
+  vcRenderRows();
+  vcCalc();
+  vcNowPaint();
+}
+
+function vcRowEdit(i,k,v){
+  if(!vcRows[i]) return;
+  var x=parseFloat(v);
+  vcRows[i][k]=(isFinite(x)&&x>=0)?x:0;
+  vcUpdateDur(i);
+  vcCalc();
+}
+function vcUpdateDur(i){
+  var el=document.querySelector('[data-dur="'+i+'"]');
+  if(!el||!vcRows[i]) return;
+  var d=vcRows[i].e-vcRows[i].s;
+  el.textContent=(d>0?(d.toFixed(2)+'s'):'无效');
+}
+function vcRowDel(i){
+  vcRows.splice(i,1);
+  vcRenderRows();
+  vcCalc();
+}
+function vcRenderRows(){
+  var box=document.getElementById('vc_rows');
+  if(!box) return;
+  if(!vcRows.length){
+    box.innerHTML='<div class="hint" style="margin-top:4px">还没有要删的段：中间有广告就边播边打点，片头片尾直接填下面的秒数</div>';
+    return;
+  }
+  var h='', i, inp='width:74px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 4px;font-size:12px;text-align:center';
+  for(i=0;i<vcRows.length;i++){
+    var d=vcRows[i].e-vcRows[i].s;
+    h+='<div style="display:flex;gap:5px;align-items:center;margin-top:6px;font-size:12px">'
+      +'<span style="color:var(--muted);flex:0 0 22px">'+(i+1)+'.</span>'
+      +'<input type="number" min="0" step="0.01" value="'+vcRows[i].s.toFixed(2)+'" oninput="vcRowEdit('+i+',\'s\',this.value)" style="'+inp+'">'
+      +'<span style="color:var(--muted);flex:0 0 auto">→</span>'
+      +'<input type="number" min="0" step="0.01" value="'+vcRows[i].e.toFixed(2)+'" oninput="vcRowEdit('+i+',\'e\',this.value)" style="'+inp+'">'
+      +'<span data-dur="'+i+'" style="color:var(--muted);flex:1 1 auto;white-space:nowrap;font-size:11px">'+(d>0?(d.toFixed(2)+'s'):'无效')+'</span>'
+      +'<button type="button" class="btn btn-ghost" style="flex:0 0 30px;padding:4px 0;font-size:12px" onclick="vcRowDel('+i+')">×</button>'
+      +'</div>';
+  }
+  box.innerHTML=h;
+}
+
+/* ---- 删除区间 → 保留区间（起点吸附关键帧） ---- */
+function vcBuildPlan(){
+  if(!vcParsed) return null;
+  var v=vcParsed.v, vts=v.timescale, vs=v.samples, n=vs.length;
+  if(!n) return {err:'视频没有采样'};
+  var dts=new Float64Array(n), acc=0, i;
+  for(i=0;i<n;i++){ dts[i]=acc; acc+=vs[i].dur; }
+  var totalMs=acc/vts*1000;
+  var cuts=[], head=parseFloat(document.getElementById('vc_head').value)||0;
+  var tail=parseFloat(document.getElementById('vc_tail').value)||0;
+  if(head>0) cuts.push({s:0, e:head*1000});
+  for(i=0;i<vcRows.length;i++){
+    var cs=vcRows[i].s*1000, ce=vcRows[i].e*1000;
+    if(ce>cs) cuts.push({s:cs, e:ce});
+  }
+  if(tail>0) cuts.push({s:Math.max(0,totalMs-tail*1000), e:totalMs});
+  for(i=0;i<cuts.length;i++){
+    cuts[i].s=Math.max(0,Math.min(totalMs,cuts[i].s));
+    cuts[i].e=Math.max(0,Math.min(totalMs,cuts[i].e));
+  }
+  cuts.sort(function(a,b){ return a.s-b.s; });
+  var merged=[];
+  for(i=0;i<cuts.length;i++){
+    if(cuts[i].e<=cuts[i].s+1) continue;
+    var last=merged[merged.length-1];
+    if(last && cuts[i].s<=last.e) last.e=Math.max(last.e,cuts[i].e);
+    else merged.push({s:cuts[i].s, e:cuts[i].e});
+  }
+  /* 保留区间 = 全片减删除区间 */
+  var keeps=[], cur=0;
+  for(i=0;i<merged.length;i++){
+    if(merged[i].s>cur) keeps.push({s:cur, e:merged[i].s});
+    cur=Math.max(cur, merged[i].e);
+  }
+  if(cur<totalMs) keeps.push({s:cur, e:totalMs});
+
+  /* 每段：起点吸附到 >= s 的第一个关键帧；终点取最后一个完整帧 */
+  var plan=[], dropped=0;
+  for(i=0;i<keeps.length;i++){
+    var ks=keeps[i].s, ke=keeps[i].e, s0=-1, s1=-1, q;
+    for(q=0;q<n;q++){ if(vs[q].sync && dts[q]/vts*1000>=ks-1){ s0=q; break; } }
+    if(s0<0){ dropped++; continue; }
+    for(q=n-1;q>=s0;q--){ if((dts[q]+vs[q].dur)/vts*1000<=ke+1){ s1=q+1; break; } }
+    if(s1<=s0){ dropped++; continue; }
+    plan.push({
+      s0:s0, s1:s1,
+      realStartMs:dts[s0]/vts*1000,
+      realEndMs:(dts[s1-1]+vs[s1-1].dur)/vts*1000,
+      wantStartMs:ks, wantEndMs:ke
+    });
+  }
+  return {plan:plan, totalMs:totalMs, cuts:merged, dropped:dropped, n:n, dts:dts, vts:vts, vs:vs};
+}
+
+function vcCalc(){
+  if(!vcParsed) return;
+  var pl=vcBuildPlan();
+  if(!pl) return;
+  if(pl.err){ vcSay('vc_line',pl.err,'err'); return; }
+  if(!pl.plan.length){ vcSay('vc_line','删完之后一段都不剩了：片头+片尾+删除段已经盖住全片（原长 '+vcSec(pl.totalMs)+'）','err'); return; }
+  var keptMs=0, segs=[], i, drift=0;
+  for(i=0;i<pl.plan.length;i++){
+    var d=pl.plan[i].realEndMs-pl.plan[i].realStartMs;
+    keptMs+=d;
+    segs.push((pl.plan[i].realStartMs/1000).toFixed(2)+'–'+(pl.plan[i].realEndMs/1000).toFixed(2));
+    if(pl.plan[i].realStartMs-pl.plan[i].wantStartMs>50) drift++;
+  }
+  var msg='保留 '+pl.plan.length+' 段 · 共 '+vcSec(keptMs)+'（原长 '+vcSec(pl.totalMs)+'）';
+  if(segs.length<=3) msg+=' ｜ '+segs.join('、')+' 秒';
+  if(drift) msg+=' ｜ '+drift+' 段起点后移到关键帧，实际多删了一点（保证不留广告尾巴）';
+  if(pl.dropped) msg+=' ｜ '+pl.dropped+' 段删完没有可用帧，已跳过';
+  vcSay('vc_line',msg, (drift||pl.dropped)?'':'');
+}
+
+function vcAudioSpan(as, ats, sMs, eMs){
+  var at0=sMs/1000*ats, at1=eMs/1000*ats, from=-1, to=-1, r;
+  for(r=0;r<as.length;r++){
+    var d1=as[r].dts+as[r].dur;
+    if(from<0 && d1>at0) from=r;
+    if(d1<=at1) to=r;
+    else if(as[r].dts>=at1) break;
+  }
+  if(from<0 || to<from) return null;
+  return {from:from, to:to};
+}
+
+function vcRun(){
+  if(!vcParsed){ vcSay('vc_status','先选一个 MP4','err'); return; }
+  var pl=vcBuildPlan();
+  if(!pl||pl.err){ vcSay('vc_line',(pl&&pl.err)?pl.err:'算不出来','err'); return; }
+  if(!pl.plan.length){ vcSay('vc_line','删完之后一段都不剩了','err'); return; }
+  var btn=document.getElementById('vc_btn');
+  btn.disabled=true; btn.textContent='正在裁剪…';
+  try{
+    var p=vcParsed.p, v=vcParsed.v, a=vcParsed.a, vs=pl.vs, vts=pl.vts;
+    var vSamp=[], aSamp=[], i, j;
+    for(i=0;i<pl.plan.length;i++){
+      for(j=pl.plan[i].s0;j<pl.plan[i].s1;j++){
+        vSamp.push({size:vs[j].size, dur:vs[j].dur, sync:vs[j].sync, cts:vs[j].cts, src:p.u8, srcOff:vs[j].off});
+      }
+    }
+    if(a && a.samples && a.samples.length){
+      var as=a.samples, ats=a.timescale, sp;
+      for(i=0;i<pl.plan.length;i++){
+        sp=vcAudioSpan(as, ats, pl.plan[i].realStartMs, pl.plan[i].realEndMs);
+        if(!sp) continue;
+        for(j=sp.from;j<=sp.to;j++){
+          aSamp.push({size:as[j].size, dur:as[j].dur, sync:true, cts:null, src:p.u8, srcOff:as[j].off});
+        }
+      }
+    }
+    var tracks=[{tpl:{stsd:v.stsd, hdlr:v.hdlr, minfPrefix:v.minfPrefix, tkhd:v.tkhd, mdhd:v.mdhd, timescale:v.timescale},
+                 samples:vSamp, timescale:vts}];
+    if(aSamp.length){
+      tracks.push({tpl:{stsd:a.stsd, hdlr:a.hdlr, minfPrefix:a.minfPrefix, tkhd:a.tkhd, mdhd:a.mdhd, timescale:a.timescale},
+                   samples:aSamp, timescale:a.timescale});
+    }
+    var bytes=mzmp4.assemble(p.ftyp, p.mvhd, tracks);
+    var ck=mzmp4.check(bytes);
+    var base=(vcFile.name||'视频').replace(/\.mp4$/i,'').replace(/["<>]/g,'');
+    var outName=base+'_去片头片尾.mp4';
+    var url=URL.createObjectURL(new Blob([bytes],{type:'video/mp4'}));
+    var keptMs=0;
+    for(i=0;i<pl.plan.length;i++) keptMs+=pl.plan[i].realEndMs-pl.plan[i].realStartMs;
+    var pct='';
+    var orig=vcParsed.u8.length;
+    if(orig){ pct=' · 体积减 '+((1-bytes.length/orig)*100).toFixed(1)+'%'; }
+    var h='<div class="cap">✓ 裁剪完成：'+vcSec(keptMs)+' · '+pl.plan.length+' 段拼成 · '+vcFmt(bytes.length)+pct
+      +' · '+vSamp.length+' 帧 + '+aSamp.length+' 音帧'+(ck.ok?'':' · 结构自检未通过：'+(ck.err||'采样越界'))+'</div>'
+      +'<video src="'+url+'" controls preload="metadata" playsinline style="width:100%;max-height:52vh;border-radius:8px;background:#000;display:block;margin:6px 0"></video>'
+      +'<a class="btn btn-primary" href="'+url+'" download="'+outName+'" style="display:flex;align-items:center;justify-content:center">保存 '+outName+'（'+vcFmt(bytes.length)+'）</a>';
+    var list=document.getElementById('vc_list');
+    if(list) list.innerHTML=h;
+    var res=document.getElementById('vc_result');
+    if(res) res.style.display='block';
+    vcSay('vc_line','裁剪完成，下面可以直接试播、保存','ok');
+  }catch(e){
+    vcSay('vc_line','裁剪失败：'+(e&&e.message?e.message:e),'err');
+  }
+  btn.disabled=false; btn.textContent='开始裁剪';
+}
+
 </script>
 </body>
 </html>
