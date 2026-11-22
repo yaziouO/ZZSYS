@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作战实验室 · 请安装新版</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1115;color:#e8e8ea;font:16px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+padding:22px 18px 34px;max-width:640px;margin:0 auto}
+.brand{font-size:14px;color:#8b8f99;letter-spacing:.5px;margin-bottom:6px}
+h1{font-size:26px;line-height:1.35;margin:2px 0 6px}
+h1 em{font-style:normal;color:#f0a500}
+.sub{font-size:15px;color:#b6bac4;margin-bottom:18px}
+.sub b{color:#f0a500}
+.card{background:#171a20;border:1px solid #262a33;border-radius:14px;padding:16px 15px;margin-bottom:14px}
+.label{font-size:13px;color:#8b8f99;margin-bottom:8px}
+.urlbox{font:600 15px/1.6 ui-monospace,Consolas,monospace;word-break:break-all;color:#ffcf6a;
+background:#0d0f13;border:1px dashed #4a3c17;border-radius:10px;padding:12px 12px;
+-webkit-user-select:text;user-select:text}
+.btn{display:block;width:100%;margin-top:12px;padding:14px 0;border:0;border-radius:12px;
+background:#f0a500;color:#1a1200;font-size:17px;font-weight:700}
+.btn:active{background:#d39400}
+.hint{font-size:13px;color:#8b8f99;margin-top:9px}
+ol{margin:4px 0 0 0;padding-left:22px}
+li{margin-bottom:9px;font-size:15px}
+li b{color:#ffd98a}
+.warn{background:#2a1d0c;border:1px solid #5c421a;border-radius:12px;padding:12px 13px;
+font-size:14px;color:#f2c98a;margin-bottom:14px}
+.foot{font-size:13px;color:#7d828c;text-align:center;margin-top:20px}
+#toast{position:fixed;left:0;right:0;bottom:36px;text-align:center;pointer-events:none;opacity:0;
+transition:opacity .2s}
+#toast span{display:inline-block;background:#000c;color:#fff;font-size:14px;padding:9px 16px;border-radius:20px}
+</style>
+</head>
+<body>
+<div class="brand">作战实验室 ZZSYS</div>
+<h1>此版本已<em>停用</em></h1>
+<p class="sub">你正在用的老版（3.x）已下架，内置工具不再可用。请安装新版 <b>4.46</b>，全部工具都在里面。</b></p>
+
+<div class="card">
+<div class="label">新版安装包地址（复制这条）</div>
+<div class="urlbox" id="urltext">https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk</div>
+<button class="btn" id="copybtn" onclick="copyUrl()">复制网址</button>
+<p class="hint">按钮没反应，就长按上面的网址 →「全选」→「复制」</p>
+</div>
+
+<div class="card">
+<div class="label">装法（3 步）</div>
+<ol>
+<li>把上面网址<b>复制</b>下来</li>
+<li>粘贴到<b>浏览器</b>（或 QQ 聊天框）里打开</li>
+<li>下载后点安装；可以<b>直接覆盖安装</b>，原来的图片/文件不会丢</li>
+</ol>
+</div>
+
+<div class="warn">如果手机提示「禁止安装未知应用」，先到设置里给浏览器（或 QQ）打开「允许安装未知应用」，再装一次即可。</div>
+
+<p class="foot">腾讯频道号 5929620590 ｜ BUG 反馈 QQ 群 592941563</p>
+<div id="toast"><span id="toastmsg"></span></div>
+<script>
+var tId=0;
+function msg(s){
+  var t=document.getElementById('toast'), m=document.getElementById('toastmsg');
+  m.innerHTML=s; t.style.opacity=1;
+  if(tId) clearTimeout(tId);
+  tId=setTimeout(function(){ t.style.opacity=0; },1800);
+}
+function copyUrl(){
+  var box=document.getElementById('urltext');
+  var text=(box.innerText||box.textContent||'').replace(/^\s+|\s+$/g,'');
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.top='-1000px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    msg(ok ? '已复制，去浏览器粘贴打开' : '复制失败，请长按网址手动复制');
+  }catch(e){
+    msg('复制失败，请长按网址手动复制');
+  }
+}
+</script>
+</body>
+</html>
