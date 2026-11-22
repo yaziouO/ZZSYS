@@ -1,6 +1,7 @@
 {
- "code": 83,
+ "version": 16,
+ "code": 0,
  "name": "4.46",
- "url": "https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk",
- "note": "新增：新增「MP4去片头片尾/去广告（无损不转码）」，片头片尾可填、中间广告边播边点，接缝不转码；「TS/FLV/MKV转 MP4视频」新增 FLV、MKV，仍只换壳不转码。\n修复：修偶发点「取图」弹 E001 报错；缩减工具能剥掉 PNG 私有块藏的图数据，体积能真降；多张载体图各用自己画幅，不再被第一张裁成横条；修 TS 转 MP4 偶发少一半帧、时长变长。"
+ "url": "https://yaziouo.github.io/ZZSYS/app/upgrade.html",
+ "note": "旧版（3.x）已停用：请到公告页复制网址，下载安装 4.46 新版。"
 }
