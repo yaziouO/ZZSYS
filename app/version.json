@@ -1,7 +1,6 @@
 {
- "version": 1003,
- "code": 1,
+ "code": 84,
  "name": "4.46",
- "url": "https://yaziouo.github.io/ZZSYS/app/upgrade.html",
- "note": "旧版（3.x）已停用：请到公告页复制网址，下载安装 4.46 新版。"
+ "url": "https://yaziouo.github.io/ZZSYS/app/ZZSYS.apk",
+ "note": "新增：Webp转GIF：WebP 动图逐帧转 GIF，可调颜色数、帧率、尺寸，支持透明帧。\n修复：MP4修剪工具不能拖入视频，现在拖进去即识别；安卓端作战图生成成品偶发 E001 报错，已加备用导出通道，失败时提示第几张图。"
 }
