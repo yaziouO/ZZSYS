@@ -217,6 +217,13 @@
   .drop.has-img{border-style:solid;border-color:var(--accent);padding:10px}
   .drop .label{font-size:14px;font-weight:600}
   .drop .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  /* 分组标题：素材处理 */
+  .matsec{display:flex;align-items:center;justify-content:center;gap:7px;margin:20px 2px 8px;
+    font:700 13px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);
+    letter-spacing:.06em;opacity:.9;text-align:center}
+  .matsec-ar{font:400 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--muted);
+    letter-spacing:0;margin-left:1px}
+  .matsec::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--accent)}
   .drop img{max-width:100%;max-height:180px;border-radius:8px;display:block;margin:0 auto 8px}
 
   /* 画质选择 */
@@ -517,7 +524,7 @@ details>summary{position:relative}
 <script>
 /* v490 页签兜底（独立脚本块）：主脚本块里 setMode 没注册时，切页签照样能用 */
 (function(){
-  var EMB=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app'];
+  var EMB=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app','wp2g-app','matsec-hd'];
   function apply(m){
     var pairs=[['tabEmbed','embed'],['tabExtract','extract'],['paneEmbed','embed'],['paneExtract','extract']];
     for(var i=0;i<pairs.length;i++){
@@ -631,8 +638,8 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
     <div class="upd-body">
       <section class="upd-sec">
         <div class="upd-ver">4.46<em>本次</em></div>
-        <div class="upd-line"><span class="upd-tag add">新增</span><span>新增「MP4去片头片尾/去广告（无损不转码）」，片头片尾可填、中间广告边播边点，接缝不转码；「TS/FLV/MKV转 MP4视频」新增 FLV、MKV，仍只换壳不转码。</span></div>
-        <div class="upd-line"><span class="upd-tag fix">修复</span><span>修偶发点「取图」弹 E001 报错；缩减工具能剥掉 PNG 私有块藏的图数据，体积能真降；多张载体图各用自己画幅，不再被第一张裁成横条；修 TS 转 MP4 偶发少一半帧、时长变长。</span></div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>Webp转GIF：WebP 动图逐帧转 GIF，可调颜色数、帧率、尺寸，支持透明帧。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>MP4修剪工具不能拖入视频，现在拖进去即识别；安卓端作战图生成成品偶发 E001 报错，已加备用导出通道，失败时提示第几张图。</span></div>
       </section>
       <section class="upd-sec">
         <div class="upd-ver">4.45</div>
@@ -2061,70 +2068,69 @@ window.tjpDoExtract=function(){
     </div>
   </div>
 </details>
-<details id="tsm-app" style="margin-top:12px">
-  <summary style="position:relative;padding-right:42px">TS/FLV/MKV转 MP4视频（只换容器不转码）<button type="button" class="zzq" data-q="TS/FLV/MKV转 MP4视频：把原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
-支持三种容器：MPEG-TS（.ts/.m2ts/.mts）、FLV（.flv）、MKV（.mkv/.webm 里的 H.264+AAC）。
-为什么需要：浏览器和手机默认放不了 .ts / .flv / .mkv，转成 .mp4 就能直接播、能拖进度、能传平台。
-速度：纯搬运，68MB 约 1 秒；文件越大越慢，但远快于重新压缩。
-限制：只认 H.264 + AAC；HEVC(H.265)、VP9/AV1 视频和 AC3/MP2/Opus 音频会直接报不支持（换编码必须重编码）。
-原文件不会被改动，转换结果另存为新文件。">?</button></summary>
+
+<div class="matsec" id="matsec-hd">素材处理<span class="matsec-ar">↓</span></div>
+
+<details id="wp2g-app" style="margin-top:12px">
+  <summary style="position:relative;padding-right:42px">Webp转GIF<button type="button" class="zzq" data-q="Webp转GIF：把 WebP 动画逐帧解出来，重排成 GIF89a 动图，贴吧、频道、微信都能直接发。
+① 内核：靠浏览器自带的逐帧解码，要 Chrome / Android WebView 94 以上；老内核会提示不支持。
+② 选图：可多选，点选、拖进来、Ctrl+V 都行，一张一个成品。
+③ 尺寸：按百分比缩放分辨率，100% = 不动。
+④ 颜色：GIF 每帧自带色表，256 = 尽量还原；128 / 64 / 32 更小，渐变会有台阶。
+⑤ 帧率：100% = 全帧；50% = 隔帧留一，跳过的帧延时累加到保留帧，总时长不变。
+⑥ 帧差分：每帧只写变动的矩形块，背景不动的图能省很多，画面无损。
+⑦ 透明：GIF 只有「透 / 不透」，半透明像素按透明处理；同一动图里透明帧和不透明帧混用时会露出上一帧。
+⑧ 体积：每帧都要带色表，通常比原 WebP 大，嫌大就降颜色、降尺寸或降帧率。
+⑨ 帧延时按原图，最小 2/100 秒（GIF 播放下限）。">?</button></summary>
   <div style="margin-top:14px">
-    <div class="drop" id="tsm_drop" onclick="document.getElementById('tsm_file').click()">
-      <div class="label">选 TS / FLV / MKV 视频</div>
-      <div class="sub">点这里选、拖进来，或 Ctrl+V 粘贴文件；.ts / .flv / .mkv，只换容器不转码</div>
+    <div class="drop" id="wp2g_drop" onclick="document.getElementById('wp2g_file').click()">
+      <div class="label">选图（WebP 动图 / 静态 WebP，可多选）</div>
+      <div class="sub">点这里选，也可以直接把文件拖进来或 Ctrl+V 粘贴；转完先看预览和体积，满意再保存</div>
     </div>
-    <input type="file" id="tsm_file" accept=".ts,.m2ts,.mts,.flv,.mkv,video/*" hidden onchange="tsmPick(this.files[0])">
-    <div class="hint" id="tsm_status" style="margin-top:8px">尚未选择文件</div>
-    <button class="btn btn-primary" id="tsm_btn" style="width:100%;margin-top:10px;display:none" onclick="tsmRun()">开始转换</button>
-    <div class="result" id="tsm_result" style="display:none">
-      <div class="box" id="tsm_info" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
-      <div id="tsm_play" style="margin-top:8px"></div>
-      <div id="tsm_dl" style="margin-top:8px"></div>
-    </div>
-  </div>
-</details>
-<details id="vc-app" style="margin-top:12px">
-  <summary style="position:relative;padding-right:42px">MP4视频去片头片尾 / 去广告（无损不转码）<button type="button" class="zzq" data-q="MP4视频去片头片尾 / 去广告：只按关键帧无损剪切 + 重新封装，不重编码、不解码，画质和原片完全一样。
-① 两条路：片头片尾直接填秒数；中间插播的广告可以边播边打点——播到广告开始按「标起点」、播到结束按「标终点」，自动加一段删除，可标多段。
-② 切点只能落在关键帧：删除段之后的第一帧必须重新从关键帧起算，所以实际会多留零点几秒，界面会直接写出实际切点。
-③ 中间挖掉后前后自动拼起来，接缝不重编码；接缝处偶尔有一帧时间戳抖动（B 帧），肉眼看不出来。
-④ 音轨跟着同一时间窗一起取，不会音画不同步。
-⑤ 输出是标准 MP4，可以直接选进图种式当里图，再去分段。
-⑥ 原文件不会被改动，成品另存。">?</button></summary>
-  <div style="margin-top:14px">
-    <div class="drop" id="vc_drop" onclick="document.getElementById('vc_file').click()">
-      <div class="label">选一个 MP4（点选 / 拖入）</div>
-      <div class="sub">只按关键帧无损剪切、重新封装，不重编码；片头片尾手填，中间广告边播边打点</div>
-    </div>
-    <input type="file" id="vc_file" accept="video/mp4,.mp4" hidden onchange="vcPick(this.files)">
-    <div class="hint" id="vc_status" style="margin-top:8px">尚未选择视频</div>
-    <div id="vc_opts" style="display:none;margin-top:10px">
-      <video id="vc_prev" controls preload="metadata" playsinline style="width:100%;max-height:46vh;border-radius:8px;background:#000;display:block"></video>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <button type="button" class="btn btn-ghost" style="flex:1 1 40%;font-size:13px" onclick="vcMark('s')">标起点（当前时间）</button>
-        <button type="button" class="btn btn-ghost" style="flex:1 1 40%;font-size:13px" onclick="vcMark('e')">标终点</button>
-      </div>
-      <div class="hint" id="vc_now" style="margin-top:6px">播到广告开始点「标起点」，播到广告结束点「标终点」</div>
-      <div id="vc_rows" style="margin-top:10px"></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-        <label style="flex:1 1 40%;min-width:120px;font-size:12px;color:var(--muted)">去片头（秒）
-          <input id="vc_head" type="number" min="0" step="0.1" value="0" oninput="vcCalc()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px">
+    <input type="file" id="wp2g_file" accept="image/webp,.webp" multiple hidden onchange="wp2gPick(this.files);this.value=''">
+    <div class="hint" id="wp2g_status" style="margin-top:8px">尚未选择文件</div>
+    <div id="wp2g_opts" style="display:none;margin-top:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">尺寸
+          <select id="wp2g_scale" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="1">100%</option>
+            <option value="0.8">80%</option>
+            <option value="0.7">70%</option>
+            <option value="0.5">50%</option>
+            <option value="0.3">30%</option>
+          </select>
         </label>
-        <label style="flex:1 1 40%;min-width:120px;font-size:12px;color:var(--muted)">去片尾（秒）
-          <input id="vc_tail" type="number" min="0" step="0.1" value="0" oninput="vcCalc()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px">
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">颜色
+          <select id="wp2g_colors" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="256">256 色</option>
+            <option value="128">128 色</option>
+            <option value="64">64 色</option>
+            <option value="32">32 色</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">帧率
+          <select id="wp2g_fps" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="100">100%</option>
+            <option value="75">75%</option>
+            <option value="50">50%</option>
+            <option value="25">25%</option>
+          </select>
         </label>
       </div>
-      <div class="hint" id="vc_line" style="margin-top:8px"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;font-size:13px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="wp2g_diff" checked>帧差分（无损）</label>
+      </div>
+      <div class="hint" id="wp2g_head" style="margin-top:8px"></div>
     </div>
-    <button class="btn btn-primary" id="vc_btn" style="width:100%;margin-top:10px;display:none" onclick="vcRun()">开始裁剪</button>
-    <div class="result" id="vc_result" style="display:none">
-      <div id="vc_list"></div>
+    <button class="btn btn-primary" id="wp2g_btn" style="width:100%;margin-top:10px;display:none" onclick="wp2gRun()">开始转 GIF</button>
+    <div class="result" id="wp2g_result" style="display:none">
+      <div id="wp2g_list"></div>
     </div>
   </div>
 </details>
 
 <details id="gsz-app" style="margin-top:12px">
-  <summary style="position:relative;padding-right:42px">GIF/PNG图缩减工具(可缩小图/清除里图数据)<button type="button" class="zzq" data-q="GIF/PNG 图缩减：把过大的动图压小，顺带也能缩 PNG / JPG / WebP 静态图；先看预览和体积，满意再保存。
+  <summary style="position:relative;padding-right:42px">GIF缩减工具<button type="button" class="zzq" data-q="GIF缩减：把过大的动图压小，顺带也能缩 PNG / JPG / WebP 静态图；先看预览和体积，满意再保存。
 ① 选图：可多选，拖进来、点选、Ctrl+V 都行；GIF 按下面的颜色/帧率调，静态图按「画质」重编码；原文件不会被改动。
 ② 尺寸：按百分比缩小分辨率，100% = 不动尺寸。
 ③ 颜色：256 = 全彩不量化；128/64/32 会把相近颜色合并，越小越省，渐变会有台阶。
@@ -2189,6 +2195,69 @@ window.tjpDoExtract=function(){
     <button class="btn btn-primary" id="gsz_btn" style="width:100%;margin-top:10px;display:none" onclick="gszRun()">开始缩减</button>
     <div class="result" id="gsz_result" style="display:none">
       <div id="gsz_list"></div>
+    </div>
+  </div>
+</details>
+
+<details id="tsm-app" style="margin-top:12px">
+  <summary style="position:relative;padding-right:42px">TS/FLV/MKV转 MP4<button type="button" class="zzq" data-q="TS/FLV/MKV转 MP4：把原始 H.264 / AAC 码流原样搬进 MP4 容器，不重编码、不动画质。
+支持三种容器：MPEG-TS（.ts/.m2ts/.mts）、FLV（.flv）、MKV（.mkv/.webm 里的 H.264+AAC）。
+为什么需要：浏览器和手机默认放不了 .ts / .flv / .mkv，转成 .mp4 就能直接播、能拖进度、能传平台。
+速度：纯搬运，68MB 约 1 秒；文件越大越慢，但远快于重新压缩。
+限制：只认 H.264 + AAC；HEVC(H.265)、VP9/AV1 视频和 AC3/MP2/Opus 音频会直接报不支持（换编码必须重编码）。
+原文件不会被改动，转换结果另存为新文件。">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="tsm_drop" onclick="document.getElementById('tsm_file').click()">
+      <div class="label">选 TS / FLV / MKV 视频</div>
+      <div class="sub">点这里选、拖进来，或 Ctrl+V 粘贴文件；.ts / .flv / .mkv，只换容器不转码</div>
+    </div>
+    <input type="file" id="tsm_file" accept=".ts,.m2ts,.mts,.flv,.mkv,video/*" hidden onchange="tsmPick(this.files[0])">
+    <div class="hint" id="tsm_status" style="margin-top:8px">尚未选择文件</div>
+    <button class="btn btn-primary" id="tsm_btn" style="width:100%;margin-top:10px;display:none" onclick="tsmRun()">开始转换</button>
+    <div class="result" id="tsm_result" style="display:none">
+      <div class="box" id="tsm_info" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
+      <div id="tsm_play" style="margin-top:8px"></div>
+      <div id="tsm_dl" style="margin-top:8px"></div>
+    </div>
+  </div>
+</details>
+
+<details id="vc-app" style="margin-top:12px">
+  <summary style="position:relative;padding-right:42px">MP4修剪工具<button type="button" class="zzq" data-q="MP4修剪：只按关键帧无损剪切 + 重新封装，不重编码、不解码，画质和原片完全一样。
+① 两条路：片头片尾直接填秒数；中间插播的广告可以边播边打点——播到广告开始按「标起点」、播到结束按「标终点」，自动加一段删除，可标多段。
+② 切点只能落在关键帧：删除段之后的第一帧必须重新从关键帧起算，所以实际会多留零点几秒，界面会直接写出实际切点。
+③ 中间挖掉后前后自动拼起来，接缝不重编码；接缝处偶尔有一帧时间戳抖动（B 帧），肉眼看不出来。
+④ 音轨跟着同一时间窗一起取，不会音画不同步。
+⑤ 输出是标准 MP4，可以直接选进图种式当里图，再去分段。
+⑥ 原文件不会被改动，成品另存。">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="vc_drop" onclick="document.getElementById('vc_file').click()">
+      <div class="label">选一个 MP4（点选 / 拖入）</div>
+      <div class="sub">只按关键帧无损剪切、重新封装，不重编码；片头片尾手填，中间广告边播边打点</div>
+    </div>
+    <input type="file" id="vc_file" accept="video/mp4,.mp4" hidden onchange="vcPick(this.files)">
+    <div class="hint" id="vc_status" style="margin-top:8px">尚未选择视频</div>
+    <div id="vc_opts" style="display:none;margin-top:10px">
+      <video id="vc_prev" controls preload="metadata" playsinline style="width:100%;max-height:46vh;border-radius:8px;background:#000;display:block"></video>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost" style="flex:1 1 40%;font-size:13px" onclick="vcMark('s')">标起点（当前时间）</button>
+        <button type="button" class="btn btn-ghost" style="flex:1 1 40%;font-size:13px" onclick="vcMark('e')">标终点</button>
+      </div>
+      <div class="hint" id="vc_now" style="margin-top:6px">播到广告开始点「标起点」，播到广告结束点「标终点」</div>
+      <div id="vc_rows" style="margin-top:10px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <label style="flex:1 1 40%;min-width:120px;font-size:12px;color:var(--muted)">去片头（秒）
+          <input id="vc_head" type="number" min="0" step="0.1" value="0" oninput="vcCalc()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px">
+        </label>
+        <label style="flex:1 1 40%;min-width:120px;font-size:12px;color:var(--muted)">去片尾（秒）
+          <input id="vc_tail" type="number" min="0" step="0.1" value="0" oninput="vcCalc()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:13px">
+        </label>
+      </div>
+      <div class="hint" id="vc_line" style="margin-top:8px"></div>
+    </div>
+    <button class="btn btn-primary" id="vc_btn" style="width:100%;margin-top:10px;display:none" onclick="vcRun()">开始裁剪</button>
+    <div class="result" id="vc_result" style="display:none">
+      <div id="vc_list"></div>
     </div>
   </div>
 </details>
@@ -3490,6 +3559,7 @@ function mmgRebuildSegsFrom(fromIdx, imgs){
     mmgWriteBits(px,bits,2,'mmgEmbedProg',function(){
       cx.putImageData(d,0,0);
       c.toBlob(function(blob){
+        if(!blob){ try{ blob=new Blob([dataUrlToBytes(c.toDataURL('image/png'))],{type:'image/png'}); }catch(err){ return; } }
         var fr=new FileReader(); fr.onload=function(){
           var url=fr.result;
           var segList=mmgEl('mmgSegList');
@@ -3649,7 +3719,10 @@ async function mmgBuildSingleImgs(imgs, S, q){
     var w=Math.max(16,Math.round(S*iw/ih)); ws.push(w);
     var cv=document.createElement('canvas'); cv.width=w; cv.height=S;
     var ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,S);
-    var sb=await imgToBytes(cv, q||'png'); lens.push(sb.length); parts.push(sb);
+    var sb;
+    try{ sb=await imgToBytes(cv, q||'png'); }
+    catch(e){ throw new Error('第 '+(i+1)+' 张里图导出失败（'+w+'×'+S+'）：'+(e&&e.message?e.message:'画布编码失败')); }
+    lens.push(sb.length); parts.push(sb);
   }
   return {bytes:concatU8(parts), ws:ws, lens:lens};
 }
@@ -3977,7 +4050,7 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     var bits=bytesToBits(payload,2);
     await new Promise(function(done){ mmgWriteBits(px,bits,2,'mmgEmbedProg',done); });
     ctx.putImageData(data,0,0);
-    canvas.toBlob(function(blob){ var fr=new FileReader(); fr.onload=function(){ var url=fr.result; _rawResult=url; _rawImg=null; _glowApplied=false; var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化'; mmgEl('mmgPreview').src=url; mmgEl('mmgDownload').href=url; mmgEl('mmgResult').style.display='block'; mmgHint('mmgHint','完成！动图已整份嵌入，成品 '+cw+'×'+ch+'；用取图剥出可还原成动画（GIF/WebP）。','ok'); mmgHideProg('mmgEmbedProg'); }; fr.readAsDataURL(blob); },'image/png');
+    canvas.toBlob(function(blob){ if(!blob){ try{ blob=new Blob([dataUrlToBytes(canvas.toDataURL('image/png'))],{type:'image/png'}); }catch(err){ mmgHint('mmgHint','成品导出失败：这张表图太大，先缩小表图再试','err'); mmgHideProg('mmgEmbedProg'); return; } } var fr=new FileReader(); fr.onload=function(){ var url=fr.result; _rawResult=url; _rawImg=null; _glowApplied=false; var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化'; mmgEl('mmgPreview').src=url; mmgEl('mmgDownload').href=url; mmgEl('mmgResult').style.display='block'; mmgHint('mmgHint','完成！动图已整份嵌入，成品 '+cw+'×'+ch+'；用取图剥出可还原成动画（GIF/WebP）。','ok'); mmgHideProg('mmgEmbedProg'); }; fr.readAsDataURL(blob); },'image/png');
   }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
 }
 var _rawResult=null;
@@ -4773,7 +4846,7 @@ var f30=await mmgFit30Scale(cw0,ch0,reloaded,function(cwT,chT){
     var bits=bytesToBits(payload,bpc);
     await new Promise(function(done){ mmgWriteBits(px,bits,bpc,'mmgEmbedProg',done); });
     ctx.putImageData(data,0,0);
-    canvas.toBlob(function(blob){ var fr=new FileReader(); fr.onload=function(){ var url=fr.result; _rawResult=url; _rawImg=null; _glowApplied=false; var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化'; mmgEl('mmgPreview').src=url; mmgEl('mmgDownload').href=url; mmgEl('mmgResult').style.display='block'; mmgHint('mmgHint','完成！成品 '+cw+'×'+ch+'，内含 '+n+' 张小图（'+(singleImg?'独立小图':'拼成长条')+'·'+(mmgSt.quality==='png'?'PNG':'JPEG')+'·小图约 '+S+'px）。','ok'); mmgHideProg('mmgEmbedProg'); }; fr.readAsDataURL(blob); },'image/png');
+    canvas.toBlob(function(blob){ if(!blob){ try{ blob=new Blob([dataUrlToBytes(canvas.toDataURL('image/png'))],{type:'image/png'}); }catch(err){ mmgHint('mmgHint','成品导出失败：这张表图太大，先缩小表图再试','err'); mmgHideProg('mmgEmbedProg'); return; } } var fr=new FileReader(); fr.onload=function(){ var url=fr.result; _rawResult=url; _rawImg=null; _glowApplied=false; var _gb=document.getElementById('glowBtn'); if(_gb) _gb.textContent='表图光棱化'; mmgEl('mmgPreview').src=url; mmgEl('mmgDownload').href=url; mmgEl('mmgResult').style.display='block'; mmgHint('mmgHint','完成！成品 '+cw+'×'+ch+'，内含 '+n+' 张小图（'+(singleImg?'独立小图':'拼成长条')+'·'+(mmgSt.quality==='png'?'PNG':'JPEG')+'·小图约 '+S+'px）。','ok'); mmgHideProg('mmgEmbedProg'); }; fr.readAsDataURL(blob); },'image/png');
   }catch(e){ mmgHint('mmgHint','出错了：'+e.message,'err'); mmgHideProg('mmgEmbedProg'); }
 }
 // 多小图还原统一走主取图页（主取图已识别多小图成品并自动切分）
@@ -5084,7 +5157,7 @@ function setMode(m){
     // 下载区只在取图页显示
     var d=document.getElementById('download-area'); if(d) d.style.display='';
     // 取图页只保留光棱图、混淆图两个分支，其余工具不跟过来
-    var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app'];
+    var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app','wp2g-app','matsec-hd'];
     for(var i=0;i<embOnly.length;i++){
       var el=document.getElementById(embOnly[i]);
       if(el) el.style.display=(m==='extract')?'none':'';
@@ -5201,17 +5274,53 @@ function drawToCanvas(img){
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,img.width,img.height);
   ctx.drawImage(img,0,0); return c;
 }
+/* dataURL -> Uint8Array（不做 base64 解码以外的事） */
+function dataUrlToBytes(d){
+  var i=d.indexOf(',');
+  if(i<0) throw new Error('dataURL 格式不对');
+  var bin=atob(d.slice(i+1));
+  var u=new Uint8Array(bin.length);
+  for(var k=0;k<bin.length;k++) u[k]=bin.charCodeAt(k);
+  return u;
+}
+/* 画布导出字节：优先 toBlob（省内存）；安卓 WebView 上 toBlob 偶尔回调 null，
+   这时退回 toDataURL 解码，避免 readAsArrayBuffer(null) 抛 TypeError */
+function canvasToBytes(c, type, q){
+  return new Promise(function(res){
+    var done=false;
+    function ok(v){ if(done) return; done=true; res(v); }
+    function viaDataUrl(){
+      var d=null;
+      try{ d=c.toDataURL(type, q); }catch(e){ d=null; }
+      if(!d || d.slice(0,5)!=='data:'){ ok(null); return; }
+      try{ ok(dataUrlToBytes(d)); }catch(e){ ok(null); }
+    }
+    try{
+      c.toBlob(function(b){
+        if(!b){ viaDataUrl(); return; }
+        try{
+          if(b.arrayBuffer){ b.arrayBuffer().then(function(ab){ ok(new Uint8Array(ab)); }, function(){ viaDataUrl(); }); return; }
+        }catch(e){}
+        try{
+          var fr=new FileReader();
+          fr.onload=function(){ try{ ok(new Uint8Array(fr.result)); }catch(e){ viaDataUrl(); } };
+          fr.onerror=viaDataUrl;
+          fr.readAsArrayBuffer(b);
+        }catch(e){ viaDataUrl(); }
+      }, type, q);
+    }catch(e){ viaDataUrl(); }
+    // 兜底：toBlob 回调没来（个别系统上会偶发）
+    setTimeout(function(){ if(!done){ viaDataUrl(); } }, 25000);
+  });
+}
 function imgToBytes(img, fmt){
   // fmt: 'jpeg' | 'png'
-  return new Promise(res=>{
-    const c=drawToCanvas(img);
-    const type = fmt==='jpeg' ? 'image/jpeg' : 'image/png';
-    const q = fmt==='jpeg' ? 0.85 : undefined;
-    c.toBlob(blob=>{
-      const fr=new FileReader();
-      fr.onload=()=>res(new Uint8Array(fr.result));
-      fr.readAsArrayBuffer(blob);
-    }, type, q);
+  const c=drawToCanvas(img);
+  const type = fmt==='jpeg' ? 'image/jpeg' : 'image/png';
+  const q = fmt==='jpeg' ? 0.85 : undefined;
+  return canvasToBytes(c, type, q).then(function(b){
+    if(!b) throw new Error('画布导出失败（'+c.width+'×'+c.height+'），这张图太大，先缩小或换一张');
+    return b;
   });
 }
 function bytesToBits(bytes, bpc){
@@ -12168,6 +12277,438 @@ function vcRun(){
   btn.disabled=false; btn.textContent='开始裁剪';
 }
 
+</script>
+
+<script>
+/* ================== WebP 动图转 GIF 分支工具（前缀 wp2g_） ================== */
+var wp2gJobs=[], wp2gOut=[], wp2gBusy=false;
+
+/* RIFF....WEBP 头判定 */
+function wp2gIsWebp(u8){
+  return !!(u8 && u8.length>=12 && u8[0]===0x52 && u8[1]===0x49 && u8[2]===0x46 && u8[3]===0x46 &&
+            u8[8]===0x57 && u8[9]===0x45 && u8[10]===0x42 && u8[11]===0x50);
+}
+
+/* 内核能力：ImageDecoder 逐帧解 WebP（Chrome / Android WebView 94 起） */
+function wp2gKernel(){
+  return (typeof ImageDecoder!=='undefined' && !!ImageDecoder.isTypeSupported);
+}
+async function wp2gSupported(){
+  if(!wp2gKernel()) return false;
+  try{ return await ImageDecoder.isTypeSupported('image/webp'); }catch(e){ return false; }
+}
+
+/* 读元信息：帧数 + 画幅 */
+async function wp2gMeta(u8){
+  var dec=new ImageDecoder({data:u8, type:'image/webp'});
+  await dec.tracks.ready;
+  var tr=dec.tracks.selectedTrack, n=(tr && tr.frameCount)||1;
+  var r=await dec.decode({frameIndex:0});
+  var w=r.image.displayWidth||r.image.codedWidth, h=r.image.displayHeight||r.image.codedHeight;
+  try{ r.image.close(); }catch(e){}
+  try{ dec.close(); }catch(e){}
+  return {n:n, w:w, h:h};
+}
+
+/* 中位切分量化：跳过半透明/全透明像素（GIF 只有 1 位透明） */
+function wp2gQuant(data,w,h,maxColors){
+  var n=w*h, i, o, a, hist=new Uint32Array(32768), hasTrans=false;
+  for(i=0;i<n;i++){
+    o=i*4; a=data[o+3];
+    if(a<128){ hasTrans=true; continue; }
+    hist[((data[o]>>3)<<10)|((data[o+1]>>3)<<5)|(data[o+2]>>3)]++;
+  }
+  var keys=[], k;
+  for(k=0;k<32768;k++) if(hist[k]) keys.push(k);
+  if(!keys.length) return {err:'整张都是透明像素，转不出 GIF'};
+
+  var want=Math.max(2, Math.min(256, (maxColors||256)-(hasTrans?1:0)));
+  function makeBox(items){
+    var rmin=31,rmax=0,gmin=31,gmax=0,bmin=31,bmax=0,count=0, t;
+    for(t=0;t<items.length;t++){
+      var kk=items[t], r=(kk>>10)&31, g=(kk>>5)&31, b=kk&31;
+      if(r<rmin)rmin=r; if(r>rmax)rmax=r;
+      if(g<gmin)gmin=g; if(g>gmax)gmax=g;
+      if(b<bmin)bmin=b; if(b>bmax)bmax=b;
+      count+=hist[kk];
+    }
+    return {items:items,count:count,rmin:rmin,rmax:rmax,gmin:gmin,gmax:gmax,bmin:bmin,bmax:bmax};
+  }
+  var boxes=[makeBox(keys)];
+  while(boxes.length<want){
+    var bi=-1, best=-1, t2;
+    for(t2=0;t2<boxes.length;t2++){
+      if(boxes[t2].items.length<2) continue;
+      if(boxes[t2].count>best){ best=boxes[t2].count; bi=t2; }
+    }
+    if(bi<0) break;
+    var bx=boxes[bi];
+    var dr=bx.rmax-bx.rmin, dg=bx.gmax-bx.gmin, db=bx.bmax-bx.bmin;
+    var axis=(dr>=dg&&dr>=db)?0:((dg>=db)?1:2);
+    bx.items.sort(function(p,q){
+      var ka=axis===0?((p>>10)&31):(axis===1?((p>>5)&31):(p&31));
+      var kb=axis===0?((q>>10)&31):(axis===1?((q>>5)&31):(q&31));
+      return ka-kb;
+    });
+    var half=bx.count/2, acc=0, cut=bx.items.length-1, t3;
+    for(t3=0;t3<bx.items.length-1;t3++){
+      acc+=hist[bx.items[t3]];
+      if(acc>=half){ cut=t3+1; break; }
+    }
+    if(cut<1) cut=1;
+    if(cut>bx.items.length-1) cut=bx.items.length-1;
+    boxes.splice(bi,1,makeBox(bx.items.slice(0,cut)),makeBox(bx.items.slice(cut)));
+  }
+  var pal=[], t4;
+  for(t4=0;t4<boxes.length;t4++){
+    var b2=boxes[t4], sr=0,sg=0,sb=0,sc=0, t5;
+    for(t5=0;t5<b2.items.length;t5++){
+      var kk2=b2.items[t5], r2=(kk2>>10)&31, g2=(kk2>>5)&31, bb=kk2&31, ww=hist[kk2];
+      sr+=r2*ww; sg+=g2*ww; sb+=bb*ww; sc+=ww;
+    }
+    if(!sc) continue;
+    var R=Math.min(255,Math.round(sr/sc*8)), G=Math.min(255,Math.round(sg/sc*8)), B=Math.min(255,Math.round(sb/sc*8));
+    pal.push((R<<16)|(G<<8)|B);
+  }
+  var used=pal.length;
+  var transIdx=hasTrans? used : -1;
+  if(hasTrans) pal.push(0x000000);
+  var nC=pal.length, bits=1;
+  while((1<<bits)<nC) bits++;
+  if(bits<2) bits=2;
+  if(bits>8) bits=8;
+
+  /* 懒映射：15 位桶 → 调色板下标，遇到才算 */
+  var lut=new Int16Array(32768); lut.fill(-1);
+  var realPal=pal.length-(hasTrans?1:0);
+  function mapBucket(bk){
+    var v=lut[bk];
+    if(v>=0) return v;
+    var rr=((bk>>10)&31)*8+4, gg=((bk>>5)&31)*8+4, bb2=(bk&31)*8+4;
+    var bestI=0, bestD=1e18, p, d1, d2, d3, dd;
+    for(p=0;p<realPal;p++){
+      d1=rr-(pal[p]>>16); d2=gg-((pal[p]>>8)&0xFF); d3=bb2-(pal[p]&0xFF);
+      dd=d1*d1+d2*d2+d3*d3;
+      if(dd<bestD){ bestD=dd; bestI=p; }
+    }
+    lut[bk]=bestI;
+    return bestI;
+  }
+  var idx=new Uint8Array(n);
+  for(i=0;i<n;i++){
+    o=i*4;
+    if(data[o+3]<128){ idx[i]=transIdx>=0? transIdx : 0; continue; }
+    idx[i]=mapBucket(((data[o]>>3)<<10)|((data[o+1]>>3)<<5)|(data[o+2]>>3));
+  }
+  return {pal:pal, idx:idx, bits:bits, used:used, transIdx:transIdx};
+}
+
+/* GIF89a 文件头（全局色表 = 首帧色表；动图带 NETSCAPE 循环块） */
+function wp2gHeader(w,h,bits,pal,transIdx,loop){
+  var out=[0x47,0x49,0x46,0x38,0x39,0x61], i;
+  out.push(w&0xFF,(w>>8)&0xFF, h&0xFF,(h>>8)&0xFF, 0x80|0x70|(bits-1), (transIdx>=0? transIdx : 0), 0);
+  var size=1<<bits;
+  for(i=0;i<size;i++){
+    if(i<pal.length){ var c=pal[i]; out.push((c>>16)&0xFF,(c>>8)&0xFF,c&0xFF); }
+    else out.push(0,0,0);
+  }
+  if(loop){
+    out.push(0x21,0xFF,0x0B);
+    var ns='NETSCAPE2.0', j;
+    for(j=0;j<ns.length;j++) out.push(ns.charCodeAt(j));
+    out.push(0x03,0x01,0x00,0x00,0x00);
+  }
+  return new Uint8Array(out);
+}
+
+/* 单帧图形块：GCE + 图像描述符(+局部色表) + LZW；x/y/w/h 支持只写变化块 */
+function wp2gFrameBlock(x,y,w,h,q,delayCs,local,disposal){
+  var out=[], i;
+  var trans=(q.transIdx>=0);
+  var disp=(disposal===2)?2:1;
+  out.push(0x21,0xF9,0x04, (disp<<2)|(trans?1:0), delayCs&0xFF,(delayCs>>8)&0xFF, trans? q.transIdx : 0, 0x00);
+  out.push(0x2C, x&0xFF,(x>>8)&0xFF, y&0xFF,(y>>8)&0xFF, w&0xFF,(w>>8)&0xFF, h&0xFF,(h>>8)&0xFF, (local?0x80:0)|(q.bits-1));
+  if(local){
+    var size=1<<q.bits;
+    for(i=0;i<size;i++){
+      if(i<q.pal.length){ var c=q.pal[i]; out.push((c>>16)&0xFF,(c>>8)&0xFF,c&0xFF); }
+      else out.push(0,0,0);
+    }
+  }
+  var minCode=Math.max(2,q.bits);
+  out.push(minCode);
+  var lz=gpLzw(q.idx,minCode);
+  for(i=0;i<lz.length;i+=255){
+    var L=Math.min(255,lz.length-i);
+    out.push(L);
+    for(var t=0;t<L;t++) out.push(lz[i+t]);
+  }
+  out.push(0);
+  return new Uint8Array(out);
+}
+
+/* 只放延时的 1×1 透空块（画面完全没变时用，撑住时间轴） */
+function wp2gDelayBlock(delayCs){
+  var q={pal:[0x000000,0x000000], idx:new Uint8Array([1]), bits:2, transIdx:1};
+  return wp2gFrameBlock(0,0,1,1,q,delayCs,true,1);
+}
+
+/* 变化区域包围盒（逐字节比，返回 null = 完全一样） */
+function wp2gBBox(a,b,w,h){
+  var x0=1e9,y0=1e9,x1=-1,y1=-1,x,y,o;
+  for(y=0;y<h;y++){
+    for(x=0;x<w;x++){
+      o=(y*w+x)*4;
+      if(a[o]!==b[o] || a[o+1]!==b[o+1] || a[o+2]!==b[o+2] || a[o+3]!==b[o+3]){
+        if(x<x0)x0=x; if(x>x1)x1=x;
+        if(y<y0)y0=y; if(y>y1)y1=y;
+      }
+    }
+  }
+  if(x1<0) return null;
+  return {x:x0, y:y0, w:x1-x0+1, h:y1-y0+1};
+}
+
+/* 逐帧解码 + 编码（流式，不把整段动画留在内存里） */
+async function wp2gConvert(job, opt, prog){
+  var dec=new ImageDecoder({data:job.u8, type:'image/webp'});
+  await dec.tracks.ready;
+  var tr=dec.tracks.selectedTrack, N=(tr&&tr.frameCount)||1;
+  var chunks=[], size=0, canvas=null, ctx=null, nw=0, nh=0, W=0, H=0;
+  var outFrames=0, durMs=0, maxUsed=0, emittedCs=0, cumUs=0;
+  var prev=null, hasTrans=false, diffFrames=0, mixAlpha=false;
+  function pushArr(arr){ chunks.push(arr); size+=arr.length; }
+  var i;
+  for(i=0;i<N;i++){
+    var r=await dec.decode({frameIndex:i});
+    var img=r.image;
+    W=img.displayWidth||img.codedWidth; H=img.displayHeight||img.codedHeight;
+    if(!canvas){
+      nw=Math.max(1,Math.round(W*(opt.scale||1)));
+      nh=Math.max(1,Math.round(H*(opt.scale||1)));
+      canvas=document.createElement('canvas');
+      canvas.width=nw; canvas.height=nh;
+      ctx=canvas.getContext('2d',{willReadFrequently:true});
+    }
+    cumUs += (img.duration||100000);
+    var keep=(i===0) || (i===N-1) || (Math.floor((i+1)*opt.fps/100) > Math.floor(i*opt.fps/100));
+    if(keep){
+      ctx.clearRect(0,0,nw,nh);
+      try{ ctx.drawImage(img,0,0,nw,nh); }catch(e0){}
+      var data=ctx.getImageData(0,0,nw,nh).data;
+      var targetCs=Math.round(cumUs/10000);
+      var dly=targetCs-emittedCs;
+      if(dly<2) dly=2;
+      var box=null;
+      if(opt.diff && outFrames>0 && prev && !hasTrans) box=wp2gBBox(prev,data,nw,nh);
+      if(box === null && outFrames>0 && prev && !hasTrans){
+        /* 一帧完全没变：只补延时，不写画面 */
+        pushArr(wp2gDelayBlock(Math.min(65535, dly)));
+        emittedCs += dly;
+        durMs += dly*10;
+        prev=data;
+      } else {
+        var q, bw=nw, bh=nh, bx=0, by=0, sub=null, full=true;
+        if(box && (box.w*box.h) < nw*nh*0.85){
+          bw=box.w; bh=box.h; bx=box.x; by=box.y; full=false;
+          sub=new Uint8ClampedArray(bw*bh*4);
+          var yy, xx, so, to;
+          for(yy=0;yy<bh;yy++){
+            so=((by+yy)*nw+bx)*4; to=yy*bw*4;
+            sub.set(data.subarray(so, so+bw*4), to);
+          }
+          q=wp2gQuant(sub,bw,bh,opt.colors);
+        } else {
+          q=wp2gQuant(data,nw,nh,opt.colors);
+        }
+        if(q.err){ try{img.close();}catch(e1){} try{dec.close();}catch(e2){} return {err:q.err}; }
+        if(q.transIdx>=0 && !hasTrans && outFrames>0) mixAlpha=true;
+        if(q.transIdx>=0) hasTrans=true;
+        if(!outFrames){
+          pushArr(wp2gHeader(nw,nh,q.bits,q.pal,q.transIdx, N>1));
+          pushArr(wp2gFrameBlock(0,0,nw,nh,q,Math.min(65535,dly),false, q.transIdx>=0?2:1));
+        } else {
+          pushArr(wp2gFrameBlock(bx,by,bw,bh,q,Math.min(65535,dly),true, q.transIdx>=0?2:1));
+          if(!full) diffFrames++;
+        }
+        outFrames++;
+        if(q.used>maxUsed) maxUsed=q.used;
+        prev=data;
+        durMs += dly*10;
+        emittedCs += dly;
+      }
+    }
+    try{ img.close(); }catch(e3){}
+    if(prog && (i%3===2)) await prog(i+1, N, size);
+  }
+  try{ dec.close(); }catch(e4){}
+  if(!outFrames) return {err:'没解出可用帧'};
+  pushArr(new Uint8Array([0x3B]));
+  var out=new Uint8Array(size), off=0, c;
+  for(c=0;c<chunks.length;c++){ out.set(chunks[c],off); off+=chunks[c].length; }
+  return {bytes:out, w:nw, h:nh, frames:outFrames, durMs:durMs, colors:maxUsed,
+          srcW:W, srcH:H, srcN:N, diffFrames:diffFrames, trans:hasTrans, mixAlpha:mixAlpha};
+}
+
+/* 选图（可多选） */
+async function wp2gPick(files){
+  var raw=[], i;
+  for(i=0;i<files.length;i++) raw.push(files[i]);
+  var st=document.getElementById('wp2g_status'), btn=document.getElementById('wp2g_btn'),
+      opts=document.getElementById('wp2g_opts'), list=document.getElementById('wp2g_list'),
+      res=document.getElementById('wp2g_result'), head=document.getElementById('wp2g_head');
+  if(res) res.style.display='none';
+  if(list) list.innerHTML='';
+  if(head) head.textContent='';
+  wp2gOut=[]; wp2gJobs=[];
+  if(!raw.length){ if(st) st.textContent='尚未选择文件'; if(btn) btn.style.display='none'; if(opts) opts.style.display='none'; return; }
+  if(st){ st.style.color='var(--muted)'; st.textContent='正在读取 '+raw.length+' 个文件…'; }
+  var bad=[], lines=[], totalB=0, okN=0;
+  var sup=await wp2gSupported();
+  for(i=0;i<raw.length;i++){
+    var f=raw[i], name=f.name||('WebP'+(i+1));
+    try{
+      var ab=await f.arrayBuffer(), u8=new Uint8Array(ab);
+      if(!wp2gIsWebp(u8)){ bad.push(name+'（不是 WebP）'); continue; }
+      if(!sup){ bad.push(name+'（当前内核不支持逐帧解码）'); continue; }
+      var meta=await wp2gMeta(u8);
+      wp2gJobs.push({name:name, size:f.size||u8.length, u8:u8, w:meta.w, h:meta.h, n:meta.n});
+      totalB += (f.size||u8.length);
+      lines.push(name+'（'+meta.w+'×'+meta.h+'，'+meta.n+' 帧）');
+      okN++;
+    }catch(e){ bad.push(name+'（读取失败：'+((e&&e.message)||e)+'）'); }
+  }
+  if(btn) btn.style.display=(okN? 'block':'none');
+  if(opts) opts.style.display=(okN? 'block':'none');
+  if(!okN){
+    var why=(!sup? '当前浏览器内核不支持逐帧解码 WebP（要 Chrome / Android WebView 94 以上，请换新一点的浏览器或装 4.46 APP）'
+                : '没有可用的 WebP：'+bad.slice(0,3).join('、'));
+    if(st){ st.style.color='#ff8a8a'; st.textContent=why; }
+    return;
+  }
+  if(st){ st.style.color='var(--muted)'; st.textContent='已选 '+okN+' 个，共 '+gszFmt(totalB)+(bad.length? '；跳过 '+bad.length+' 个（'+bad.slice(0,2).join('、')+'）':''); }
+  if(head) head.textContent='原图：'+lines.join('；');
+}
+
+/* 开始转换（多张依次跑） */
+async function wp2gRun(){
+  if(wp2gBusy) return;
+  if(!wp2gJobs.length){ document.getElementById('wp2g_status').textContent='先选 WebP 动图'; return; }
+  var st=document.getElementById('wp2g_status'), list=document.getElementById('wp2g_list'),
+      res=document.getElementById('wp2g_result'), btn=document.getElementById('wp2g_btn');
+  var opt={
+    scale: parseFloat(document.getElementById('wp2g_scale').value)||1,
+    colors: parseInt(document.getElementById('wp2g_colors').value,10)||256,
+    fps: parseInt(document.getElementById('wp2g_fps').value,10)||100,
+    diff: !!(document.getElementById('wp2g_diff') && document.getElementById('wp2g_diff').checked)
+  };
+  wp2gBusy=true;
+  if(btn){ btn.disabled=true; btn.textContent='转换中…'; }
+  for(var z=0;z<wp2gOut.length;z++){ try{ URL.revokeObjectURL(wp2gOut[z].url); }catch(e){} }
+  wp2gOut=[];
+  if(list) list.innerHTML='';
+  if(res) res.style.display='block';
+  for(var i=0;i<wp2gJobs.length;i++){
+    var jo=wp2gJobs[i];
+    if(st){ st.style.color='var(--muted)'; st.textContent='正在转换 '+(i+1)+' / '+wp2gJobs.length+'：'+jo.name+'（0 / '+jo.n+' 帧）'; }
+    await new Promise(function(r){ setTimeout(r,0); });
+    var t0=Date.now(), r2=null;
+    try{
+      r2=await wp2gConvert(jo, opt, function(now,total,bytes){
+        if(st) st.textContent='正在转换 '+(i+1)+' / '+wp2gJobs.length+'：'+jo.name+'（'+now+' / '+total+' 帧，已 '+gszFmt(bytes)+'）';
+      });
+    }catch(ee){ r2={err:'内部错误：'+((ee&&ee.message)||ee)}; }
+    var cost=Date.now()-t0;
+    if(!r2 || r2.err){
+      if(list) list.innerHTML += '<div class="box" style="margin-bottom:10px;color:var(--err,#ff8a8a);font-size:12px">'+jo.name+'：'+(r2? r2.err : '转换失败')+'</div>';
+      continue;
+    }
+    var url=URL.createObjectURL(new Blob([r2.bytes],{type:'image/gif'}));
+    var outName=jo.name.replace(/\.[^.]+$/,'')+'.gif';
+    wp2gOut.push({name:outName, bytes:r2.bytes, url:url, meta:r2, src:jo});
+    var k=wp2gOut.length-1;
+    var sizeLine=gszFmt(jo.size)+' → <b>'+gszFmt(r2.bytes.length)+'</b>（'+gszPct(r2.bytes.length, jo.size)+'）';
+    var dimLine=(r2.w===r2.srcW && r2.h===r2.srcH)? (r2.w+'×'+r2.h+'（不变）') : (r2.srcW+'×'+r2.srcH+' → '+r2.w+'×'+r2.h);
+    if(list){
+      list.innerHTML +=
+        '<div class="box" style="margin-bottom:12px;font-size:12px;line-height:1.75;word-break:break-all">'+
+        '<div style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:4px">'+jo.name+'</div>'+
+        '<div>'+sizeLine+'</div>'+
+        '<div style="color:var(--muted)">'+jo.size+' B → '+r2.bytes.length+' B</div>'+
+        '<div style="color:var(--muted)">尺寸：'+dimLine+' · 帧数：'+r2.frames+' · 总时长：'+gszSec(r2.durMs)+'</div>'+
+        '<div style="color:var(--muted)">输出：GIF89a · 逐帧色表 · 最多 '+r2.colors+' 色'+(r2.diffFrames? (' · 差分块 '+r2.diffFrames+' 帧'):'')+(r2.trans? ' · 带透明':'')+'</div>'+
+        (r2.mixAlpha? '<div style="color:var(--warn,#c9a227)">注意：这个动图有的帧不透明、有的帧透明，GIF 没有半透明，透明帧会露出上一帧的画面。</div>' : '')+
+        ((r2.bytes.length > jo.size*1.6)? '<div style="color:var(--warn,#c9a227)">GIF 每帧都要带色表，通常比原 WebP 大。想小一点：把「颜色」降到 64 或 32，或把「尺寸」调到 70%，或「帧率」调到 50%（会掉帧）。</div>' : '')+
+        '<div style="color:var(--muted)">耗时 '+cost+' ms</div>'+
+        '<img src="'+url+'" alt="GIF 预览" style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin-top:8px">'+
+        '<button class="btn btn-primary" style="margin-top:8px" onclick="wp2gSave('+k+')">保存这个 GIF（'+gszFmt(r2.bytes.length)+'）</button>'+
+        '</div>';
+    }
+  }
+  wp2gBusy=false;
+  if(btn){ btn.disabled=false; btn.textContent='重新转换'; }
+  if(st){ st.style.color='var(--muted)'; st.textContent='完成：'+wp2gOut.length+' 个 GIF；预览满意再点保存'; }
+}
+
+function wp2gSave(k){
+  var o=wp2gOut[k];
+  if(!o) return;
+  var a=document.createElement('a');
+  a.href=o.url;
+  a.download=o.name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ try{ document.body.removeChild(a); }catch(e){} }, 800);
+}
+
+/* 拖拽 / 粘贴 */
+(function(){
+  var d=document.getElementById('wp2g_drop');
+  if(!d) return;
+  d.addEventListener('dragover', function(e){ e.preventDefault(); d.style.borderColor='var(--accent)'; });
+  d.addEventListener('dragleave', function(){ d.style.borderColor=''; });
+  d.addEventListener('drop', function(e){
+    e.preventDefault();
+    d.style.borderColor='';
+    var fs=e.dataTransfer && e.dataTransfer.files;
+    if(fs && fs.length) wp2gPick(fs);
+  });
+  window.addEventListener('paste', function(e){
+    var app=document.getElementById('wp2g-app');
+    if(!app || !app.open) return;
+    var fs=e.clipboardData && e.clipboardData.files;
+    if(!fs || !fs.length) return;
+    for(var i=0;i<fs.length;i++){
+      if(/\.webp$/i.test(fs[i].name||'') || (fs[i].type||'')==='image/webp'){ e.preventDefault(); wp2gPick(fs); return; }
+    }
+  });
+})();
+
+</script>
+
+<script>
+/* vc-app（MP4 去片头/去广告）：补拖拽，原来只有点击选文件 */
+(function(){
+  var d=document.getElementById('vc_drop');
+  if(!d) return;
+  d.addEventListener('dragover',function(e){ e.preventDefault(); d.classList.add('drag-over'); });
+  d.addEventListener('dragleave',function(){ d.classList.remove('drag-over'); });
+  d.addEventListener('drop',function(e){
+    e.preventDefault(); e.stopPropagation();
+    d.classList.remove('drag-over');
+    var fs=e.dataTransfer && e.dataTransfer.files;
+    if(fs && fs.length) vcPick(fs);
+  });
+  /* 兜底：拖歪到页面别处时别让浏览器打开文件把整页顶掉 */
+  function hasFiles(e){
+    var t=e.dataTransfer;
+    if(!t || !t.types) return false;
+    for(var i=0;i<t.types.length;i++){ if(t.types[i]==='Files') return true; }
+    return false;
+  }
+  window.addEventListener('dragover',function(e){ if(hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('drop',function(e){ if(hasFiles(e)) e.preventDefault(); });
+})();
 </script>
 </body>
 </html>
