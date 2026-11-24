@@ -524,7 +524,8 @@ details>summary{position:relative}
 <script>
 /* v490 页签兜底（独立脚本块）：主脚本块里 setMode 没注册时，切页签照样能用 */
 (function(){
-  var EMB=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app','wp2g-app','matsec-hd'];
+  var EMB=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app','wp2g-app','matsec-hd','pk-app'];
+  var EXT=['pkd-app'];
   function apply(m){
     var pairs=[['tabEmbed','embed'],['tabExtract','extract'],['paneEmbed','embed'],['paneExtract','extract']];
     for(var i=0;i<pairs.length;i++){
@@ -536,6 +537,10 @@ details>summary{position:relative}
     for(var j=0;j<EMB.length;j++){
       var e2=document.getElementById(EMB[j]);
       if(e2) e2.style.display=(m==='extract')?'none':'';
+    }
+    for(var j2=0;j2<EXT.length;j2++){
+      var e3=document.getElementById(EXT[j2]);
+      if(e3) e3.style.display=(m==='extract')?'':'none';
     }
   }
   window.zzTab=function(m){
@@ -623,7 +628,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 
 <header>
   <!-- 版本号：每次发版只改下面这个 v404 -->
-  <h1>作战实验室<span class="zz-ver">4.46</span></h1>
+  <h1>作战实验室<span class="zz-ver">4.47</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   <button type="button" class="upd-btn" onclick="updOpen()" title="查看最近几个版本的更新内容"><i></i>更新公告</button>
   </header>
@@ -632,12 +637,17 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   <div class="upd-card">
     <div class="upd-head">
       <div class="upd-kicker">RELEASE NOTES</div>
-      <div class="upd-title">更新公告<span class="upd-pill">4.46</span></div>
+      <div class="upd-title">更新公告<span class="upd-pill">4.47</span></div>
       <button type="button" class="upd-x" onclick="updClose()" aria-label="关闭">×</button>
     </div>
     <div class="upd-body">
       <section class="upd-sec">
-        <div class="upd-ver">4.46<em>本次</em></div>
+        <div class="upd-ver">4.47<em>本次</em></div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>局部混淆图工具：藏图页可半切或手框一块区域打成块粥，其余像素不动；取图页自动解，认不出能手框解；主取图也认得混淆图成品，一键转到对应工具。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>局部混淆图制作卡拖拽/粘贴没反应；还原卡选块径不生效；超 16MP 成品提示不清楚。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.46</div>
         <div class="upd-line"><span class="upd-tag add">新增</span><span>Webp转GIF：WebP 动图逐帧转 GIF，可调颜色数、帧率、尺寸，支持透明帧。</span></div>
         <div class="upd-line"><span class="upd-tag fix">修复</span><span>MP4修剪工具不能拖入视频，现在拖进去即识别；安卓端作战图生成成品偶发 E001 报错，已加备用导出通道，失败时提示第几张图。</span></div>
       </section>
@@ -2068,6 +2078,1066 @@ window.tjpDoExtract=function(){
     </div>
   </div>
 </details>
+
+<details id="pk-app" style="margin-top:12px">
+  <summary style="position:relative;padding-right:42px">局部混淆图制作工具<button type="button" class="zzq" data-q="局部混淆图制作工具：只把框住的那块打成「马赛克块粥」，其他地方原样不动；换到「取图」页用还原工具把那一块解回去。
+① 选区：半切（左/右/上/下 + 1/2、1/3、2/3）或手动框选，选区自动对齐块网格。
+② 块径：16px 更抗压、8px 更碎；块内像素保持邻接，所以 JPEG 压缩只让每块轻微糊，块的位置不乱，压缩后仍能解。
+③ 还原：成品拿去「取图」页的「局部混淆图还原工具」，放进去直接解，自动认选区与块径；认不出就在图上拖个框，工具自己对到块边。
+④ 只对本工具做的成品有效；缩放会改画幅，救不回来。">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="pk_drop" onclick="document.getElementById('pk_file').click()">
+      <div class="label">选图（做局部混淆）</div>
+      <div class="sub">点这里选，或拖进来，或 Ctrl+V 粘贴；成品只支持 PNG，存 JPG 也能解但会糊</div>
+    </div>
+    <input type="file" id="pk_file" accept="image/*" hidden onchange="pkPick(this.files);this.value=''">
+    <div class="hint" id="pk_status" style="margin-top:8px">尚未选择图片</div>
+    <div id="pk_opts" style="display:none;margin-top:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <label style="flex:1 1 30%;min-width:110px;font-size:12px;color:var(--muted)">选区方式
+          <select id="pk_mode" onchange="pkModeChange()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="half" title="选区自动对齐块网格">半切（自动）</option>
+            <option value="rect">手动框选</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:100px;font-size:12px;color:var(--muted)">方向
+          <select id="pk_dir" onchange="pkSelUpdate()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="right">右半</option>
+            <option value="left">左半</option>
+            <option value="bottom">下半</option>
+            <option value="top">上半</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:100px;font-size:12px;color:var(--muted)">比例
+          <select id="pk_ratio" onchange="pkSelUpdate()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="0.5">1/2</option>
+            <option value="0.3333">1/3</option>
+            <option value="0.6667">2/3</option>
+          </select>
+        </label>
+        <label style="flex:1 1 30%;min-width:100px;font-size:12px;color:var(--muted)">块径
+          <select id="pk_bs" onchange="pkSelUpdate()" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+            <option value="16">16×16（抗压）</option>
+            <option value="8">8×8（更碎）</option>
+          </select>
+        </label>
+      </div>
+      <canvas id="pk_canvas" style="display:none;width:100%;max-width:520px;margin-top:10px;border-radius:10px;touch-action:none;cursor:crosshair"></canvas>
+      <div class="sub" id="pk_selinfo" style="margin-top:8px"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="pkBuild()">生成局部混淆 →</button>
+      <div class="sub" style="margin-top:8px">只打乱选中的块，其余像素一个不动；块径越大越抗压，越小越碎。</div>
+    </div>
+    <div class="result" id="pk_result" style="display:none">
+      <div class="box" id="pk_preview"></div>
+      <div id="pk_dl"></div>
+    </div>
+  </div>
+</details>
+
+<details id="pkd-app" style="margin-top:12px;display:none">
+  <summary style="position:relative;padding-right:42px">局部混淆图还原工具<button type="button" class="zzq" data-q="局部混淆图还原工具：把「局部混淆图制作工具」做出来的成品放进来，点一下就能解，不用自己复现原来的框。
+自动找：选区是半切还是矩形、起止在哪、块径是 16 还是 8。
+矩形认不准时，在图上把块粥那块拖个框圈住，点「按我框的选区解」——框大一圈小一圈都行，工具自己会对到块边。
+成品被平台压过（JPG/WebP）也能解，块内会糊一点；被缩放或裁剪过就救不回。
+只认本工具做的局部混淆，普通图放进来会提示没识别到。」">?</button></summary>
+  <div style="margin-top:14px">
+    <div class="drop" id="pk2_drop" onclick="document.getElementById('pk2_file').click()">
+      <div class="label">选局部混淆成品图</div>
+      <div class="sub">点这里选，或拖进来，或 Ctrl+V 粘贴；PNG / JPG 都行</div>
+    </div>
+    <input type="file" id="pk2_file" accept="image/*" hidden onchange="pk2Pick(this.files);this.value=''">
+    <div class="hint" id="pk2_status" style="margin-top:8px">尚未选择图片</div>
+    <canvas id="pk2_canvas" style="display:none;width:100%;max-width:520px;margin-top:10px;border-radius:10px;touch-action:none;cursor:crosshair"></canvas>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <label style="flex:1 1 40%;min-width:110px;font-size:12px;color:var(--muted)">块径
+        <select id="pk2_bs" style="width:100%;margin-top:4px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:12px">
+          <option value="0">自动</option>
+          <option value="16">16×16</option>
+          <option value="8">8×8</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" style="flex:1 1 55%;align-self:flex-end" onclick="pk2Unmix()">解混淆 →</button>
+    </div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="pk2Manual()">按我框的选区解 →</button>
+    <div class="sub" style="margin-top:8px">自动识别不中就自己框：在图上拖一个框（大致框住块粥那块就行），点「按我框的选区解」，工具会自己对到块边。</div>
+    <div class="hint" id="pk2_info" style="margin-top:8px"></div>
+    <div class="hint" id="pk2_selinfo" style="margin-top:4px"></div>
+    <div class="result" id="pk2_res" style="display:none">
+      <div class="box" id="pk2_preview"></div>
+      <div id="pk2_dl"></div>
+    </div>
+  </div>
+</details>
+
+<script>
+(function(){
+var pkW=0,pkH=0,pkOrig=null,pkBs=16,pkSel=null,pkCanvas=null,pkCtx=null,pkDrag=null;
+
+function gcd(a,b){while(b){var t=a%b;a=b;b=t;}return a;}
+function permK(n){if(!isFinite(n)||n<2) return 1;var k=Math.floor(n*0.6180339887);if(k<2)k=3;while(gcd(k,n)!==1)k++;return k%n;}
+function permOff(n){if(!isFinite(n)||n<2) return 0;var x=(n%997)*2654435761+7*40503;return Math.floor(Math.abs(x)%n);}
+
+function snapRect(r,W,H,bs){
+  if(!r||!isFinite(r.x)||!isFinite(r.y)||!isFinite(r.w)||!isFinite(r.h)) return {x:0,y:0,w:0,h:0};
+  var x=Math.max(0,Math.floor(r.x/bs)*bs), y=Math.max(0,Math.floor(r.y/bs)*bs);
+  var w=Math.floor(r.w/bs)*bs, h=Math.floor(r.h/bs)*bs;
+  if(x+w>W) w=Math.floor((W-x)/bs)*bs;
+  if(y+h>H) h=Math.floor((H-y)/bs)*bs;
+  return {x:x,y:y,w:Math.max(0,w),h:Math.max(0,h)};
+}
+function halfRect(W,H,dir,ratio,bs){
+  var w=Math.round(W*ratio),h=Math.round(H*ratio);
+  var r;
+  if(dir==='right') r={x:W-w,y:0,w:w,h:H};
+  else if(dir==='left') r={x:0,y:0,w:w,h:H};
+  else if(dir==='bottom') r={x:0,y:H-h,w:W,h:h};
+  else r={x:0,y:0,w:W,h:h};
+  return snapRect(r,W,H,bs);
+}
+function blockCount(r,bs){return Math.floor(r.w/bs)*Math.floor(r.h/bs);}
+
+function shuffle(data,W,H,r,bs,sign){
+  if(!r||!isFinite(r.x)||!isFinite(r.y)||!(r.w>0)||!(r.h>0)) return data;
+  var bw=Math.floor(r.w/bs),bh=Math.floor(r.h/bs),n=bw*bh;
+  if(!(n>=2)) return data;
+  var k=permK(n),off=permOff(n);
+  var B=bs*bs*4,src=new Uint8ClampedArray(n*B),dst=new Uint8ClampedArray(n*B);
+  var by,bx,idx,ox,oy,y,x;
+  for(by=0;by<bh;by++)for(bx=0;bx<bw;bx++){
+    idx=by*bw+bx;ox=r.x+bx*bs;oy=r.y+by*bs;
+    for(y=0;y<bs;y++){
+      var srow=((oy+y)*W+ox)*4,drow=(idx*bs+y)*bs*4;
+      for(x=0;x<bs*4;x++)src[drow+x]=data[srow+x];
+    }
+  }
+  var i,j;
+  for(i=0;i<n;i++){
+    j=(i*k+off)%n;
+    var si=(sign>0?j:i)*B,di=(sign>0?i:j)*B;
+    for(var p=0;p<B;p++)dst[di+p]=src[si+p];
+  }
+  for(by=0;by<bh;by++)for(bx=0;bx<bw;bx++){
+    idx=by*bw+bx;ox=r.x+bx*bs;oy=r.y+by*bs;
+    for(y=0;y<bs;y++){
+      var srow2=(idx*bs+y)*bs*4,drow2=((oy+y)*W+ox)*4;
+      for(x=0;x<bs*4;x++)data[drow2+x]=dst[srow2+x];
+    }
+  }
+  return data;
+}
+// 块缝能量：区域内每 bs 像素接缝两侧的平均亮度差，越小越连续
+function seamEnergy(data,W,H,r,bs){
+  var sum=0,cnt=0,x,y,i;
+  for(y=r.y;y<r.y+r.h-1;y++){
+    var row=(y*W)*4;
+    for(x=r.x+bs;x<r.x+r.w-1;x+=bs){ i=row+x*4; sum+=Math.abs(data[i]-data[i-4]); cnt++; }
+  }
+  for(y=r.y+bs;y<r.y+r.h-1;y+=bs){
+    var row2=(y*W)*4;
+    for(x=r.x;x<r.x+r.w-1;x++){ i=row2+x*4; sum+=Math.abs(data[i]-data[i-W*4]); cnt++; }
+  }
+  return cnt?sum/cnt:1e9;
+}
+// 边界能量：选区四条边与「外面」的接缝平均差；错解会把平坦区涂乱，边界先炸
+function edgeEnergy(data,W,H,r){
+  var sum=0,cnt=0,x,y,i;
+  if(r.x>0){for(y=r.y;y<r.y+r.h;y++){i=(y*W+r.x)*4;sum+=Math.abs(data[i]-data[i-4]);cnt++;}}
+  if(r.x+r.w<W){for(y=r.y;y<r.y+r.h;y++){i=(y*W+r.x+r.w-1)*4;sum+=Math.abs(data[i+4]-data[i]);cnt++;}}
+  if(r.y>0){for(x=r.x;x<r.x+r.w;x++){i=(r.y*W+x)*4;sum+=Math.abs(data[i]-data[i-W*4]);cnt++;}}
+  if(r.y+r.h<H){for(x=r.x;x<r.x+r.w;x++){i=((r.y+r.h-1)*W+x)*4;sum+=Math.abs(data[i+W*4]-data[i]);cnt++;}}
+  return cnt?sum/cnt:0;
+}
+// 判分：解前/解后的块缝比值（真候选会把缝压下去，误候选会把平坦区搅乱、比值>1）
+// 只在选区缓冲里算，避免每候选复制整图
+function cropRect(data,W,H,r){
+  var out=new Uint8ClampedArray(r.w*r.h*4),y,x;
+  for(y=0;y<r.h;y++){
+    var s=((r.y+y)*W+r.x)*4,d=y*r.w*4;
+    for(x=0;x<r.w*4;x++) out[d+x]=data[s+x];
+  }
+  return out;
+}
+function scoreCand(orig,W,H,r,bs){
+  var buf=cropRect(orig,W,H,r),rr={x:0,y:0,w:r.w,h:r.h};
+  var before=seamEnergy(buf,r.w,r.h,rr,bs);
+  shuffle(buf,r.w,r.h,rr,bs,-1);
+  var after=seamEnergy(buf,r.w,r.h,rr,bs);
+  return (after+1)/(before+1);
+}
+// 逐条块缝的均值（不是总和）：便于看分布，均值会掩盖「大部分白、几条炸」的错解
+function seamVals(buf,w,h,r,bs){
+  var v=[],nv=r.w/bs,nh=r.h/bs,j,k,x,y,i,sum,xk,yk;
+  for(j=0;j<nh;j++)for(k=0;k+1<nv;k++){
+    xk=(k+1)*bs;sum=0;
+    for(y=j*bs;y<j*bs+bs;y++){i=(y*w+xk)*4;sum+=Math.abs(buf[i]-buf[i-4]);}
+    v.push(sum/bs);
+  }
+  for(k=0;k<nv;k++)for(j=0;j+1<nh;j++){
+    yk=(j+1)*bs;sum=0;
+    for(x=k*bs;x<k*bs+bs;x++){i=(yk*w+x)*4;sum+=Math.abs(buf[i]-buf[i-w*4]);}
+    v.push(sum/bs);
+  }
+  return v;
+}
+function qv(a,p){
+  if(!a.length) return 0;
+  var b=a.slice().sort(function(x,y){return x-y;});
+  return b[Math.min(b.length-1,Math.floor(b.length*p))];
+}
+function avg(a){var s=0,i;for(i=0;i<a.length;i++)s+=a[i];return a.length?s/a.length:0;}
+// 稳健判分：均值项 + 90 分位项。错一格的解在白底上均值仍然低，但会有几条缝被文字炸穿，90 分位能抓住
+function scoreRob(orig,W,H,r,bs){
+  var buf=cropRect(orig,W,H,r),rr={x:0,y:0,w:r.w,h:r.h};
+  var b=seamVals(buf,r.w,r.h,rr,bs);
+  shuffle(buf,r.w,r.h,rr,bs,-1);
+  var a=seamVals(buf,r.w,r.h,rr,bs);
+  var mr=(avg(a)+1)/(avg(b)+1), qr=(qv(a,0.9)+1)/(qv(b,0.9)+1);
+  var hi=(0.6*qr+0.4*mr);
+  return {score:hi,mean:mr,q90:qr,qA:qv(a,0.9),qB:qv(b,0.9),n:a.length};
+}
+// 每块的「接缝相对自身内部细节」比值：块被打乱 → 四条边全断、但块内还是原样；
+// 天然块（哪怕满是文字）边上的落差和块内落差是一个量级，比值接近 1。
+function blockSoupMap(data,W,H,bs){
+  var bw=Math.floor(W/bs),bh=Math.floor(H/bs),D=new Float32Array(bw*bh),bx,by,x,y,i,s1,c1,s2,c2,x0,y0,x1,y1,xc,yc;
+  for(by=0;by<bh;by++)for(bx=0;bx<bw;bx++){
+    s1=0;c1=0;s2=0;c2=0;x0=bx*bs;y0=by*bs;x1=x0+bs-1;y1=y0+bs-1;xc=x0+(bs>>1);yc=y0+(bs>>1);
+    if(x1+1<W){for(y=y0;y<=y1;y++){i=((y*W)+x1)*4;s1+=Math.abs(data[i+1]-data[i]);c1++;}}
+    if(y1+1<H){for(x=x0;x<=x1;x++){i=(y1*W+x)*4;s1+=Math.abs(data[i+W*4]-data[i]);c1++;}}
+    if(x0>0){for(y=y0;y<=y1;y++){i=(y*W+x0)*4;s1+=Math.abs(data[i]-data[i-4]);c1++;}}
+    if(y0>0){for(x=x0;x<=x1;x++){i=(y0*W+x)*4;s1+=Math.abs(data[i]-data[i-W*4]);c1++;}}
+    if(xc+1<W){for(y=y0;y<=y1;y++){i=((y*W)+xc)*4;s2+=Math.abs(data[i+1]-data[i]);c2++;}}
+    if(yc+1<H){for(x=x0;x<=x1;x++){i=(yc*W+x)*4;s2+=Math.abs(data[i+W*4]-data[i]);c2++;}}
+    D[by*bw+bx]=(s1/Math.max(c1,1)+1.5)/(s2/Math.max(c2,1)+1.5);
+  }
+  return {D:D,bw:bw,bh:bh};
+}
+// 块粥图 → 候选矩形：Otsu 自动阈值 + 连通块外框（取最大的 3 个，再加全部外框）
+function otsuThr(D,n){
+  var hist=new Int32Array(256),i,v,mx=0,total=n,sum=0,sumB=0,wB=0,wF=0,maxV=-1,thr=0,SC=12;
+  for(i=0;i<n;i++){v=Math.round(D[i]*SC);if(v<0)v=0;if(v>255)v=255;hist[v]++;if(v>mx)mx=v;}
+  for(i=0;i<=mx;i++)sum+=i*hist[i];
+  for(i=0;i<=mx;i++){
+    wB+=hist[i]; if(!wB) continue;
+    wF=total-wB; if(!wF) break;
+    sumB+=i*hist[i];
+    var mB=sumB/wB,mF=(sum-sumB)/wF,d=wB*wF*(mB-mF)*(mB-mF);
+    if(d>maxV){maxV=d;thr=i;}
+  }
+  return thr/SC;
+}
+function roughCands(data,W,H,bs){
+  var m=blockSoupMap(data,W,H,bs),D0=m.D,bw=m.bw,bh=m.bh,n=bw*bh,i,t;
+  if(n<9) return [];
+  // 3×3 均值平滑：块粥区内部本来就连成一片，平滑掉单块的起伏才好连通
+  var D=new Float32Array(n);
+  for(i=0;i<n;i++){
+    var kx=i%bw,ky=(i/bw)|0,s=0,c=0;
+    for(t=-1;t<=1;t++)for(var u=-1;u<=1;u++){
+      var ax=kx+u,ay=ky+t;
+      if(ax<0||ay<0||ax>=bw||ay>=bh) continue;
+      s+=D0[ay*bw+ax];c++;
+    }
+    D[i]=s/c;
+  }
+  var thr=Math.max(otsuThr(D,n),1.9);
+  var vis=new Uint8Array(n),stack=[],boxes=[],allBox=null;
+  for(i=0;i<n;i++){
+    if(vis[i]||D[i]<=thr) continue;
+    var cnt=0,x0=bw,y0=bh,x1=-1,y1=-1;
+    stack.push(i);vis[i]=1;
+    while(stack.length){
+      var k=stack.pop(),kx=k%bw,ky=(k/bw)|0;
+      cnt++; if(kx<x0)x0=kx; if(kx>x1)x1=kx; if(ky<y0)y0=ky; if(ky>y1)y1=ky;
+      if(kx>0&&!vis[k-1]&&D[k-1]>thr){vis[k-1]=1;stack.push(k-1);}
+      if(kx<bw-1&&!vis[k+1]&&D[k+1]>thr){vis[k+1]=1;stack.push(k+1);}
+      if(ky>0&&!vis[k-bw]&&D[k-bw]>thr){vis[k-bw]=1;stack.push(k-bw);}
+      if(ky<bh-1&&!vis[k+bw]&&D[k+bw]>thr){vis[k+bw]=1;stack.push(k+bw);}
+    }
+    var bx={x:x0*bs,y:y0*bs,w:(x1-x0+1)*bs,h:(y1-y0+1)*bs,c:cnt};
+    boxes.push(bx);
+    if(!allBox) allBox={x:bx.x,y:bx.y,w:bx.w,h:bx.h,c:cnt};
+    else{
+      var ax=Math.min(allBox.x,bx.x),ay=Math.min(allBox.y,bx.y);
+      var ar=Math.max(allBox.x+allBox.w,bx.x+bx.w),ab=Math.max(allBox.y+allBox.h,bx.y+bx.h);
+      allBox={x:ax,y:ay,w:ar-ax,h:ab-ay,c:allBox.c+cnt};
+    }
+  }
+  boxes.sort(function(a,b){return b.c-a.c;});
+  var out=[],seen={},minA=Math.max(9*bs*bs,0.002*W*H);
+  function push(r){
+    if(!r) return;
+    r=snapRect(r,W,H,bs);
+    if(r.w<bs*3||r.h<bs*3||r.w*r.h<minA) return;
+    var key=[r.x,r.y,r.w,r.h].join(',');
+    if(seen[key]) return; seen[key]=1; out.push(r);
+  }
+  for(i=0;i<Math.min(3,boxes.length);i++) push(boxes[i]);
+  push(allBox);
+  return out;
+}
+// ===== 快速判分器 =====
+// 每个块预先存好四条边的像素列/行和每条块缝的平均落差，这样"解一遍"只是查表，
+// 不必真的复制/打乱整块，几百上千个候选也能在几十毫秒内试完。
+function mkFast(data,W,H,bs){
+  var GW=Math.floor(W/bs),GH=Math.floor(H/bs),N=GW*GH,gx,gy,x,y,i,y0,x0;
+  var fc=new Uint8Array(N*bs),lc=new Uint8Array(N*bs),fr=new Uint8Array(N*bs),lr=new Uint8Array(N*bs);
+  var V=new Float32Array(N),Hh=new Float32Array(N);
+  for(gy=0;gy<GH;gy++)for(gx=0;gx<GW;gx++){
+    i=gy*GW+gx;y0=gy*bs;x0=gx*bs;
+    for(y=0;y<bs;y++){
+      fc[i*bs+y]=data[((y0+y)*W+x0)*4+1];
+      lc[i*bs+y]=data[((y0+y)*W+x0+bs-1)*4+1];
+      fr[i*bs+y]=data[(y0*W+x0+y)*4+1];
+      lr[i*bs+y]=data[((y0+bs-1)*W+x0+y)*4+1];
+    }
+    var s=0,c=0,t;
+    if(gx>0){for(y=0;y<bs;y++){t=((y0+y)*W+x0)*4;s+=Math.abs(data[t+1]-data[t-3]);c++;}V[i]=s/c;}
+    s=0;c=0;
+    if(gy>0){for(x=0;x<bs;x++){t=(y0*W+x0+x)*4;s+=Math.abs(data[t+1]-data[t-W*4+1]);c++;}Hh[i]=s/c;}
+  }
+  return {GW:GW,GH:GH,V:V,Hh:Hh,fc:fc,lc:lc,fr:fr,lr:lr,bs:bs};
+}
+function fastScore(P,rect){
+  var bs=P.bs,GW=P.GW,V=P.V,Hh=P.Hh,fc=P.fc,lc=P.lc,fr=P.fr,lr=P.lr;
+  var bw=Math.floor(rect.w/bs),bh=Math.floor(rect.h/bs),n=bw*bh;
+  if(n<9||bw<3||bh<3) return 1e9;
+  var k=permK(n),off=permOff(n),pos=new Int32Array(n),i,q;
+  for(i=0;i<n;i++){q=(i*k+off)%n;pos[q]=i;}
+  var X0=(rect.x/bs)|0,Y0=(rect.y/bs)|0;
+  var bSum=0,bCnt=0,aSum=0,aCnt=0,bx,by,p,a,b,g1,g2;
+  for(by=0;by<bh;by++)for(bx=0;bx<bw-1;bx++){
+    bSum+=V[(Y0+by)*GW+(X0+bx+1)];bCnt++;
+    p=by*bw+bx;
+    g1=(Y0+((pos[p]/bw)|0))*GW+(X0+(pos[p]%bw));
+    g2=(Y0+((pos[p+1]/bw)|0))*GW+(X0+(pos[p+1]%bw));
+    for(var y=0;y<bs;y++){aSum+=Math.abs(lc[g1*bs+y]-fc[g2*bs+y]);aCnt++;}
+  }
+  for(by=0;by<bh-1;by++)for(bx=0;bx<bw;bx++){
+    bSum+=Hh[(Y0+by+1)*GW+(X0+bx)];bCnt++;
+    p=by*bw+bx;q=p+bw;
+    g1=(Y0+((pos[p]/bw)|0))*GW+(X0+(pos[p]%bw));
+    g2=(Y0+((pos[q]/bw)|0))*GW+(X0+(pos[q]%bw));
+    for(var x=0;x<bs;x++){aSum+=Math.abs(lr[g1*bs+x]-fr[g2*bs+x]);aCnt++;}
+  }
+  var before=bSum/Math.max(bCnt,1),after=aSum/Math.max(aCnt,1);
+  return rankOf((after+1.5)/(before+1.5),n);
+}
+// 在给定种子附近，用快速判分器对四条边穷举（横向一遍、纵向一遍，来回几轮），把框对齐到块
+function locateRect(P,W,H,seed,bs,winPx,iters){
+  var wW=Math.max(2,Math.round(winPx/bs));
+  var cur=snapRect({x:seed.x,y:seed.y,w:seed.w,h:seed.h},W,H,bs);
+  if(cur.w<bs*3||cur.h<bs*3) return null;
+  var bestS=fastScore(P,cur),best=cur,it,ax,d0,d1,r,s;
+  iters=iters||2;
+  for(it=0;it<iters;it++){
+    for(ax=0;ax<2;ax++){
+      for(d0=-wW;d0<=wW;d0++)for(d1=-wW;d1<=wW;d1++){
+        r={x:best.x,y:best.y,w:best.w,h:best.h};
+        if(ax===0){r.x+=d0*bs;r.w-=d0*bs;r.w+=d1*bs;}
+        else{r.y+=d0*bs;r.h-=d0*bs;r.h+=d1*bs;}
+        if(r.x<0||r.y<0||r.w<bs*3||r.h<bs*3||r.x+r.w>W||r.y+r.h>H) continue;
+        s=fastScore(P,r);
+        if(s<bestS-1e-9){bestS=s;best=r;}
+      }
+    }
+  }
+  return {rect:best,rank:bestS};
+}
+// 逐条「块缝」的归一化断裂度：BV[by][bx] = x=bx*bs 那条竖缝在 by 行带内断得有多狠
+// BH[bx][by] = y=by*bs 那条横缝在 bx 列带内断得有多狠。块粥区内每条内部缝都断 → 连通成段。
+function blockEdgeMaps(data,W,H,bs){
+  var bw=Math.floor(W/bs),bh=Math.floor(H/bs),bx,by,x,y,i,s,c,sf,cf,s2,c2,s3,c3,x0,y0,x1,y1,xc,yc,N=bw*bh;
+  var BV=new Float32Array(N),BH=new Float32Array(N);
+  for(by=0;by<bh;by++)for(bx=0;bx<bw;bx++){
+    x0=bx*bs;y0=by*bs;x1=x0+bs-1;y1=y0+bs-1;xc=x0+(bs>>1);yc=y0+(bs>>1);
+    // 竖缝（与右邻块之间，bx<bw-1 才算内部缝）
+    if(bx<bw-1){
+      s=0;c=0;
+      for(y=y0;y<=y1;y++){i=((y*W)+x1)*4;s+=Math.abs(data[i+4]-data[i]);c++;}
+      sf=c?s/c:0;cf=0;
+      if(xc+1<W){s2=0;c2=0;for(y=y0;y<=y1;y++){i=((y*W)+xc)*4;s2+=Math.abs(data[i+4]-data[i]);c2++;}cf=c2?s2/c2:0;}
+      BV[by*bw+bx]=(sf+1.5)/(cf+1.5);
+    }
+    // 横缝（与下邻块之间）
+    if(by<bh-1){
+      s=0;c=0;
+      for(x=x0;x<=x1;x++){i=(y1*W+x)*4;s+=Math.abs(data[i+W*4]-data[i]);c++;}
+      sf=c?s/c:0;cf=0;
+      if(yc+1<H){s3=0;c3=0;for(x=x0;x<=x1;x++){i=(yc*W+x)*4;s3+=Math.abs(data[i+W*4]-data[i]);c3++;}cf=c3?s3/c3:0;}
+      BH[by*bw+bx]=(sf+1.5)/(cf+1.5);
+    }
+  }
+  return {BV:BV,BH:BH,bw:bw,bh:bh};
+}
+// 用「最长连续断裂段」定出矩形：块粥区内每条缝都断，外面只有零星断开
+function runsBox(data,W,H,bs){
+  var m=blockEdgeMaps(data,W,H,bs),BV=m.BV,BH=m.BH,bw=m.bw,bh=m.bh,i,k=0,b,ri;
+  if(bw<4||bh<4) return null;
+  var all=new Float32Array(bw*bh*2);
+  for(i=0;i<bw*bh;i++){if(BV[i]>0)all[k++]=BV[i];if(BH[i]>0)all[k++]=BH[i];}
+  var thr=Math.max(otsuThr(all.subarray(0,k),k),2.0);
+  // 竖缝：某一排 by 内，bx 方向的最长连续断开段
+  function runV(by){
+    var bestA=0,bestB=-1,bestLen=0,a=-1,bx2,ln;
+    for(bx2=1;bx2<bw;bx2++){
+      if(BV[by*bw+bx2]>thr){ if(a<0)a=bx2; ln=bx2-a+1; if(ln>bestLen){bestLen=ln;bestA=a;bestB=bx2;} }
+      else a=-1;
+    }
+    return {a:bestA,b:bestB,len:bestLen};
+  }
+  // 横缝：某一列 bx 内，by 方向的最长连续断开段
+  function runH(bx){
+    var bestA=0,bestB=-1,bestLen=0,a=-1,by2,ln;
+    for(by2=1;by2<bh;by2++){
+      if(BH[by2*bw+bx]>thr){ if(a<0)a=by2; ln=by2-a+1; if(ln>bestLen){bestLen=ln;bestA=a;bestB=by2;} }
+      else a=-1;
+    }
+    return {a:bestA,b:bestB,len:bestLen};
+  }
+  function vote(runs,nrun,tol){
+    var maxL=0,cnt={},bestKey=null,bestC=0,j,r;
+    for(j=0;j<nrun;j++) if(runs[j].len>maxL) maxL=runs[j].len;
+    if(maxL<2) return null;
+    for(j=0;j<nrun;j++){
+      r=runs[j]; if(r.len<maxL-tol) continue;
+      var key=r.a+','+r.b; cnt[key]=(cnt[key]||0)+1;
+      if(cnt[key]>bestC){bestC=cnt[key];bestKey=key;}
+    }
+    if(!bestKey) return null;
+    var p=bestKey.split(',');
+    return {a:+p[0],b:+p[1]};
+  }
+  var rv=new Array(bh);
+  for(b=0;b<bh;b++) rv[b]=runV(b);
+  var c1=vote(rv,bh,1);
+  if(!c1) return null;
+  var rh=new Array(bw);
+  for(b=0;b<bw;b++) rh[b]=runH(b);
+  var c2=vote(rh,bw,1);
+  if(!c2) return null;
+  // 竖缝 A..B 断裂 → 块粥块在第 A-1..B 块；横缝 C..D → 第 C-1..D 块
+  var box={x:(c1.a-1)*bs,y:(c2.a-1)*bs,w:(c1.b-c1.a+2)*bs,h:(c2.b-c2.a+2)*bs};
+  return snapRect(box,W,H,bs);
+}
+// 上面定的框可能每边多一块，枚举「每边收回 0/1 块」的 16 种组合，用判分挑最准的
+function snapBest(data,W,H,box,bs,wide){
+  var w=wide?bs:0;
+  var x0s=wide?[box.x-bs,box.x,box.x+bs]:[box.x,box.x+bs];
+  var x1s=wide?[box.x+box.w-bs,box.x+box.w,box.x+box.w+bs]:[box.x+box.w,box.x+box.w-bs];
+  var y0s=wide?[box.y-bs,box.y,box.y+bs]:[box.y,box.y+bs];
+  var y1s=wide?[box.y+box.h-bs,box.y+box.h,box.y+box.h+bs]:[box.y+box.h,box.y+box.h-bs];
+  var best=null,bestR=1e9,a,b,c,d,r,s,rk;
+  for(a=0;a<x0s.length;a++)for(b=0;b<x1s.length;b++)for(c=0;c<y0s.length;c++)for(d=0;d<y1s.length;d++){
+    var nx=x0s[a],nw=x1s[b]-x0s[a],ny=y0s[c],nh=y1s[d]-y0s[c];
+    if(nw<bs*3||nh<bs*3||nx<0||ny<0||nx+nw>W||ny+nh>H) continue;
+    r={x:nx,y:ny,w:nw,h:nh};
+    s=scoreCand(data,W,H,r,bs);rk=rankOf(s,blockCount(r,bs));
+    if(rk<bestR){bestR=rk;best=r;r.s=s;}
+  }
+  return best?{rect:best,score:best.s,rank:bestR}:null;
+}
+function boxScore(data,W,H,r,bs){return rankOf(scoreCand(data,W,H,r,bs),blockCount(r,bs));}
+function refineRect(data,W,H,r,bs){
+  var best={x:r.x,y:r.y,w:r.w,h:r.h},bestS=boxScore(data,W,H,best,bs);
+  var steps=[8,4,2,1],si,step,improved,guard,edge,e,dl,nr,ns;
+  for(si=0;si<steps.length;si++){
+    step=steps[si]*bs;
+    improved=true;guard=0;
+    while(improved&&guard++<4){
+      improved=false;
+      for(edge=0;edge<4;edge++)for(e=0;e<2;e++){
+        dl=e?step:-step; nr={x:best.x,y:best.y,w:best.w,h:best.h};
+        if(edge===0){nr.x+=dl;nr.w-=dl;}
+        if(edge===1){nr.w+=dl;}
+        if(edge===2){nr.y+=dl;nr.h-=dl;}
+        if(edge===3){nr.h+=dl;}
+        nr=snapRect(nr,W,H,bs);
+        if(nr.x+nr.w>W||nr.y+nr.h>H||nr.w<bs*3||nr.h<bs*3) continue;
+        ns=boxScore(data,W,H,nr,bs);
+        if(ns<bestS-1e-9){bestS=ns;best=nr;improved=true;}
+      }
+    }
+  }
+  return {rect:best,score:bestS};
+}
+// 排序分：比值 + 支持的块数惩罚（只有两三块的小框容易蒙对，必须压下去）
+function rankOf(ratio,nb){return ratio+1.8/Math.sqrt(Math.max(nb,1));}
+// 全盲识别：半切 12 种 + 矩形自动框，块径 16/8 都试，取排序分最低
+function rectifyResid(data,W,H,rect,bs){
+  // 全图复核：真框解完，全图的块缝应该基本平掉；只解中一小块，剩下的块粥还在缝里
+  var full={x:0,y:0,w:W,h:H};
+  var s0=seamVals(data,W,H,full,bs), t0=qv(s0,0.75), s1, tmp=new Uint8ClampedArray(data), i, c=0;
+  shuffle(tmp,W,H,rect,bs,-1);
+  s1=seamVals(tmp,W,H,full,bs);
+  for(i=0;i<s1.length;i++){ if(s1[i]>t0) c++; }
+  return {resid:c/(s1.length||1), t0:t0};
+}
+function detectAll(data,W,H,bsOnly){
+  var dirs=['right','left','bottom','top'],ratios=[0.5,0.3333,0.6667],bss=bsOnly?[bsOnly]:[16,8];
+  var best=null,bestR=1e9,second=1e9,bi,di,ri,bs,r,e,nb,cs,cj,P,loc,pre;
+  function same(a,b){return a&&b&&a.bs===b.bs&&a.rect.x===b.rect.x&&a.rect.y===b.rect.y&&a.rect.w===b.rect.w&&a.rect.h===b.rect.h;}
+  function keep(cand){
+    if(same(cand,best)) return;
+    if(!best||cand.rank<bestR){ if(best) second=Math.min(second,bestR); best=cand; bestR=cand.rank; }
+    else if(cand.rank<second) second=cand.rank;
+  }
+  for(bi=0;bi<bss.length;bi++){
+    bs=bss[bi];P=mkFast(data,W,H,bs);
+    for(di=0;di<dirs.length;di++)for(ri=0;ri<ratios.length;ri++){
+      r=halfRect(W,H,dirs[di],ratios[ri],bs);
+      nb=blockCount(r,bs);
+      if(nb<2) continue;
+      keep({kind:'half',dir:dirs[di],ratio:ratios[ri],bs:bs,rect:r,score:1,rank:fastScore(P,r)});
+    }
+    // 矩形：粗糙外框当种子 → 快速判分穷举四条边 → 前几名用稳健判分定胜负
+    cs=roughCands(data,W,H,bs);
+    if(cs.length){
+      cs=cs.map(function(s){return {s:s,r:fastScore(P,snapRect(s,W,H,bs))};});
+      cs.sort(function(a,b){return a.r-b.r;});
+      loc=locateRect(P,W,H,cs[0].s,bs,bs*9,2);
+      if(loc){
+        pre=fastScore(P,loc.rect);
+        loc=locateRect(P,W,H,loc.rect,bs,bs*2,2)||loc;
+        var pr=pickRob(data,W,H,bs,loc.rect,1,1,6);
+        var rc2={kind:'rect',bs:bs,rect:(pr?pr.rect:loc.rect),score:1,rank:Math.min(pr?pr.rank:1e9,pre)};
+        rc2.resid=rectifyResid(data,W,H,rc2.rect,bs).resid;
+        keep(rc2);
+      }
+    }
+  }
+  // 快速判分可能有偏差，最后把冠军按精确判分复核一遍（矩形已用稳健分，跳过）
+  if(best&&best.kind!=='rect'){
+    e=scoreCand(data,W,H,best.rect,best.bs);
+    best.score=e;best.rank=rankOf(e,blockCount(best.rect,best.bs));
+  }
+  var thr=best?(best.kind==='rect'?0.30:0.62):0.62;
+  var ok=!!best&&best.rank<thr;
+  if(ok&&best.kind==='rect'&&best.resid>0.15) ok=false;   // 全图复核没过：块粥还剩一大片，说明只锁中其中一小块
+  return {best:best,second:second,conf:best?second/Math.max(best.rank,1e-6):0,
+          ok:ok,rank:best?best.rank:bestR};
+}
+function psnr(a,b){  var se=0,n=a.length/4;  for(var i=0;i<a.length;i+=4){for(var c=0;c<3;c++){var d=a[i+c]-b[i+c];se+=d*d;}}
+  var mse=se/(n*3);
+  return mse===0?99:Math.round(10*Math.log10(255*255/mse)*10)/10;
+}
+function status(id,txt,warn){document.getElementById(id).textContent=txt;}
+
+function pkDrawBase(){
+  if(!pkCtx) return;
+  pkCtx.putImageData(new ImageData(new Uint8ClampedArray(pkOrig),pkW,pkH),0,0);
+  if(pkSel&&pkSel.w>0&&pkSel.h>0){
+    pkCtx.fillStyle='rgba(0,0,0,.62)';
+    var S=pkSel;
+    pkCtx.fillRect(0,0,pkW,S.y);pkCtx.fillRect(0,S.y+S.h,pkW,pkH-S.y-S.h);
+    pkCtx.fillRect(0,S.y,S.x,S.h);pkCtx.fillRect(S.x+S.w,S.y,pkW-S.x-S.w,S.h);
+    pkCtx.strokeStyle='#e8c27a';pkCtx.lineWidth=Math.max(2,Math.round(pkW/300));
+    pkCtx.strokeRect(S.x,S.y,S.w,S.h);
+  }
+}
+window.pkSelUpdate=function(){
+  if(!pkOrig) return;
+  pkBs=parseInt(document.getElementById('pk_bs').value,10)||16;
+  var mode=document.getElementById('pk_mode').value;
+  if(mode==='half'){
+    pkSel=halfRect(pkW,pkH,document.getElementById('pk_dir').value,
+                   parseFloat(document.getElementById('pk_ratio').value),pkBs);
+  }else if(pkSel){ pkSel=snapRect(pkSel,pkW,pkH,pkBs); }
+  pkDrawBase();
+  if(pkSel) status('pk_selinfo','选区：'+pkSel.w+'×'+pkSel.h+'，块径 '+pkBs+'px，块数 '+
+      Math.floor(pkSel.w/pkBs)*Math.floor(pkSel.h/pkBs)); 
+};
+window.pkModeChange=function(){
+  var mode=document.getElementById('pk_mode').value;
+  if(mode==='half'){ pkSelUpdate(); }
+  else { status('pk_selinfo','手动框选：在图上按住拖出要打乱的那一块'); }
+};
+
+function pkLoadImage(img){
+  var W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
+  if(W*H>16777216){ status('pk_status','图太大（'+W+'×'+H+'），先缩到 1600 万像素以内再用',true); return; }
+  pkW=W;pkH=H;
+  pkCanvas=document.getElementById('pk_canvas');
+  pkCanvas.width=W;pkCanvas.height=H;pkCanvas.style.display='block';
+  pkCtx=pkCanvas.getContext('2d',{willReadFrequently:true});
+  pkCtx.drawImage(img,0,0,W,H);
+  var d=pkCtx.getImageData(0,0,W,H);
+  pkOrig=new Uint8ClampedArray(d.data);
+  document.getElementById('pk_opts').style.display='block';
+  document.getElementById('pk_result').style.display='none';
+  status('pk_status','已加载 '+W+'×'+H);
+  pkSel=null;
+  pkModeChange();
+  if(document.getElementById('pk_mode').value==='half') pkSelUpdate();
+}
+window.pkLoadUrl=function(url,onDone){
+  var im=new Image();
+  im.onload=function(){pkLoadImage(im); if(onDone) onDone();};
+  im.onerror=function(){status('pk_status','图片读取失败',true);};
+  im.src=url;
+};
+window.pkPick=function(files){
+  if(!files||!files[0]) return;
+  var f=files[0];
+  var url=URL.createObjectURL(f),im=new Image();
+  im.onload=function(){pkLoadImage(im);URL.revokeObjectURL(url);};
+  im.onerror=function(){status('pk_status','图片读取失败',true);URL.revokeObjectURL(url);};
+  im.src=url;
+};
+
+// 画布拖拽框选
+function pkPos(ev){
+  var rc=pkCanvas.getBoundingClientRect();
+  if(!(rc.width>0)||!(rc.height>0)) return null;   // 卡片收起时画布尺寸为 0，别算出 NaN
+  var sx=pkW/rc.width,sy=pkH/rc.height;
+  var px=(ev.clientX-rc.left)*sx,py=(ev.clientY-rc.top)*sy;
+  if(!isFinite(px)||!isFinite(py)) return null;
+  return {x:Math.max(0,Math.min(pkW,px)),y:Math.max(0,Math.min(pkH,py))};
+}
+function bindDrag(){
+  var cv=document.getElementById('pk_canvas');
+  if(!cv||cv.__pkBound) return;
+  cv.__pkBound=1;
+  cv.addEventListener('pointerdown',function(ev){
+    if(document.getElementById('pk_mode').value!=='rect') return;
+    pkDrag=pkPos(ev); if(!pkDrag) return; try{cv.setPointerCapture(ev.pointerId);}catch(e){}
+  });
+  cv.addEventListener('pointermove',function(ev){
+    if(!pkDrag) return;
+    var p=pkPos(ev); if(!p) return; var bs=parseInt(document.getElementById('pk_bs').value,10)||16;
+    pkBs=bs;
+    pkSel=snapRect({x:Math.min(pkDrag.x,p.x),y:Math.min(pkDrag.y,p.y),
+                    w:Math.abs(p.x-pkDrag.x),h:Math.abs(p.y-pkDrag.y)},pkW,pkH,bs);
+    pkDrawBase();
+    status('pk_selinfo','选区：'+pkSel.w+'×'+pkSel.h+'，块径 '+pkBs+'px，块数 '+
+      Math.floor(pkSel.w/pkBs)*Math.floor(pkSel.h/pkBs));
+  });
+  cv.addEventListener('pointerup',function(){pkDrag=null;});
+  cv.addEventListener('pointercancel',function(){pkDrag=null;});
+}
+setInterval(bindDrag,800);
+
+window.pkBuild=function(){
+  if(!pkOrig){status('pk_status','请先选择图片',true);return;}
+  pkBs=parseInt(document.getElementById('pk_bs').value,10)||16;
+  if(document.getElementById('pk_mode').value==='rect'&&pkSel) pkSel=snapRect(pkSel,pkW,pkH,pkBs);
+  if(!pkSel||Wow(pkSel)<2){status('pk_status','选区太小（至少 2×2 块）',true);return;}
+  var out=new Uint8ClampedArray(pkOrig);
+  shuffle(out,pkW,pkH,pkSel,pkBs,1);
+  pkCtx.putImageData(new ImageData(out,pkW,pkH),0,0);
+  var url=pkCanvas.toDataURL('image/png');
+  var jurl=pkCanvas.toDataURL('image/jpeg',0.92);
+  document.getElementById('pk_preview').innerHTML='<img src="'+url+'" alt=""><div class="cap">局部混淆成品（'+
+     pkSel.w+'×'+pkSel.h+' 区，块径 '+pkBs+'）</div>';
+  document.getElementById('pk_dl').innerHTML=
+    '<a class="btn btn-primary" style="display:block;margin-top:10px" href="'+url+'" download="partmix.png">下载成品 PNG（推荐）</a>'+
+    '<a class="btn btn-ghost" style="display:block;margin-top:6px" href="'+jurl+'" download="partmix.jpg">存成 JPG（也能解，会糊一点）</a>';
+  document.getElementById('pk_result').style.display='block';
+  status('pk_status','已生成：只打乱选区，其余像素未动');
+};
+function Wow(r){return Math.floor(r.w/pkBs)*Math.floor(r.h/pkBs);}
+
+var pk2Data=null,pk2W=0,pk2H=0,pk2Cv=null,pk2Ctx=null;
+function pk2Setup(img){
+  var W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
+  if(W*H>16777216){status('pk2_status','图太大（'+W+'×'+H+'），先缩到 1600 万像素以内再用',true);return;}
+  pk2W=W;pk2H=H;
+  pk2Cv=document.getElementById('pk2_canvas');
+  pk2Cv.width=W;pk2Cv.height=H;pk2Cv.style.display='block';
+  pk2Ctx=pk2Cv.getContext('2d',{willReadFrequently:true});
+  pk2Box=null;pk2Drag=null;
+  status('pk2_selinfo','');
+  pk2Ctx.drawImage(img,0,0,W,H);
+  pk2Data=new Uint8ClampedArray(pk2Ctx.getImageData(0,0,W,H).data);
+  document.getElementById('pk2_res').style.display='none';
+  document.getElementById('pk2_info').textContent='';
+  status('pk2_status','已加载 '+W+'×'+H+'，点「解混淆」');
+}
+window.pk2Pick=function(files){
+  if(!files||!files[0]) return;
+  var url=URL.createObjectURL(files[0]),im=new Image();
+  im.onload=function(){pk2Setup(im);URL.revokeObjectURL(url);};
+  im.onerror=function(){status('pk2_status','图片读取失败',true);URL.revokeObjectURL(url);};
+  im.src=url;
+};
+window.pk2LoadUrl=function(url,cb){
+  var im=new Image();
+  im.onload=function(){pk2Setup(im); if(cb) cb();};
+  im.onerror=function(){status('pk2_status','图片读取失败',true);};
+  im.src=url;
+};
+window.pk2Restore=function(rect,bs,desc){
+  var full=new Uint8ClampedArray(pk2Data);
+  shuffle(full,pk2W,pk2H,rect,bs,-1);
+  pk2Ctx.putImageData(new ImageData(full,pk2W,pk2H),0,0);
+  var url=pk2Cv.toDataURL('image/png');
+  document.getElementById('pk2_preview').innerHTML='<img src="'+url+'" alt=""><div class="cap">已还原（'+desc+'，块径 '+bs+'）</div>';
+  document.getElementById('pk2_dl').innerHTML='<a class="btn btn-primary" style="display:block;margin-top:10px" href="'+url+'" download="restored.png">下载还原 PNG</a>';
+  document.getElementById('pk2_res').style.display='block';
+  return url;
+};
+function rectDesc(b){
+  if(b.kind==='half') return '半切 '+({right:'右半',left:'左半',top:'上半',bottom:'下半'})[b.dir]+
+    ' · '+(b.ratio===0.5?'1/2':(b.ratio<0.5?'1/3':'2/3'));
+  return '矩形 起点 '+b.rect.x+','+b.rect.y+' · '+b.rect.w+'×'+b.rect.h;
+}
+window.pk2Unmix=function(){
+  if(!pk2Data){status('pk2_info','请先选择成品图',true);return;}
+  var selBs=parseInt(document.getElementById('pk2_bs').value,10)||0;
+  var det=detectAll(pk2Data,pk2W,pk2H,selBs||null);
+  if(!det.ok){
+    var why=selBs
+      ? '按你选的 '+selBs+'×'+selBs+' 块径没认出选区 —— 把块径改回「自动」再试，或直接在图上拖框后点「按我框的选区解」。'
+      : ((det.best&&det.best.kind==='rect')
+        ? '看到像矩形选区的痕迹，但没锁准边界 —— 在图上拖个框把块粥那块圈住，点「按我框的选区解」。'
+        : '没自动认出选区（可能不是本工具做的、图被缩放过）。也可以在图上拖框后点「按我框的选区解」。');
+    status('pk2_info',why,true);
+    window.__pk2last={failed:true,best:det.best,rank:det.rank};
+    return;
+  }
+  var b=det.best,sure=det.conf>1.3;
+  var desc=rectDesc(b);
+  status('pk2_info','自动识别：'+desc+' · '+b.bs+'px 块'+(sure?'':'（把握一般，解出来若不对就自己框一下）'));
+  pk2Restore(b.rect,b.bs,desc);
+  window.__pk2last=b;
+};
+// 给主取图用：不碰页面上的画布，直接用像素判分 → 还原出 dataURL
+window.pk2QuickRestore=function(img){
+  var W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
+  if(!W||!H) return null;
+  if(W*H>16777216) return {ok:false,oversize:true};
+  var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  var cx=cv.getContext('2d',{willReadFrequently:true});
+  cx.drawImage(img,0,0,W,H);
+  var data=new Uint8ClampedArray(cx.getImageData(0,0,W,H).data);
+  var det=detectAll(data,W,H);
+  if(!det.ok){
+    return {ok:false,looksRect:!!(det.best&&det.best.kind==='rect'&&det.rank<0.62),rank:det.rank};
+  }
+  var b=det.best,full=new Uint8ClampedArray(data);
+  shuffle(full,W,H,b.rect,b.bs,-1);
+  cx.putImageData(new ImageData(full,W,H),0,0);
+  return {ok:true,url:cv.toDataURL('image/png'),desc:rectDesc(b),bs:b.bs,rect:b.rect};
+};
+// 混淆图（整图像素打散）粗判：用本工具的解混淆逆回去，明显变顺滑就是它
+function pk2RoughL(u32,W,H){
+  var d=new Uint8ClampedArray(u32.buffer,0,W*H*4), s=0, n2=0, i, x, y, l, j;
+  for(y=0;y<H;y++){
+    var row=y*W*4;
+    for(x=0;x<W;x++){
+      i=row+x*4;
+      l=d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11;
+      if(x+1<W){ j=i+4; s+=Math.abs(l-(d[j]*0.3+d[j+1]*0.59+d[j+2]*0.11)); n2++; }
+      if(y+1<H){ j=i+W*4; s+=Math.abs(l-(d[j]*0.3+d[j+1]*0.59+d[j+2]*0.11)); n2++; }
+    }
+  }
+  return n2?s/n2:0;
+}
+window.pk2HxCheck=function(img){
+  try{
+    var W=img&&(img.naturalWidth||img.width), H=img&&(img.naturalHeight||img.height);
+    if(!W||!H) return {ok:false};
+    if(typeof hxBuildCurve!=='function'||typeof hxDeconfuseFn!=='function') return {ok:false};
+    var n=W*H;
+    if(n>8388608) return {ok:false,big:true};
+    var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    var cx=cv.getContext('2d');if(!cx) return {ok:false};
+    cx.drawImage(img,0,0,W,H);
+    var d=cx.getImageData(0,0,W,H).data;
+    var buf=new ArrayBuffer(n*4);new Uint8ClampedArray(buf).set(d);
+    var u32=new Uint32Array(buf);
+    var r0=pk2RoughL(u32,W,H);
+    if(r0<2.0) return {ok:false,rough0:r0};
+    var curve=hxBuildCurve(W,H), off=Math.round((Math.sqrt(5)-1)/2*n);
+    var dec=hxDeconfuseFn(u32,curve,n,off);
+    var r1=pk2RoughL(dec,W,H);
+    if(r1<=r0*0.72&&(r0-r1)>=1.5) return {ok:true,rough0:r0,rough1:r1};
+    return {ok:false,rough0:r0,rough1:r1};
+  }catch(e){ return {ok:false}; }
+};
+// 主取图解不出时，把这张图塞进「局部混淆图还原工具」让用户手框
+window.pk2SendItem=function(i){
+  var it=window._extractItems&&window._extractItems[i];
+  if(!it){ alert('图片数据不可用，请重新选择'); return; }
+  var d=document.getElementById('pkd-app');
+  if(d){ d.style.display=''; d.open=true; }
+  var url=null;
+  if(it.img&&it.img.src&&it.img.src.indexOf('data:')===0) url=it.img.src;
+  if(!url&&it.file) url=URL.createObjectURL(it.file);
+  if(!url){ alert('这张图的数据读不到，请重新选一次'); return; }
+  window.pk2LoadUrl(url);
+  if(d&&d.scrollIntoView) d.scrollIntoView({behavior:'smooth',block:'start'});
+};
+// 主取图解不出时，给两个去处：普通混淆图（hx-app）/ 局部混淆图（pkd-app）
+window.pk2Goto=function(which){
+  var d=document.getElementById(which==='hx'?'hx-app':'pkd-app');
+  if(!d){ alert('对应工具没找到，刷新页面再试'); return; }
+  d.style.display='';
+  d.open=true;
+  if(d.scrollIntoView) d.scrollIntoView({behavior:'smooth',block:'start'});
+};
+// 四边联合粗搜：每边在 ±w 块内按 step 块枚举（用户框本来就不准，得允许形状整体变形）
+function jointRect(P,W,H,box,bs,w,step){
+  var i,j,k,m,x0,x1,y0,y1,r,best=null,bestS=1e9,sc;
+  for(i=-w;i<=w;i+=step)for(j=-w;j<=w;j+=step)for(k=-w;k<=w;k+=step)for(m=-w;m<=w;m+=step){
+    x0=box.x+i*bs;x1=box.x+box.w+j*bs;y0=box.y+k*bs;y1=box.y+box.h+m*bs;
+    if(x0<0||y0<0||x1-x0<bs*3||y1-y0<bs*3||x1>W||y1>H) continue;
+    r={x:x0,y:y0,w:x1-x0,h:y1-y0};
+    sc=fastScore(P,r);
+    if(sc<bestS-1e-9){bestS=sc;best=r;}
+  }
+  return best?{rect:best,rank:bestS}:null;
+}
+// 同上但留前 n 名，给精确/稳健判分复选
+function jointRectTop(P,W,H,box,bs,w,step,n){
+  var i,j,k,m,x0,x1,y0,y1,r,sc,list=[],p;
+  for(i=-w;i<=w;i+=step)for(j=-w;j<=w;j+=step)for(k=-w;k<=w;k+=step)for(m=-w;m<=w;m+=step){
+    x0=box.x+i*bs;x1=box.x+box.w+j*bs;y0=box.y+k*bs;y1=box.y+box.h+m*bs;
+    if(x0<0||y0<0||x1-x0<bs*3||y1-y0<bs*3||x1>W||y1>H) continue;
+    r={x:x0,y:y0,w:x1-x0,h:y1-y0};
+    sc=fastScore(P,r);
+    if(list.length<n){list.push({rect:r,rank:sc});list.sort(function(a,b){return a.rank-b.rank;});}
+    else if(sc<list[n-1].rank){list[n-1]={rect:r,rank:sc};list.sort(function(a,b){return a.rank-b.rank;});}
+  }
+  return list;
+}
+// 先用快速判分筛前 n 名，再用稳健判分复选（均值会被白底骗，错一格的解在 90 分位上露馅）
+function pickRob(data,W,H,bs,box,w,step,n){
+  var P=mkFast(data,W,H,bs),list=jointRectTop(P,W,H,box,bs,w,step,n),out=[],i,rob;
+  if(!list.length) return null;
+  for(i=0;i<list.length;i++){
+    rob=scoreRob(data,W,H,list[i].rect,bs);
+    out.push({rect:list[i].rect,bs:bs,rank:rob.score,rob:rob});
+  }
+  out.sort(function(a,b){return a.rank-b.rank;});
+  return out[0];
+}
+// 四边联合搜索 + 精确均值判分全量筛一遍（就几百个候选，吃得消），前 n 名再用稳健判分定胜负
+function pickRob(data,W,H,bs,box,w,step,n){
+  var P=mkFast(data,W,H,bs),list=jointRectTop(P,W,H,box,bs,w,step,n),out=[],i,rob;
+  if(!list.length) return null;
+  for(i=0;i<list.length;i++){
+    rob=scoreRob(data,W,H,list[i].rect,bs);
+    out.push({rect:list[i].rect,bs:bs,rank:rob.score,rob:rob});
+  }
+  out.sort(function(a,b){return a.rank-b.rank;});
+  return out[0];
+}
+// 手动框选兜底：用户大致框住，工具自己对到块边（先 ±2 块，不够再 ±8 块），稳健判分定胜负
+window.pk2Manual=function(){
+  var sel=parseInt(document.getElementById('pk2_bs').value,10)||0;
+  var bss=sel?[sel]:[16,8],best=null,i,bs,c1,c2,seeds,si,d0;
+  d0=detectAll(pk2Data,pk2W,pk2H);
+  seeds=[pk2Box];
+  if(d0.best) seeds.push(d0.best.rect);
+  for(i=0;i<bss.length;i++){
+    bs=bss[i];
+    for(si=0;si<seeds.length;si++){
+      c1=pickRob(pk2Data,pk2W,pk2H,bs,seeds[si],3,1,8);
+      if((!c1)||c1.rank>0.30){
+        c2=pickRob(pk2Data,pk2W,pk2H,bs,seeds[si],8,2,8);
+        if(c2&&(!c1||c2.rank<c1.rank)) c1=c2;
+      }
+      if(c1&&(!best||c1.rank<best.rank)) best=c1;
+      if(best&&best.rank<0.18) break;
+    }
+    if(best&&best.rank<0.18) break;
+  }
+  window.__pk2last=best?Object.assign({manual:true},best):{manual:true,failed:true};
+  if(!best||best.rank>0.30){
+    status('pk2_info','这个框解不开（评分 '+(best?best.rank.toFixed(2):'-')+'）：检查是不是把整块块粥都圈住了、块径选得对不对。',true);
+    return;
+  }
+  status('pk2_info','按框：起点 '+best.rect.x+','+best.rect.y+' · '+best.rect.w+'×'+best.rect.h+' · '+best.bs+'px 块'+
+    (best.rank>0.20?'（拿不太准，解出来若还糊就再框紧一点）':''));
+  pk2Restore(best.rect,best.bs,'手动框选 '+best.rect.w+'×'+best.rect.h);
+};
+window.pk2State=function(){return {W:pk2W,H:pk2H};};
+window.pk2Resid=function(rect,bs){return rectifyResid(pk2Data,pk2W,pk2H,rect,bs);};
+window.pk2Data=function(){return pk2Data;};
+var pk2Box=null,pk2Drag=null;
+function pk2DrawBox(b){
+  pk2Ctx.putImageData(new ImageData(new Uint8ClampedArray(pk2Data),pk2W,pk2H),0,0);
+  if(!b) return;
+  pk2Ctx.save();
+  pk2Ctx.fillStyle='rgba(0,0,0,0.35)';
+  pk2Ctx.fillRect(0,0,pk2W,b.y);
+  pk2Ctx.fillRect(0,b.y+b.h,pk2W,pk2H-b.y-b.h);
+  pk2Ctx.fillRect(0,b.y,b.x,b.h);
+  pk2Ctx.fillRect(b.x+b.w,b.y,pk2W-b.x-b.w,b.h);
+  pk2Ctx.strokeStyle='#7de3ff';pk2Ctx.lineWidth=Math.max(1,Math.round(pk2W/420));
+  pk2Ctx.strokeRect(b.x+0.5,b.y+0.5,b.w-1,b.h-1);
+  pk2Ctx.restore();
+}
+function pk2Snap(b){
+  var bs=parseInt(document.getElementById('pk2_bs').value,10)||16;
+  var x0=Math.floor(b.x/bs)*bs,y0=Math.floor(b.y/bs)*bs;
+  var x1=Math.ceil((b.x+b.w)/bs)*bs,y1=Math.ceil((b.y+b.h)/bs)*bs;
+  x0=Math.max(0,x0);y0=Math.max(0,y0);x1=Math.min(pk2W,x1);y1=Math.min(pk2H,y1);
+  return {x:x0,y:y0,w:x1-x0,h:y1-y0};
+}
+function pk2Pos(e){
+  var rc=pk2Cv.getBoundingClientRect();
+  if(!(rc.width>0)||!(rc.height>0)) return null;
+  var q={x:(e.clientX-rc.left)*pk2W/rc.width,y:(e.clientY-rc.top)*pk2H/rc.height};
+  if(!isFinite(q.x)||!isFinite(q.y)) return null;
+  return q;
+}
+(function(){
+  var cv0=document.getElementById('pk2_canvas');
+  if(!cv0) return;
+  cv0.addEventListener('pointerdown',function(e){
+    if(!pk2Data) return;
+    var p0=pk2Pos(e); if(!p0) return;
+    pk2Drag={sx:p0.x,sy:p0.y};
+    try{cv0.setPointerCapture(e.pointerId);}catch(err){}
+    e.preventDefault();
+  });
+  cv0.addEventListener('pointermove',function(e){
+    if(!pk2Drag) return;
+    var p=pk2Pos(e); if(!p) return;
+    var x0=Math.min(p.x,pk2Drag.sx),y0=Math.min(p.y,pk2Drag.sy);
+    var b={x:x0,y:y0,w:Math.abs(p.x-pk2Drag.sx),h:Math.abs(p.y-pk2Drag.sy)};
+    pk2DrawBox(b);
+  });
+  cv0.addEventListener('pointerup',function(e){
+    if(!pk2Drag) return;
+    var p=pk2Pos(e); if(!p){pk2Drag=null;return;}
+    var x0=Math.min(p.x,pk2Drag.sx),y0=Math.min(p.y,pk2Drag.sy);
+    var raw={x:x0,y:y0,w:Math.abs(p.x-pk2Drag.sx),h:Math.abs(p.y-pk2Drag.sy)};
+    pk2Drag=null;
+    if(raw.w<8||raw.h<8){pk2Box=null;pk2DrawBox(null);status('pk2_selinfo','');return;}
+    pk2Box=pk2Snap(raw);pk2DrawBox(pk2Box);
+    status('pk2_selinfo','已框 '+pk2Box.w+'×'+pk2Box.h+' @ '+pk2Box.x+','+pk2Box.y+' — 点「按我框的选区解」');
+  });
+  cv0.addEventListener('pointercancel',function(){pk2Drag=null;pk2DrawBox(pk2Box);});
+})();
+(function(){
+  var d=document.getElementById('pkd-app'),drop=document.getElementById('pk2_drop'),done=false;
+  if(!d||!drop||done) return; done=true;
+  function pickFrom(dt){
+    var files=dt&&dt.files;
+    if(files&&files.length){pk2Pick(files);return;}
+    var items=(dt&&dt.items)||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i].kind==='file'){var f=items[i].getAsFile();if(f){pk2Pick([f]);return;}}
+    }
+  }
+  drop.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='copy';drop.classList.add('drag-over');});
+  drop.addEventListener('dragleave',function(){drop.classList.remove('drag-over');});
+  drop.addEventListener('drop',function(e){
+    e.preventDefault();e.stopPropagation();drop.classList.remove('drag-over');
+    pickFrom(e.dataTransfer);
+  });
+  document.addEventListener('paste',function(e){
+    if(!d.open||getComputedStyle(d).display==='none') return;
+    var items=(e.clipboardData||{}).items||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i].type&&items[i].type.indexOf('image')===0){
+        var f=items[i].getAsFile(); if(f){pk2Pick([f]);e.preventDefault();break;}
+      }
+    }
+  });
+  // 拖到整张卡片的任意位置也接
+  d.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='copy';drop.classList.add('drag-over');});
+  d.addEventListener('dragleave',function(e){if(e.target===d)drop.classList.remove('drag-over');});
+  d.addEventListener('drop',function(e){e.preventDefault();drop.classList.remove('drag-over');pickFrom(e.dataTransfer);});
+  // 兜底：这两张卡显形时，拖歪了别让浏览器直接打开文件把页面顶掉
+  document.addEventListener('dragover',function(e){e.preventDefault();});
+  document.addEventListener('drop',function(e){e.preventDefault();});
+})();
+// 制作卡（藏图页）：拖进来 / Ctrl+V 粘贴
+(function(){
+  var d=document.getElementById('pk-app'),drop=document.getElementById('pk_drop'),done=false;
+  if(!d||!drop||done) return; done=true;
+  function pickFrom(dt){
+    var files=dt&&dt.files;
+    if(files&&files.length){pkPick(files);return;}
+    var items=(dt&&dt.items)||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i].kind==='file'){var f=items[i].getAsFile();if(f){pkPick([f]);return;}}
+    }
+  }
+  drop.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='copy';drop.classList.add('drag-over');});
+  drop.addEventListener('dragleave',function(){drop.classList.remove('drag-over');});
+  drop.addEventListener('drop',function(e){
+    e.preventDefault();e.stopPropagation();drop.classList.remove('drag-over');
+    pickFrom(e.dataTransfer);
+  });
+  document.addEventListener('paste',function(e){
+    if(!d.open||getComputedStyle(d).display==='none') return;
+    var pd=document.getElementById('pkd-app');
+    if(pd&&getComputedStyle(pd).display!=='none') return;
+    var items=(e.clipboardData||{}).items||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i].type&&items[i].type.indexOf('image')===0){
+        var f=items[i].getAsFile(); if(f){pkPick([f]);e.preventDefault();break;}
+      }
+    }
+  });
+  // 拖到整张卡片的任意位置也接（不必非要对准虚线框）
+  d.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='copy';drop.classList.add('drag-over');});
+  d.addEventListener('dragleave',function(e){if(e.target===d)drop.classList.remove('drag-over');});
+  d.addEventListener('drop',function(e){e.preventDefault();drop.classList.remove('drag-over');pickFrom(e.dataTransfer);});
+})();
+window.pkDetect=function(){return detectAll(pkOrig,pkW,pkH);};
+function soupStats(data,W,H,bs){
+  var m=blockSoupMap(data,W,H,bs),D=m.D,n=D.length,a=[],i;
+  for(i=0;i<n;i++)a.push(D[i]);
+  a.sort(function(x,y){return x-y;});
+  var q=function(p){return Math.round(a[Math.min(n-1,Math.floor(p*n))]*100)/100;};
+  var med=a[Math.floor(n*0.5)];
+  return {n:n,p10:q(.1),p25:q(.25),p50:q(.5),p75:q(.75),p90:q(.9),p99:q(.99),max:q(1),
+    thr:Math.round((med+Math.max((a[Math.floor(n*0.75)]-a[Math.floor(n*0.25)])*1.4826*2.5,5))*100)/100};
+}
+function soupInside(data,W,H,bs,rect){
+  var m=blockSoupMap(data,W,H,bs),D=m.D,bw=m.bw,s1=0,c1=0,s2=0,c2=0;
+  for(var by=0;by<m.bh;by++)for(var bx=0;bx<bw;bx++){
+    var px=bx*bs,py=by*bs;
+    if(px>=rect.x&&px<rect.x+rect.w&&py>=rect.y&&py<rect.y+rect.h){s1+=D[by*bw+bx];c1++;}
+    else{s2+=D[by*bw+bx];c2++;}
+  }
+  return {inAvg:+(s1/Math.max(c1,1)).toFixed(2),outAvg:+(s2/Math.max(c2,1)).toFixed(2),inN:c1,outN:c2};
+}
+window.pkSoup=function(bs){return soupStats(pkOrig,pkW,pkH,bs||16);};
+window.pkSoupAt=function(bs,rect){return soupInside(pkOrig,pkW,pkH,bs||16,rect);};
+window.pkRough=function(bs){return roughCands(pkOrig,pkW,pkH,bs||16);};
+window.pkScoreR=function(x,y,w,h,bs){return scoreCand(pkOrig,pkW,pkH,{x:x,y:y,w:w,h:h},bs||16);};
+window.pkDetect2=function(){return pk2Data?detectAll(pk2Data,pk2W,pk2H):null;};
+window.pkSoup2=function(bs){return pk2Data?soupStats(pk2Data,pk2W,pk2H,bs||16):null;};
+window.pkSoup2At=function(bs,rect){return pk2Data?soupInside(pk2Data,pk2W,pk2H,bs||16,rect):null;};
+window.pkRough2=function(bs){return pk2Data?roughCands(pk2Data,pk2W,pk2H,bs||16):null;};
+window.pkRuns2=function(bs){return pk2Data?runsBox(pk2Data,pk2W,pk2H,bs||16):null;};
+window.pkFast2=function(rect,bs){if(!pk2Data)return null;return fastScore(mkFast(pk2Data,pk2W,pk2H,bs||16),rect);};
+window.pkLocate2=function(seed,bs,win,it){if(!pk2Data)return null;var P=mkFast(pk2Data,pk2W,pk2H,bs||16);return locateRect(P,pk2W,pk2H,seed,bs||16,win||96,it||2);};
+window.pkRob=function(x,y,w,h,bs){return pk2Data?scoreRob(pk2Data,pk2W,pk2H,{x:x,y:y,w:w,h:h},bs||16):null;};
+window.pkJoint=function(x,y,w,h,bs,win,step,n){if(!pk2Data)return null;var P=mkFast(pk2Data,pk2W,pk2H,bs||16);return jointRectTop(P,pk2W,pk2H,{x:x,y:y,w:w,h:h},bs||16,win||2,step||1,n||5);};
+window.pkScore2=function(x,y,w,h,bs){return pk2Data?scoreCand(pk2Data,pk2W,pk2H,{x:x,y:y,w:w,h:h},bs||16):null;};
+window.pk2Raw=function(kind,q){if(!pk2Data)return '';pk2Ctx.putImageData(new ImageData(new Uint8ClampedArray(pk2Data),pk2W,pk2H),0,0);
+  return kind==='jpg'?pk2Cv.toDataURL('image/jpeg',q||0.92):pk2Cv.toDataURL('image/png');};
+window.pkDiag=function(){
+  var out=[],dirs=['right','left','bottom','top'],rs=[0.5,0.3333,0.6667],bs=parseInt(document.getElementById('pk_bs').value,10)||16;
+  for(var di=0;di<dirs.length;di++)for(var ri=0;ri<rs.length;ri++){
+    var r=halfRect(pkW,pkH,dirs[di],rs[ri],bs);
+    if(Math.floor(r.w/bs)*Math.floor(r.h/bs)<2) continue;
+    var buf=cropRect(pkOrig,pkW,pkH,r),rr={x:0,y:0,w:r.w,h:r.h};
+    var sb=seamEnergy(buf,r.w,r.h,rr,bs); shuffle(buf,r.w,r.h,rr,bs,-1);
+    out.push({dir:dirs[di],ratio:rs[ri],seat:+seamEnergy(buf,r.w,r.h,rr,bs).toFixed(2),
+      seatB:+sb.toFixed(2),score:+scoreCand(pkOrig,pkW,pkH,r,bs).toFixed(2)});
+  }
+  return out;
+};
+window.pkState=function(){return {W:pkW,H:pkH,bs:pkBs,sel:pkSel,mode:document.getElementById('pk_mode').value};};
+window.pkDataUrl=function(){return pkCanvas?pkCanvas.toDataURL('image/png'):'';};
+window.pkRawUrl=function(kind,q){if(!pkOrig)return '';var out=new Uint8ClampedArray(pkOrig);pkCtx.putImageData(new ImageData(out,pkW,pkH),0,0);
+  return kind==='jpg'?pkCanvas.toDataURL('image/jpeg',q||0.92):pkCanvas.toDataURL('image/png');};
+window.pkPsnr=function(a,b){return psnr(a,b);};
+window.pkOrigData=function(){return pkOrig;};
+window.pkUnmixSilent=function(bs,dir,ratio){
+  var r=halfRect(pkW,pkH,dir,ratio,bs), t=new Uint8ClampedArray(pkOrig);
+  shuffle(t,pkW,pkH,r,bs,-1); return t;
+};
+})();
+</script>
 
 <div class="matsec" id="matsec-hd">素材处理<span class="matsec-ar">↓</span></div>
 
@@ -5157,10 +6227,16 @@ function setMode(m){
     // 下载区只在取图页显示
     var d=document.getElementById('download-area'); if(d) d.style.display='';
     // 取图页只保留光棱图、混淆图两个分支，其余工具不跟过来
-    var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app','wp2g-app','matsec-hd'];
+    var embOnly=['lg-app-details','tjp-app-details','mrg-app-details','glt-app-details','tsm-app','gsz-app','vc-app','wp2g-app','matsec-hd','pk-app'];
     for(var i=0;i<embOnly.length;i++){
       var el=document.getElementById(embOnly[i]);
       if(el) el.style.display=(m==='extract')?'none':'';
+    }
+    // 取图页专属：局部混淆图还原工具（藏图页不显示）
+    var extOnly=['pkd-app'];
+    for(var i=0;i<extOnly.length;i++){
+      var el=document.getElementById(extOnly[i]);
+      if(el) el.style.display=(m==='extract')?'':'none';
     }
   }catch(e){}
   try{ if(window.tipsHide) window.tipsHide(); }catch(e){}
@@ -10342,6 +11418,16 @@ function extractOneMem(item){
             .then(urls=>({urls,type:r.type,useJpeg:r.useJpeg,kind:'多小图'}));
           return r;
         }
+        var pk2q=null;
+        try{ if(item.img&&window.pk2QuickRestore) pk2q=window.pk2QuickRestore(item.img); }catch(ePk2){}
+        if(pk2q&&pk2q.ok&&pk2q.url){
+          return {url:pk2q.url,type:'image/png',useJpeg:false,kind:'局部混淆图（'+pk2q.desc+' · '+pk2q.bs+'px 块）'};
+        }
+        if(pk2q&&!pk2q.ok&&pk2q.looksRect) item.__pk2rect=true;
+        if(pk2q&&!pk2q.ok&&pk2q.oversize) item.__pk2big=true;
+        var pk2h=null;
+        try{ if(item.img&&window.pk2HxCheck) pk2h=window.pk2HxCheck(item.img); }catch(ePk2h){}
+        if(pk2h&&pk2h.ok) item.__pk2hx=true;
         var rs=await gpRescueGrid(item.img);
         if(rs) return rs;
         var ww=item.img&&(item.img.naturalWidth||item.img.width), hh=item.img&&(item.img.naturalHeight||item.img.height);
@@ -10584,14 +11670,37 @@ async function doExtract(){
         mmgSetProg('mmgExtractProg',(i+1)/list.length);
         continue;
       }
-      item.innerHTML='<div class="cap" style="color:#e06c5b">第 '+(i+1)+' 张 ✗ '+err.message+'</div>'
-        +'<div style="margin-top:8px;font-size:12px;line-height:1.7;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">'+mmgErrExplain(err.message)+'</div>';
-      if(err.message==='没有藏东西，不是本工具的成品'){
-        item.innerHTML+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'
-          +'<button class="btn btn-ghost" style="flex:1" onclick="sendTo('+i+',\'光棱图\')">当作光棱图显形</button>'
-          +'<button class="btn btn-ghost" style="flex:1" onclick="sendTo('+i+',\'混淆图\')">当作混淆图处理</button>'
-          +'</div>';
+      if(list[i]&&list[i].__pk2big){
+        item.innerHTML='<div class="cap" style="color:#e0c06b">第 '+(i+1)+' 张：图太大，超过 16MP 上限（约 4000×4000 以上）</div>'
+          +'<div style="margin-top:8px;font-size:12px;line-height:1.75;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">这个上限是工具两端的硬限制，超过就不做像素级检测（否则会卡死浏览器）。把它先缩到 16MP 以内再试。</div>';
+        mmgSetProg('mmgExtractProg',(i+1)/list.length);
+        continue;
       }
+      if(list[i]&&list[i].__pk2hx){
+        item.innerHTML='<div class="cap" style="color:#e0c06b">第 '+(i+1)+' 张：像是「混淆图」成品（像素被整体打散过）</div>'
+          +'<div style="margin-top:8px;font-size:12px;line-height:1.75;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">这张不是藏数据的成品，而是「混淆图制作解密工具」混淆过的图。点下面的按钮，图会带过去并自动解混淆。</div>'
+          +'<button class="btn" style="width:100%;margin-top:8px" onclick="sendTo('+i+',\'混淆图\')">转到混淆图 →</button>';
+        mmgSetProg('mmgExtractProg',(i+1)/list.length);
+        continue;
+      }
+      if(list[i]&&list[i].__pk2rect){
+        item.innerHTML='<div class="cap" style="color:#e0c06b">第 '+(i+1)+' 张：看得出是局部混淆图，但自动没锁准那块选区（手框的图，框边本来就不齐）</div>'
+          +'<div style="margin-top:8px;font-size:12px;line-height:1.75;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">点下面的按钮，到「局部混淆图还原工具」里把块粥那块拖个框圈住，再点「按我框的选区解」，工具会自己把框对到块边。</div>'
+          +'<button class="btn" style="width:100%;margin-top:8px" onclick="pk2SendItem('+i+')">去还原工具手框解 →</button>';
+        mmgSetProg('mmgExtractProg',(i+1)/list.length);
+        continue;
+      }
+      item.innerHTML='<div class="cap" style="color:#e06c5b">第 '+(i+1)+' 张 ✗ '+err.message
+        +'<br><span style="color:#d8c9a0;font-size:12px;font-weight:400;line-height:1.6">如果是混淆图（像素被整片打散成块粥），点下面的按钮可转到对应工具。</span></div>';
+      var pk2row='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">';
+      if(err.message==='没有藏东西，不是本工具的成品'){
+        pk2row+='<button class="btn btn-ghost" style="flex:1" onclick="sendTo('+i+',\'光棱图\')">当作光棱图显形</button>';
+      }
+      pk2row+='<button class="btn btn-ghost" style="flex:1" onclick="sendTo('+i+',\'混淆图\')">转到混淆图</button>'
+        +'<button class="btn btn-ghost" style="flex:1" onclick="pk2SendItem('+i+')">转到局部混淆图</button>'
+        +'</div>';
+      item.innerHTML+=pk2row
+        +'<div style="margin-top:8px;font-size:12px;line-height:1.7;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">'+mmgErrExplain(err.message)+'</div>';
       mmgSetProg('mmgExtractProg',(i+1)/list.length);
     }
   }
@@ -12581,7 +13690,7 @@ async function wp2gPick(files){
   if(btn) btn.style.display=(okN? 'block':'none');
   if(opts) opts.style.display=(okN? 'block':'none');
   if(!okN){
-    var why=(!sup? '当前浏览器内核不支持逐帧解码 WebP（要 Chrome / Android WebView 94 以上，请换新一点的浏览器或装 4.46 APP）'
+    var why=(!sup? '当前浏览器内核不支持逐帧解码 WebP（要 Chrome / Android WebView 94 以上，请换新一点的浏览器或装 4.47 APP）'
                 : '没有可用的 WebP：'+bad.slice(0,3).join('、'));
     if(st){ st.style.color='#ff8a8a'; st.textContent=why; }
     return;
