@@ -410,7 +410,7 @@ details>summary{position:relative}
   }catch(e){}
 })();
 /* ===== 第二层：全局兜底与保存反馈（v429） =====
-   E001 页面脚本异常  E002 异步任务未捕获  E004 保存时没有内容 */
+   E001 页面脚本异常（v511 起不再弹条，只记日志）  E002 异步任务未捕获  E004 保存时没有内容 */
 (function(){
   function ensureToast(){
     var d=document.getElementById('zzToast');
@@ -467,7 +467,12 @@ details>summary{position:relative}
       var m=(ev&&ev.message)?ev.message:'未知脚本错误';
       var f=(ev&&ev.filename)?String(ev.filename).split('/').pop():'';
       var ln=(ev&&ev.lineno)?ev.lineno:'';
-      zzShowGlobal('[E001] 页面脚本异常：'+m+(f?('（'+f+(ln?':'+ln:'')+'）'):'')+'\n点这条可关闭；截图发给开发者即可定位');
+      /* v511：E001 不再弹红色报错条（只在控制台和 __zzErrLog 里留一条，方便回查） */
+      try{
+        (window.__zzErrLog=window.__zzErrLog||[]).push('[E001] '+m+' @'+(f||'?')+':'+(ln||'?'));
+        if(window.__zzErrLog.length>40) window.__zzErrLog.shift();
+      }catch(_){}
+      try{ if(window.console&&console.warn) console.warn('[E001] 页面脚本异常：'+m+(f?('（'+f+(ln?':'+ln:'')+'）'):'')); }catch(_){}
     }catch(_){}
   }, true);
   /* 未处理的异步错误 */
@@ -628,7 +633,7 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
 
 <header>
   <!-- 版本号：每次发版只改下面这个 v404 -->
-  <h1>作战实验室<span class="zz-ver">4.47</span></h1>
+  <h1>作战实验室<span class="zz-ver">4.49</span></h1>
   <p>与申鹤斗智斗勇の一站式藏图取图</p>
   <button type="button" class="upd-btn" onclick="updOpen()" title="查看最近几个版本的更新内容"><i></i>更新公告</button>
   </header>
@@ -637,12 +642,22 @@ makeDraggable(document.getElementById('refreshToggle'), function(){ location.rel
   <div class="upd-card">
     <div class="upd-head">
       <div class="upd-kicker">RELEASE NOTES</div>
-      <div class="upd-title">更新公告<span class="upd-pill">4.47</span></div>
+      <div class="upd-title">更新公告<span class="upd-pill">4.49</span></div>
       <button type="button" class="upd-x" onclick="updClose()" aria-label="关闭">×</button>
     </div>
     <div class="upd-body">
       <section class="upd-sec">
-        <div class="upd-ver">4.47<em>本次</em></div>
+        <div class="upd-ver">4.49<em>本次</em></div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>局部混淆图自框选完善：贴边窄条、小方块、接近整幅、缩过或压成 JPG 的成品都能锁到真值矩形并还原。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>主取图不再自动解局部混淆图（大图会卡），这类成品统一到「取图」页两个专用工具解；认不出就直说，不给错图。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.48</div>
+        <div class="upd-line"><span class="upd-tag add">新增</span><span>局部混淆图解图加了快速预筛与先粗后细锁边，手机上基本秒出。</span></div>
+        <div class="upd-line"><span class="upd-tag fix">修复</span><span>局部混淆图自动解图卡顿：1080×1920 大图从要等近一秒降到 0.25 秒上下。</span></div>
+      </section>
+      <section class="upd-sec">
+        <div class="upd-ver">4.47</div>
         <div class="upd-line"><span class="upd-tag add">新增</span><span>局部混淆图工具：藏图页可半切或手框一块区域打成块粥，其余像素不动；取图页自动解，认不出能手框解；主取图也认得混淆图成品，一键转到对应工具。</span></div>
         <div class="upd-line"><span class="upd-tag fix">修复</span><span>局部混淆图制作卡拖拽/粘贴没反应；还原卡选块径不生效；超 16MP 成品提示不清楚。</span></div>
       </section>
@@ -2427,11 +2442,14 @@ function locateRect(P,W,H,seed,bs,winPx,iters){
   var wW=Math.max(2,Math.round(winPx/bs));
   var cur=snapRect({x:seed.x,y:seed.y,w:seed.w,h:seed.h},W,H,bs);
   if(cur.w<bs*3||cur.h<bs*3) return null;
-  var bestS=fastScore(P,cur),best=cur,it,ax,d0,d1,r,s;
+  var bestS=fastScore(P,cur),best=cur,it,ax,d0,d1,r,s,step,wd;
   iters=iters||2;
   for(it=0;it<iters;it++){
+    // 第一轮按 2 块步长粗搜，之后按 1 块细搜，并把窗口收窄到上轮附近
+    step=(it===0&&wW>4)?2:1;
+    wd=wW;
     for(ax=0;ax<2;ax++){
-      for(d0=-wW;d0<=wW;d0++)for(d1=-wW;d1<=wW;d1++){
+      for(d0=-wd;d0<=wd;d0+=step)for(d1=-wd;d1<=wd;d1+=step){
         r={x:best.x,y:best.y,w:best.w,h:best.h};
         if(ax===0){r.x+=d0*bs;r.w-=d0*bs;r.w+=d1*bs;}
         else{r.y+=d0*bs;r.h-=d0*bs;r.h+=d1*bs;}
@@ -2440,6 +2458,7 @@ function locateRect(P,W,H,seed,bs,winPx,iters){
         if(s<bestS-1e-9){bestS=s;best=r;}
       }
     }
+    wW=Math.max(1,Math.round(wW/3));
   }
   return {rect:best,rank:bestS};
 }
@@ -2598,12 +2617,14 @@ function detectAll(data,W,H,bsOnly){
       if(loc){
         pre=fastScore(P,loc.rect);
         loc=locateRect(P,W,H,loc.rect,bs,bs*2,2)||loc;
-        var pr=pickRob(data,W,H,bs,loc.rect,1,1,6);
+        var pr=pickRob(data,W,H,bs,loc.rect,1,1,3,P);
         var rc2={kind:'rect',bs:bs,rect:(pr?pr.rect:loc.rect),score:1,rank:Math.min(pr?pr.rank:1e9,pre)};
         rc2.resid=rectifyResid(data,W,H,rc2.rect,bs).resid;
         keep(rc2);
       }
     }
+    // 16px 已经把选区锁稳，8px 那一遍（成本约 2 倍）就跳过
+    if(bs===16&&best&&best.rank<(best.kind==='rect'?0.30:0.62)&&!(best.kind==='rect'&&best.resid>0.15)) break;
   }
   // 快速判分可能有偏差，最后把冠军按精确判分复核一遍（矩形已用稳健分，跳过）
   if(best&&best.kind!=='rect'){
@@ -2780,44 +2801,936 @@ function rectDesc(b){
     ' · '+(b.ratio===0.5?'1/2':(b.ratio<0.5?'1/3':'2/3'));
   return '矩形 起点 '+b.rect.x+','+b.rect.y+' · '+b.rect.w+'×'+b.rect.h;
 }
+// ===== 被缩放过 / 压成 JPG 的成品：估块径 → 放大回整块网格 → 近似还原 =====
+function pk2Luma(data,W,H){
+  var n=W*H,l=new Float32Array(n),i,p;
+  for(i=0;i<n;i++){p=i*4;l[i]=data[p]*0.3+data[p+1]*0.59+data[p+2]*0.11;}
+  return l;
+}
+function pk2Prof(l,W,H,alongX){
+  var len=Math.max((alongX?W:H)-1,1),pr=new Float64Array(len),step,k,s,t,y,x;
+  step=Math.max(1,Math.round((alongX?H:W)/600));
+  for(k=0;k<len;k++){
+    s=0;t=0;
+    if(alongX){for(y=0;y<H;y+=step){s+=Math.abs(l[y*W+k+1]-l[y*W+k]);t++;}}
+    else{for(x=0;x<W;x+=step){s+=Math.abs(l[(k+1)*W+x]-l[k*W+x]);t++;}}
+    pr[k]=t?s/t:0;
+  }
+  return pr;
+}
+// 返回 {p:块周期(浮点), ph:网格起点, str:边界对比度, ac:整数峰}
+// 自相关只用来定粗范围（一块大概多少像素），精度靠「块边界上的梯度是不是明显高于平均」去拟合
+function pk2Period(l,W,H,alongX){
+  var pr=pk2Prof(l,W,H,alongX),n=pr.length,i,base=0,e=0,q,L,val,bestL=-1,bestAc=0,
+      bs=0,bp=0,bph=0,p,ph,sc,k,x,s,c;
+  if(n<64) return null;
+  for(i=0;i<n;i++) base+=pr[i]; base/=n;
+  for(i=0;i<n;i++){ q=pr[i]-base; e+=q*q; }
+  if(e<1e-6||base<1e-6) return null;
+  for(L=6;L<=30&&L<n;L++){
+    val=0;for(i=0;i<n-L;i++) val+=(pr[i]-base)*(pr[i+L]-base); val/=e;
+    if(val>bestAc){bestAc=val;bestL=L;}
+  }
+  if(bestL<0||bestAc<0.25) return null;
+  function score(p,ph){
+    s=0;c=0;
+    for(k=0;k*p<n-2;k++){
+      x=Math.round(ph+k*p);
+      if(x>2&&x<n-2){s+=pr[x];c++;}
+    }
+    return c>4?s/c/base:0;
+  }
+  for(p=bestL-1.1;p<=bestL+1.1;p+=0.05){
+    for(ph=0;ph<p;ph+=0.5){ sc=score(p,ph); if(sc>bs){bs=sc;bp=p;bph=ph;} }
+  }
+  for(p=bp-0.08;p<=bp+0.08;p+=0.002){
+    for(ph=bph-0.6;ph<=bph+0.6;ph+=0.15){ sc=score(p,ph); if(sc>bs){bs=sc;bp=p;bph=ph;} }
+  }
+  return {p:bp,ph:bph,str:bs,ac:bestAc};
+}
+// 块径已经不是 16/8 的整数 → 猜出「缩了多少」，并换算成放回 16px 网格的倍数
+function pk2ScaleGuess(data,W,H){
+  var l=pk2Luma(data,W,H),px,py,sx,sy;
+  px=pk2Period(l,W,H,true);py=pk2Period(l,W,H,false);
+  var okx=!!(px&&px.str>=1.35), oky=!!(py&&py.str>=1.35);
+  if(!okx&&!oky) return null;                                      // 两轴都没认出周期
+  // v509：块永远是正方形，一根轴认出来就够了（另一轴常被噪声带偏）
+  if(!okx) px=py; else if(!oky) py=px;
+  else if(Math.abs(px.p-py.p)/Math.max(px.p,py.p)>0.12){
+    if(px.str>=py.str) py=px; else px=py;
+  }
+  if(Math.abs(px.p-16)<0.4&&Math.abs(py.p-16)<0.4) return null;   // 本来就是整块网格
+  if(Math.abs(px.p-8)<0.3&&Math.abs(py.p-8)<0.3) return null;
+  // v514：周期可能是实际块径的 2 倍（0.85 缩放实测 27.2 = 2×13.6），两个假设都算一遍；
+  //       优先取「放大」假设（缩过的成品是主流，放大成品走整数周期直解那条路）
+  var cands=[32/px.p,16/px.p], ci, cv2, up=null, down=null;
+  for(ci=0;ci<cands.length;ci++){
+    cv2=cands[ci];
+    if(cv2<0.5||cv2>2.5) continue;
+    if(cv2>=1.02){ if(!up||cv2<up) up=cv2; }
+    else if(!down) down=cv2;
+  }
+  if(!(up||down)) return null;
+  sx=(up||down);sy=sx;
+  return {sx:sx,sy:sy,px:px.p,py:py.p,phx:px.ph,phy:py.ph};
+}
+// 缩小图上锁矩形边不可靠：只判 4 方向 × 3 比例的一半切，直接用精确判分（格不对会炸）
+function pk2HalfScore(data,W,H,bs){
+  var dirs=['right','left','bottom','top'],ratios=[0.5,0.3333,0.6667];
+  var list=[],di,ri,r;
+  for(di=0;di<4;di++)for(ri=0;ri<3;ri++){
+    r=halfRect(W,H,dirs[di],ratios[ri],bs);
+    if(blockCount(r,bs)<2) continue;
+    list.push({dir:dirs[di],ratio:ratios[ri],rect:r,sc:scoreCand(data,W,H,r,bs)});
+  }
+  list.sort(function(a,b){return a.sc-b.sc;});
+  return list;
+}
+// 近似还原：先把图按估出的块径放回 16px 网格，再挑方向/比例，最后把出口尺寸按像素微调
+// 尺寸先在「半分辨率」上扫（快 4 倍，极小值位置一致），再回全分辨率验一遍
+function pk2ApproxHalf(data,W,H,bs,srcCv){
+  bs=bs||16;
+  var g=pk2ScaleGuess(data,W,H);
+  if(!g) return null;
+  var TWf=Math.round(W*g.sx),THf=Math.round(H*g.sy);
+  if(TWf<64||THf<64||TWf*THf>16777216) return null;
+  var src=srcCv;
+  if(!src||src.width!==W||src.height!==H){
+    src=document.createElement('canvas');src.width=W;src.height=H;
+    src.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data),W,H),0,0);
+  }
+  var scratch=document.createElement('canvas');
+  function rs(tw,th){
+    scratch.width=tw;scratch.height=th;
+    var cx=scratch.getContext('2d',{willReadFrequently:true});
+    cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+    cx.drawImage(src,0,0,tw,th);
+    return {tw:tw,th:th,d:new Uint8ClampedArray(cx.getImageData(0,0,tw,th).data)};
+  }
+  // A. 半分辨率：12 种一半切里挑最像的（块径也除以 2）
+  var hb=bs>8?bs/2:bs,TW2=Math.round(TWf/2),TH2=Math.round(THf/2),list,win,runner,i,k,o,rr,sc;
+  if(TW2<32||TH2<32) return null;
+  list=pk2HalfScore(rs(TW2,TH2).d,TW2,TH2,hb);
+  if(!list.length||list[0].sc>1.25) return null;
+  win=list[0];runner=list.length>1?list[1].sc:9;
+  if(win.sc*2.0>runner) return null;          // 得明显赢过第二像的
+  // B. 半分辨率上扫尺寸（±3 半像素 = ±6 全像素）
+  var bestTH2=TH2,bestTW2=TW2,bestSc2=win.sc;
+  for(k=TH2-3;k<=TH2+3;k++){
+    if(k===TH2) continue;
+    o=rs(TW2,k);rr=halfRect(TW2,k,win.dir,win.ratio,hb);
+    sc=scoreCand(o.d,TW2,k,rr,hb);
+    if(sc<bestSc2){bestSc2=sc;bestTH2=k;}
+  }
+  for(k=TW2-3;k<=TW2+3;k++){
+    if(k===TW2) continue;
+    o=rs(k,bestTH2);rr=halfRect(k,bestTH2,win.dir,win.ratio,hb);
+    sc=scoreCand(o.d,k,bestTH2,rr,hb);
+    if(sc<bestSc2){bestSc2=sc;bestTW2=k;}
+  }
+  // C. 回全分辨率验证；差一两像素块缝就会糊，先试四邻再决定
+  var TW=bestTW2*2,TH=bestTH2*2,best=null,bestSc=9e9,dTH=0,dTW=0;
+  function ver(tw,th){
+    var oo=rs(tw,th),r=halfRect(tw,th,win.dir,win.ratio,bs),s=scoreCand(oo.d,tw,th,r,bs);
+    if(s<bestSc){bestSc=s;best={tw:tw,th:th,rect:r};}
+  }
+  ver(TW,TH);
+  if(bestSc>0.95){
+    ver(TW,TH-1);ver(TW,TH+1);ver(TW,TH-2);ver(TW,TH+2);
+    ver(TW-1,TH);ver(TW+1,TH);ver(TW-2,TH);ver(TW+2,TH);
+  }
+  if(!best||bestSc>1.25) return null;
+  // 按定下来的尺寸重画一遍（scratch 里可能已经换成别的候选）
+  var fin=rs(best.tw,best.th),full=new Uint8ClampedArray(fin.d);
+  shuffle(full,best.tw,best.th,best.rect,bs,-1);
+  var cx=scratch.getContext('2d',{willReadFrequently:true});
+  cx.putImageData(new ImageData(full,best.tw,best.th),0,0);
+  return {ok:true,url:scratch.toDataURL('image/png'),w:best.tw,h:best.th,bs:bs,rect:best.rect,
+          desc:rectDesc({kind:'half',dir:win.dir,ratio:win.ratio}),
+          score:bestSc,period:g.px,scale:g.sx,approx:true};
+}
+// 先按一半切试（快、命中率高），不行再按矩形锁边试
+function pk2ApproxRestore(data,W,H,bs,srcCv){
+  var r=null;
+  try{ r=pk2ApproxHalf(data,W,H,bs,srcCv); }catch(e1){}
+  if(r&&r.ok) return r;
+  try{ r=pk2ApproxRect(data,W,H,bs,srcCv); }catch(e2){}
+  return (r&&r.ok)?r:null;
+}
+function pk2ShowApprox(ap){
+  var cap,capt,fn;
+  if(ap.approx){
+    cap='这张像是被缩放过、又压成 JPG 的成品：块径约 '+(ap.period?ap.period.toFixed(1):'?')+
+      'px，放大回 '+ap.bs+'px 网格后近似还原 '+ap.desc+' · '+ap.w+'×'+ap.h+'（不是无损，块缝会有点糊）';
+    capt='近似还原（'+ap.desc+'，放大回 '+ap.bs+'px 网格）';fn='restored_approx.png';
+  }else{
+    cap='原尺寸的局部混淆图：按块缝认出 '+ap.desc+' · '+ap.w+'×'+ap.h+'，已还原（块缝略糊，不是无损）';
+    capt='已还原（'+ap.desc+'）';fn='restored.png';
+  }
+  status('pk2_info',cap);
+  document.getElementById('pk2_preview').innerHTML='<img src="'+ap.url+'" alt=""><div class="cap">'+capt+'</div>';
+  document.getElementById('pk2_dl').innerHTML='<a class="btn btn-primary" style="display:block;margin-top:10px" href="'+
+    ap.url+'" download="'+fn+'">下载还原 PNG</a>';
+  document.getElementById('pk2_res').style.display='block';
+}
+function pk2SayFail(selBs,det){
+  var why=selBs
+    ? '按你选的 '+selBs+'×'+selBs+' 块径没认出选区 —— 把块径改回「自动」再试，或直接在图上拖框后点「按我框的选区解」。'
+    : ((det.best&&det.best.kind==='rect')
+      ? '看到像矩形选区的痕迹，但没锁准边界 —— 在图上拖个框把块粥那块圈住，点「按我框的选区解」。'
+      : '没自动认出选区（可能不是本工具做的，或缩放/转码得太厉害）。也可以在图上拖框后点「按我框的选区解」。');
+  status('pk2_info',why,true);
+  window.__pk2last={failed:true,best:det.best,rank:det.rank};
+}
+// ===== 矩形选区：覆盖率剖面粗框 → 还原前后接缝比精锁 =====
+function pk2EdgeProfX(l,W,H,bs,y0,y1){
+  var m=Math.floor((W-1)/bs),out=new Float32Array(m),k,x,y,i,c,h;
+  y0=y0||0;y1=Math.min(y1||H,H-1);h=Math.max(1,y1-y0);
+  for(k=0;k<m;k++){
+    x=k*bs+bs-1;c=0;
+    for(y=y0;y<y1;y++){i=y*W+x;if(Math.abs(l[i+1]-l[i])>18)c++;}
+    out[k]=c/h;
+  }
+  return out;
+}
+function pk2EdgeProfY(l,W,H,bs){
+  var m=Math.floor((H-1)/bs),out=new Float32Array(m),k,x,y,i,c;
+  for(k=0;k<m;k++){
+    y=k*bs+bs-1;c=0;
+    for(x=0;x<W-1;x++){i=y*W+x;if(Math.abs(l[i+W]-l[i])>18)c++;}
+    out[k]=c/Math.max(1,W-1);
+  }
+  return out;
+}
+function pk2OtsuA(arr){
+  var n=arr.length,i,v,mn=1e9,mx=-1e9,hi=new Int32Array(256),sum=0,sumB=0,wB=0,wF,maxV=-1,thr=0,k;
+  if(n<8) return null;
+  for(i=0;i<n;i++){v=arr[i];if(v<mn)mn=v;if(v>mx)mx=v;}
+  if(!(mx-mn>1e-6)) return null;
+  for(i=0;i<n;i++){k=Math.min(255,Math.max(0,Math.round((arr[i]-mn)/(mx-mn)*255)));hi[k]++;}
+  for(i=0;i<256;i++) sum+=i*hi[i];
+  for(i=0;i<256;i++){
+    wB+=hi[i];if(!wB)continue;wF=n-wB;if(!wF)break;
+    sumB+=i*hi[i];
+    var mB=sumB/wB,mF=(sum-sumB)/wF,d=wB*wF*(mB-mF)*(mB-mF);
+    if(d>maxV){maxV=d;thr=i;}
+  }
+  return mn+thr/255*(mx-mn);
+}
+function pk2CoverRun(arr,minLen){
+  var t=pk2OtsuA(arr);
+  if(t==null) return null;
+  var thr=t*1.08,st=-1,last=-1,best=null,i,s;
+  for(i=0;i<=arr.length;i++){
+    var ok=i<arr.length&&arr[i]>=thr;
+    if(ok){if(st<0)st=i;last=i;}
+    else if(st>=0&&i-last>1){if(!best||last-st>best.b-best.a)best={a:st,b:last};st=-1;}
+  }
+  if(!best||best.b-best.a+1<(minLen||5)) return null;
+  s=0;for(i=best.a;i<=best.b;i++) s+=arr[i];
+  best.mean=s/(best.b-best.a+1);
+  return best;
+}
+// 两段式粗框：先全宽定 y 带，再用 y 带内的行定 x 带
+function pk2RectFrame(data,W,H,bs){
+  var l=pk2Luma(data,W,H);
+  if(!l) return null;
+  var py=pk2EdgeProfY(l,W,H,bs),ry=pk2CoverRun(py,5);
+  if(!ry) return null;
+  var y0=ry.a*bs,y1=Math.min((ry.b+1)*bs,H);
+  var px=pk2EdgeProfX(l,W,H,bs,y0,y1),rx=pk2CoverRun(px,6);
+  if(!rx) return null;
+  var x0=rx.a*bs,x1=Math.min((rx.b+1)*bs,W);
+  if(x1-x0<6*bs||y1-y0<4*bs) return null;
+  return {rect:{x:x0,y:y0,w:x1-x0,h:y1-y0},mx:rx.mean,my:ry.mean,px:px,py:py};
+}
+// 缝上去丝线：3 点中值，只动缝
+function pk2Deblock(d,w,h,bs){
+  var k,x,y,i,o,p,c0,c1,c2,t;
+  for(y=0;y<h;y++)for(k=1;k*bs<w-1;k++){
+    x=k*bs;i=(y*w+x)*4;o=i-4;p=i+4;
+    for(t=0;t<3;t++){c0=d[o+t];c1=d[i+t];c2=d[p+t];
+      d[i+t]=(c0<c1?(c1<c2?c1:(c0<c2?c2:c0)):(c1>c2?c1:(c0>c2?c2:c0)));}
+  }
+  for(x=0;x<w;x++)for(k=1;k*bs<h-1;k++){
+    y=k*bs;i=(y*w+x)*4;o=i-w*4;p=i+w*4;
+    for(t=0;t<3;t++){c0=d[o+t];c1=d[i+t];c2=d[p+t];
+      d[i+t]=(c0<c1?(c1<c2?c1:(c0<c2?c2:c0)):(c1>c2?c1:(c0>c2?c2:c0)));}
+  }
+}
+// 矩形判分：还原前/后块缝能量比（还原后去缝再去量）
+function pk2RectScore(data,W,H,r,bs){
+  var buf=cropRect(data,W,H,r),rr={x:0,y:0,w:r.w,h:r.h};
+  var before=seamEnergy(buf,r.w,r.h,rr,bs);
+  shuffle(buf,r.w,r.h,rr,bs,-1);
+  pk2Deblock(buf,r.w,r.h,bs);
+  var after=seamEnergy(buf,r.w,r.h,rr,bs);
+  return {k:(after+1)/(before+1),before:before,after:after};
+}
+function pk2RectSeek(data,W,H,bs){
+  var co=pk2RectFrame(data,W,H,bs);
+  if(!co) return null;
+  var b=co.rect,bsx=bs,i,j,best=b,bk=9e9,sc,tmp,tries;
+  function tryR(x,y,w,h){
+    if(x<0||y<0||w<6*bsx||h<4*bsx||x+w>W||y+h>H) return;
+    sc=pk2RectScore(data,W,H,{x:x,y:y,w:w,h:h},bsx);
+    if(sc.k<bk){bk=sc.k;best={x:x,y:y,w:w,h:h};}
+  }
+  for(i=-1;i<=1;i++)for(j=-1;j<=1;j++) tryR(b.x,b.y,b.w+i*bs,b.h+j*bs);
+  tmp={x:best.x,y:best.y,w:best.w,h:best.h};
+  for(i=-1;i<=1;i++)for(j=-1;j<=1;j++) tryR(tmp.x+i*bs,tmp.y+j*bs,tmp.w,tmp.h);
+  if(bk>1.0){
+    tmp={x:best.x,y:best.y,w:best.w,h:best.h};
+    for(i=-2;i<=2;i+=4){
+      tryR(tmp.x+i*bs,tmp.y,tmp.w,tmp.h);tryR(tmp.x,tmp.y+i*bs,tmp.w,tmp.h);
+      tryR(tmp.x,tmp.y,tmp.w+i*bs,tmp.h);tryR(tmp.x,tmp.y,tmp.w,tmp.h+i*bs);
+    }
+  }
+  if(bk>1.0) return null;
+  return {ok:true,rect:best,k:bk,mx:co.mx,my:co.my};
+}
+// 把矩形区域置换回来 + 去缝，其余像素不动
+function pk2RectApply(data,W,H,r,bs){
+  var out=new Uint8ClampedArray(data);
+  var buf=cropRect(out,W,H,r),rr={x:0,y:0,w:r.w,h:r.h},y,x,i,s,d;
+  shuffle(buf,r.w,r.h,rr,bs,-1);
+  pk2Deblock(buf,r.w,r.h,bs);
+  for(y=0;y<r.h;y++){
+    s=y*r.w*4;d=((r.y+y)*W+r.x)*4;
+    for(x=0;x<r.w*4;x++) out[d+x]=buf[s+x];
+  }
+  return {data:out,rect:r};
+}
+// 原生图直接解
+function pk2RectNative(data,W,H,bs,srcCv){
+  bs=bs||16;
+  var s=null;
+  try{ s=LOC.findP(data,W,H,bs); }catch(eLoc){}
+  if(!s||!s.ok) return null;
+  s.k=s.after;
+  var ap=pk2RectApply(data,W,H,s.rect,bs);
+  var cv=srcCv;
+  if(!cv||cv.width!==W||cv.height!==H){
+    cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  }
+  cv.getContext('2d',{willReadFrequently:true}).putImageData(new ImageData(ap.data,W,H),0,0);
+  return {ok:true,url:cv.toDataURL('image/png'),w:W,h:H,bs:bs,rect:s.rect,approx:false,
+          desc:rectDesc({kind:'rect',rect:s.rect}),score:s.k};
+}
+// 缩放成品：按剖面挑最优尺寸放大回原生，再锁矩形
+function pk2ApproxRect(data,W,H,bs,srcCv){
+  bs=bs||16;
+  var g=pk2ScaleGuess(data,W,H);
+  if(!g) return null;
+  var TW=Math.round(W*g.sx),TH=Math.round(H*g.sy);
+  if(TW<64||TH<64||TW*TH>16777216) return null;
+  var src=srcCv;
+  if(!src||src.width!==W||src.height!==H){
+    src=document.createElement('canvas');src.width=W;src.height=H;
+    src.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data),W,H),0,0);
+  }
+  var cv=document.createElement('canvas'),cx,cands=[],kk,ll,tw,th,d,fr;
+  function build(w,h){
+    cv.width=w;cv.height=h;
+    cx=cv.getContext('2d',{willReadFrequently:true});
+    cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+    cx.drawImage(src,0,0,w,h);
+    return new Uint8ClampedArray(cx.getImageData(0,0,w,h).data);
+  }
+  // 先按估出的尺寸试，不行再 ±1px；命中即停
+  var order=[[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]],oi,r=null,use=null,res=null;
+  for(oi=0;oi<order.length&&oi<5;oi++){
+    kk=order[oi][0];ll=order[oi][1];
+    tw=TW+kk;th=TH+ll;
+    if(tw<64||th<64||tw*th>16777216) continue;
+    d=build(tw,th);
+    res=null;
+    try{ res=LOC.findP(d,tw,th,bs); }catch(eLoc2){}
+    if(res&&res.ok){use={tw:tw,th:th,d:d};break;}
+  }
+  if(!use||!res||!res.ok) return null;
+  r=res;
+  var ap=pk2RectApply(use.d,use.tw,use.th,r.rect,bs);
+  cv.width=use.tw;cv.height=use.th;
+  var c2=cv.getContext('2d',{willReadFrequently:true});
+  c2.putImageData(new ImageData(ap.data,use.tw,use.th),0,0);
+  return {ok:true,url:cv.toDataURL('image/png'),w:use.tw,h:use.th,bs:bs,rect:r.rect,approx:true,
+          desc:rectDesc({kind:'rect',rect:r.rect}),score:r.after,period:g.px,scale:g.sx};
+}
+// ===== v514 定位器（见 LOC）=====
+function pk2LocResize(data,w,h,tw,th){
+  var a=document.createElement('canvas');a.width=w;a.height=h;
+  a.getContext('2d',{willReadFrequently:true}).putImageData(new ImageData(new Uint8ClampedArray(data),w,h),0,0);
+  var b=document.createElement('canvas');b.width=tw;b.height=th;
+  var bx=b.getContext('2d',{willReadFrequently:true});
+  bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';
+  bx.drawImage(a,0,0,tw,th);
+  return {data:bx.getImageData(0,0,tw,th).data,w:tw,h:th};
+}
+/* v513 块缝定位器（内容/亮度/缩放都无关）
+   思路：
+   1) soupMap：每块「边界梯度 ÷ 块内梯度」，块被搬过 → 边界炸；原图 → ≈1；取两轴较大者。
+   2) 候选一：两段式受限剖面 —— 先在全图上定一轴，再「只在带内」重算另一轴剖面，
+      窄条不会被整行平均稀释（以前 6 列宽的竖条密度只有 5%，直接认不出）。
+   3) 候选二：密集块掩膜的最大连通块包围盒 —— 极小选区（8×8 块）剖面分不开时靠它。
+   4) 精锁：尺寸 ±1..±3、位置 ±1..±3，按「还原后缝比」择优，够干净提前收。
+   5) 验收三条：还原前缝比 ≥3、还原后原始缝比 < 还原前 ×0.6（这条堵死「粥里任意子矩形」假成功）、
+      去缝后缝比 ≤2.7 且 < 还原前 ×0.45。
+   6) 周期未知（缩过分辨率的成品）：扫 p=8..26，按「带内/带外覆盖差」排序，只验前 3。
+
+   注入：D.luma(data,w,h)→Float32Array、D.crop(data,w,h,r)→ImageData.data、
+        D.shuffle(buf,w,h,r,p,sign)、D.resize(data,w,h,tw,th)→{data,w,h}
+*/
+function makeLoc(D){
+  function otsu(a,n){
+    if(n<8) return null;
+    var i,v,mn=1e9,mx=-1e9,hi=new Float64Array(64),k,sum=0,sumB=0,wB=0,wF,thr=0,maxV=-1;
+    for(i=0;i<n;i++){v=a[i];if(v<mn)mn=v;if(v>mx)mx=v;}
+    if(!(mx-mn>1e-6)) return null;
+    for(i=0;i<n;i++){k=Math.max(0,Math.min(63,Math.round((a[i]-mn)/(mx-mn)*63)));hi[k]++;}
+    for(i=0;i<64;i++) sum+=i*hi[i];
+    for(i=0;i<64;i++){ wB+=hi[i]; if(!wB) continue; wF=n-wB; if(!wF) break;
+      sumB+=i*hi[i];
+      var mB=sumB/wB, mF=(sum-sumB)/wF, d=wB*wF*(mB-mF)*(mB-mF);
+      if(d>maxV){maxV=d;thr=i;} }
+    return mn+thr/63*(mx-mn);
+  }
+  // 每块一条「边界/内部」梯度比（取上/左两边较大者）
+  function soupMap(l,W,H,p){
+    var nbX=Math.floor(W/p), nbY=Math.floor(H/p);   // W 能被 p 整除时末列也要算进来
+    if(nbX<5||nbY<4) return null;
+    var soup=new Float32Array(nbX*nbY), j,k,x,y,i,ix,iy,bx1,by1,v,x0,y0,ye,xe,step,nx,ny,nXi,nYi;
+    step=Math.max(1,Math.floor(p/8));
+    for(j=0;j<nbY;j++){
+      y0=j*p;
+      for(k=0;k<nbX;k++){
+        x0=k*p; xe=Math.min(W,x0+p); ye=Math.min(H,y0+p);
+        ix=0;iy=0;nXi=0;nYi=0;
+        for(y=y0;y<ye;y+=step){ var row=y*W;
+          for(x=x0;x<xe-1;x++){ i=row+x; ix+=Math.abs(l[i+1]-l[i]); nXi++; } }
+        for(y=y0;y<ye-1;y++){ var row2=y*W;
+          for(x=x0;x<xe;x+=step){ i=row2+x; iy+=Math.abs(l[i+W]-l[i]); nYi++; } }
+        ix=nXi?ix/nXi:0; iy=nYi?iy/nYi:0;
+        if(ix<0.6) ix=0.6; if(iy<0.6) iy=0.6;
+        bx1=0;nx=0; if(x0>0){ for(y=y0;y<ye;y+=step){ i=y*W+x0; bx1+=Math.abs(l[i]-l[i-1]); nx++; } }
+        by1=0;ny=0; if(y0>0){ for(x=x0;x<xe;x+=step){ i=y0*W+x; by1+=Math.abs(l[i]-l[i-W]); ny++; } }
+        v=0;
+        if(nx) v=Math.max(v,(bx1/nx)/ix);
+        if(ny) v=Math.max(v,(by1/ny)/iy);
+        soup[j*nbX+k]=v;
+      }
+    }
+    return {soup:soup,nbX:nbX,nbY:nbY};
+  }
+  // 覆盖率剖面 → 连续段（段正好顶到数组末尾也提交）
+  function covRun(cov,n,minLen,gapTol){
+    if(n<minLen) return null;
+    var thr=otsu(cov,n), i,st=-1,last=-1,best=null,sum=0,cnt=0,mn=1e9,mx=-1e9;
+    if(thr==null){ // 全平：看是不是整幅都高
+      var sm=0; for(i=0;i<n;i++) sm+=cov[i]; sm/=n;
+      return sm>=0.30?{a:0,b:n-1,len:n,mean:sm}:null;
+    }
+    thr*=1.05;
+    for(i=0;i<n;i++){ if(cov[i]<mn)mn=cov[i]; if(cov[i]>mx)mx=cov[i]; }
+    if(!(mx-mn>0.05)) return null;
+    for(i=0;i<=n;i++){
+      var ok=(i<n&&cov[i]>=thr);
+      if(ok){ if(st<0)st=i; last=i; }
+      else if(st>=0 && (i>=n || i-last>gapTol)){
+        var len=last-st+1;
+        if(len>=minLen){ sum=0;cnt=0; for(var q=st;q<=last;q++){sum+=cov[q];cnt++;}
+          var m=sum/cnt;
+          if(!best||len>best.len||(len===best.len&&m>best.mean)) best={a:st,b:last,len:len,mean:m}; }
+        st=-1;
+      }
+    }
+    if(!best) return null;
+    if(best.mean<0.12) return null;
+    return best;
+  }
+  // 缝处 |Δ| ÷ 半块处 |Δ|（同一裁片自比，亮度自动抵消）；另给两轴各自的还原前缝能
+  function seamRatio(l,w,h,p){
+    var sumS=0,nS=0,sumI=0,nI=0,x,y,i,d,xm=p>>1,sx=0,nx=0,sy=0,ny=0;
+    for(y=1;y<h-1;y++){
+      for(x=1;x<w-1;x++){
+        d=Math.abs(l[y*w+x]-l[y*w+x-1]);
+        if(x%p===0){ sumS+=d; nS++; sx+=d; nx++; } else if(x%p===xm){ sumI+=d; nI++; }
+        i=y*w+x; d=Math.abs(l[i]-l[i-w]);
+        if(y%p===0){ sumS+=d; nS++; sy+=d; ny++; } else if(y%p===xm){ sumI+=d; nI++; }
+      }
+    }
+    if(!nS||!nI) return {bs:0,bi:0,ratio:0,bsx:0,bsy:0};
+    var bs=sumS/nS, bi=Math.max(0.35,sumI/nI);
+    return {bs:bs, bi:bi, ratio:bs/bi, bsx:nx?sx/nx:0, bsy:ny?sy/ny:0};
+  }
+  // 缝上 3 点中值（只动 x=k*p / y=k*p），压掉 JPEG 振铃再判分
+  function deblockL(l,w,h,p){
+    var x,y,i,k,a,b,c,m;
+    for(y=0;y<h;y++){ var row=y*w;
+      for(x=p;x<w;x+=p){ i=row+x; a=l[i-1];b=l[i];c=l[i+1];
+        m=a<b?(b<c?b:(a<c?a:c)):(a<c?a:(b<c?c:b)); l[i]=m; } }
+    for(x=0;x<w;x++){
+      for(y=p;y<h;y+=p){ i=y*w+x; a=l[i-w];b=l[i];c=l[i+w];
+        m=a<b?(b<c?b:(a<c?a:c)):(a<c?a:(b<c?c:b)); l[i]=m; } }
+    return l;
+  }
+  // 还原后「有没有一条边界明显突出」：正确还原后每条块边界都该远低于还原前（剩下的是自然纹理），
+  // 而整框沿块索引错位 1 块时内容整体循环错位，只有一条列/行是绕回裂缝，能量仍接近还原前。
+  // 用「相对还原前缝能」判，比 max/中位数稳（窄条只剩几条边界时中位数会失效）。
+  function peakRatio(l,w,h,p,bsx,bsy){
+    var bw=Math.floor(w/p), bh=Math.floor(h/p);
+    if(bw<2||bh<2) return {cnt:0,wx:0,wy:0};
+    var j, y, x, s, cnt=0, wx=0, wy=0, v;
+    for(j=1;j<bw;j++){
+      s=0; for(y=0;y<h;y++){ var xx=j*p; s+=Math.abs(l[y*w+xx]-l[y*w+xx-1]); }
+      v=bsx>1e-6?(s/h)/bsx:0;
+      if(v>wx) wx=v;
+      if(v>0.55) cnt++;
+    }
+    for(j=1;j<bh;j++){
+      s=0; for(x=0;x<w;x++){ var yy=j*p; s+=Math.abs(l[yy*w+x]-l[(yy-1)*w+x]); }
+      v=bsy>1e-6?(s/w)/bsy:0;
+      if(v>wy) wy=v;
+      if(v>0.55) cnt++;
+    }
+    return {cnt:cnt, wx:wx, wy:wy};
+  }
+  // 框外连续性：还原后的内侧像素应与「框外原图」连续（原图在框边界本来是连着的）。
+  // 这是唯一能识破「整框沿块索引错位」的判据 —— 错位后内侧内容来自区域另一边，边界必断；
+  // 顺带也能识破「粥里的子框」。用框内自然梯度做分母，内容/亮度自适应。
+  function borderFit(data,W,H,r,lraw,p,biden){
+    var h=h0(r), w=r.w, x, y, sum, n, v, worst=0, i, j;
+    function L(px){ return px[0]*0.3+px[1]*0.59+px[2]*0.11; }
+    function pxAt(xx,yy){ var i2=((yy)*W+xx)*4; return [data[i2],data[i2+1],data[i2+2]]; }
+    var den=Math.max(0.35,biden||0.35);
+    // 左
+    if(r.x>0){ sum=0;n=0; for(y=0;y<r.h;y++){ var a=lraw[y*w+0], o=pxAt(r.x-1,r.y+y); sum+=Math.abs(a-L(o)); n++; } v=n?(sum/n)/den:0; if(v>worst)worst=v; }
+    // 右
+    if(r.x+r.w<W){ sum=0;n=0; for(y=0;y<r.h;y++){ var a2=lraw[y*w+r.w-1], o2=pxAt(r.x+r.w,r.y+y); sum+=Math.abs(a2-L(o2)); n++; } v=n?(sum/n)/den:0; if(v>worst)worst=v; }
+    // 上
+    if(r.y>0){ sum=0;n=0; for(x=0;x<r.w;x++){ var a3=lraw[0*w+x], o3=pxAt(r.x+x,r.y-1); sum+=Math.abs(a3-L(o3)); n++; } v=n?(sum/n)/den:0; if(v>worst)worst=v; }
+    // 下
+    if(r.y+r.h<H){ sum=0;n=0; for(x=0;x<r.w;x++){ var a4=lraw[(r.h-1)*w+x], o4=pxAt(r.x+x,r.y+r.h); sum+=Math.abs(a4-L(o4)); n++; } v=n?(sum/n)/den:0; if(v>worst)worst=v; }
+    return worst;
+  }
+  function h0(r){ return r.h; }
+  // 判分：裁片 → 还原前 → shuffle(-1) → 还原后（原始）→ 去缝 → 还原后（去缝）
+  // raw 是关键判据：只有「真值矩形」还原后才连续；粥里的子矩形怎么置换都还是块状。
+  function scoreRect(data,W,H,r,p){
+    if(r.w<p||r.h<p||r.x<0||r.y<0||r.x+r.w>W||r.y+r.h>H) return null;
+    // v514d：两轴都至少 3 块。2×2 块（32×32 @p16）内部只有一列一行缝，
+    // 缝比统计完全不可信 —— 干净图上会冒出「32×32 假成功」，实测三张图全中，必须禁掉。
+    if(r.w<p*3||r.h<p*3) return null;
+    var buf=D.crop(data,W,H,r), rr={x:0,y:0,w:r.w,h:r.h};
+    var before=seamRatio(D.luma(buf,r.w,r.h),r.w,r.h,p);
+    D.shuffle(buf,r.w,r.h,rr,p,-1);
+    var lraw=D.luma(buf,r.w,r.h);
+    var raw=seamRatio(lraw,r.w,r.h,p);
+    var l2=deblockL(D.luma(buf,r.w,r.h),r.w,r.h,p);
+    var after=seamRatio(l2,r.w,r.h,p);
+    var pk=peakRatio(l2,r.w,r.h,p,before.bsx,before.bsy);
+    var bord=borderFit(data,W,H,r,lraw,p,after.bi);
+    return {before:before.ratio, raw:raw.ratio, after:after.ratio,
+            bS:before.bs, aS:after.bs, bI:before.bi, aI:after.bi, rS:raw.bs, rI:raw.bi, fit:null,
+            cnt:pk.cnt, wx:pk.wx, wy:pk.wy, bord:bord, w:r.w, h:r.h, p:p};
+  }
+  // 验收：三条一起过（raw 那条堵假成功），再加「无绕回裂缝」
+  function accept(sc,opt){
+    if(!sc) return false;
+    opt=opt||{};
+    var p=sc.p||16, nb=Math.max(1,(sc.w||p)*(sc.h||p)/(p*p));
+    // 极小框（≤48 块）内部缝本来就少，还原前缝比自然偏低，门槛相应放宽；相对残留那条照旧
+    var bmin=opt.before||(nb<=48?2.2:3.0);
+    var amax=opt.after||2.7, frac=opt.frac||0.45, rmax=opt.raw||3.0, rfrac=opt.rfrac||0.55;
+    // 边界连续性：框小时边界样本少，自然强边会让比值虚高，按块数放宽
+    var bordMax=nb<=48?8.5:(nb<=120?7.0:6.0);
+    return !!(sc.before>=bmin && sc.raw<=rmax && sc.raw<sc.before*rfrac &&
+              sc.after<=amax && sc.after<sc.before*frac &&
+              (sc.cnt||0)<=1 && (sc.bord===undefined||sc.bord<=bordMax));
+  }
+  // 受限剖面（分母只算带内那一跨）
+  function profRows(s,nbX,nbY,ka,kb,thr){
+    var cov=new Float64Array(nbY), j, k, cnt, den=Math.max(1,kb-ka+1);
+    for(j=0;j<nbY;j++){ cnt=0; for(k=ka;k<=kb;k++) if(s[j*nbX+k]>=thr) cnt++; cov[j]=cnt/den; }
+    return cov;
+  }
+  function profCols(s,nbX,nbY,ja,jb,thr){
+    var cov=new Float64Array(nbX), j, k, cnt, den=Math.max(1,jb-ja+1);
+    for(k=0;k<nbX;k++){ cnt=0; for(j=ja;j<=jb;j++) if(s[j*nbX+k]>=thr) cnt++; cov[k]=cnt/den; }
+    return cov;
+  }
+  function fullY(nbY){ return {a:0,b:nbY-1,len:nbY,mean:1}; }
+  function fullX(nbX){ return {a:0,b:nbX-1,len:nbX,mean:1}; }
+  // 极小区兜底：密集块掩膜 → 最大 8 连通块 → 包围盒
+  function denseBox(s,nbX,nbY,thr){
+    var m=new Uint8Array(nbX*nbY), i, j, k, seen=new Uint8Array(nbX*nbY), st=[], best=null, qi, cur, cj, ck, di, dj, jj, kk, nid;
+    for(i=0;i<nbX*nbY;i++) m[i]=(s[i]>=thr)?1:0;
+    for(j=0;j<nbY;j++)for(k=0;k<nbX;k++){
+      var id0=j*nbX+k; if(!m[id0]||seen[id0]) continue;
+      st.length=0; st.push(id0); seen[id0]=1;
+      var a0=k,b0=k,c0=j,d0=j,cnt=0; qi=0;
+      while(qi<st.length){
+        cur=st[qi++]; cnt++;
+        cj=(cur/nbX)|0; ck=cur-cj*nbX;
+        if(ck<a0)a0=ck; if(ck>b0)b0=ck; if(cj<c0)c0=cj; if(cj>d0)d0=cj;
+        for(dj=-1;dj<=1;dj++)for(di=-1;di<=1;di++){
+          jj=cj+dj; kk=ck+di; if(jj<0||jj>=nbY||kk<0||kk>=nbX) continue;
+          nid=jj*nbX+kk; if(m[nid]&&!seen[nid]){ seen[nid]=1; st.push(nid); } }
+      }
+      if(cnt>=3&&(!best||cnt>best.cnt)) best={cnt:cnt,a:a0,b:b0,c:c0,d:d0};
+    }
+    if(!best) return null;
+    return best;
+  }
+  // 候选一：两段式受限剖面
+  function locateProfiles(l,W,H,p,opt,thr){
+    var sm=soupMap(l,W,H,p);
+    if(!sm) return null;
+    var nbX=sm.nbX, nbY=sm.nbY, s=sm.soup, j, k, cnt, ry, rx, i, it;
+    var cyf=new Float64Array(nbY), cxf=new Float64Array(nbX);
+    for(j=0;j<nbY;j++){ cnt=0; for(k=0;k<nbX;k++) if(s[j*nbX+k]>=thr) cnt++; cyf[j]=cnt/nbX; }
+    for(k=0;k<nbX;k++){ cnt=0; for(j=0;j<nbY;j++) if(s[j*nbX+k]>=thr) cnt++; cxf[k]=cnt/nbY; }
+    var mny=1e9, mnx=1e9;
+    for(j=0;j<nbY;j++) if(cyf[j]<mny) mny=cyf[j];
+    for(k=0;k<nbX;k++) if(cxf[k]<mnx) mnx=cxf[k];
+    ry=(mny>=0.30)?fullY(nbY):covRun(cyf,nbY,3,1);
+    rx=(mnx>=0.30)?fullX(nbX):covRun(cxf,nbX,4,1);
+    if(!ry&&!rx) return null;
+    if(!ry) ry=fullY(nbY);
+    if(!rx) rx=fullX(nbX);
+    var cy=profRows(s,nbX,nbY,rx.a,rx.b,thr), cx=profCols(s,nbX,nbY,ry.a,ry.b,thr);
+    for(it=0;it<3;it++){
+      var my=1e9, mx=1e9;
+      for(j=0;j<nbY;j++) if(cy[j]<my) my=cy[j];
+      var ryn=(my>=0.30)?fullY(nbY):(covRun(cy,nbY,2,4)||denseBoxSeg(cy,nbY));
+      if(!ryn) return null;
+      for(k=0;k<nbX;k++) if(cx[k]<mx) mx=cx[k];
+      var rxn=(mx>=0.30)?fullX(nbX):(covRun(cx,nbX,3,6)||denseBoxSeg(cx,nbX));
+      if(!rxn) return null;
+      if(ryn.a===ry.a&&ryn.b===ry.b&&rxn.a===rx.a&&rxn.b===rx.b) break;
+      ry=ryn; rx=rxn;
+      cy=profRows(s,nbX,nbY,rx.a,rx.b,thr); cx=profCols(s,nbX,nbY,ry.a,ry.b,thr);
+    }
+    var inSum=0,inN=0,outSum=0,outN=0;
+    for(j=0;j<nbY;j++){ if(j>=ry.a&&j<=ry.b){inSum+=cy[j];inN++;} else {outSum+=cy[j];outN++;} }
+    return {rect:{x:rx.a*p,y:ry.a*p,w:(rx.b-rx.a+1)*p,h:(ry.b-ry.a+1)*p},
+            ry:ry, rx:rx, inY:inN?inSum/inN:0, outY:outN?outSum/outN:0,
+            covY:cy, covX:cx, nbX:nbX, nbY:nbY, p:p, from:'prof'};
+  }
+  // 一维覆盖序列 → 峰值附近连续段（容忍细缝）
+  function denseBoxSeg(cov,n){
+    var i, mx=-1, arg=-1, thr, a, b, miss=0;
+    for(i=0;i<n;i++) if(cov[i]>mx){ mx=cov[i]; arg=i; }
+    if(arg<0||mx<0.30) return null;
+    thr=Math.max(0.30,mx*0.5);
+    a=arg; b=arg;
+    for(i=arg-1;i>=0;i--){ if(cov[i]>=thr){a=i;miss=0;} else if(++miss>2) break; }
+    miss=0;
+    for(i=arg+1;i<n;i++){ if(cov[i]>=thr){b=i;miss=0;} else if(++miss>2) break; }
+    return {a:a,b:b,len:b-a+1,mean:1};
+  }
+  // 候选二：密集块最大连通块包围盒；再按「框内行/列密度」向内收边（包围盒常偏大一圈）
+  function locateCC(l,W,H,p,opt,thr,trim){
+    var sm=soupMap(l,W,H,p);
+    if(!sm) return null;
+    var nbX=sm.nbX, nbY=sm.nbY, s=sm.soup, b=denseBox(s,nbX,nbY,thr);
+    if(!b) return null;
+    var a=b.a,bb=b.b,c=b.c,d=b.d;
+    if(trim){
+      var cy=profRows(s,nbX,nbY,a,bb,thr), cx=profCols(s,nbX,nbY,c,d,thr), q1, q2;
+      q1=covRun(cy,nbY,2,1); q2=covRun(cx,nbX,2,1);
+      // 只在框内收（超出的不动）
+      if(q1&&q1.len>=2&&q1.a>=c-1&&q1.b<=d+1){ c=q1.a; d=q1.b; }
+      if(q2&&q2.len>=2&&q2.a>=a-1&&q2.b<=bb+1){ a=q2.a; bb=q2.b; }
+    }
+    var ry={a:c,b:d,len:d-c+1,mean:1}, rx={a:a,b:bb,len:bb-a+1,mean:1};
+    return {rect:{x:rx.a*p,y:ry.a*p,w:(rx.b-rx.a+1)*p,h:(ry.b-ry.a+1)*p},
+            ry:ry, rx:rx, inY:1, outY:0, covY:null, covX:null, nbX:nbX, nbY:nbY, p:p, from:trim?'cct':'cc'};
+  }
+  function locateCands(l,W,H,p,opt){
+    opt=opt||{};
+    var out=[], a, b, c, d, thrs=[5.0,4.0,3.0];
+    try{ a=locateProfiles(l,W,H,p,opt,opt.thr||5.0); }catch(eA){}
+    if(a) out.push(a);
+    var seen=function(r){ for(var q=0;q<out.length;q++){ var o=out[q].rect; if(o.x===r.x&&o.y===r.y&&o.w===r.w&&o.h===r.h) return true; } return false; };
+    for(var t=0;t<thrs.length;t++){
+      try{ b=locateCC(l,W,H,p,opt,thrs[t],false); }catch(eB){}
+      if(b&&!seen(b.rect)) out.push(b);
+      try{ c=locateCC(l,W,H,p,opt,thrs[t],true); }catch(eC){}
+      if(c&&!seen(c.rect)) out.push(c);
+    }
+    return out;
+  }
+  // 定位（兼容老接口）：返回第一个剖面候选
+  function locate(l,W,H,p,opt){
+    var c=locateCands(l,W,H,p,opt);
+    return c.length?c[0]:null;
+  }
+  // v513：隔行隔列抽一半（不插值，缝对比不会被平滑掉）
+  function dec2(data,w,h){
+    var hw=Math.floor(w/2), hh=Math.floor(h/2), out=new Uint8ClampedArray(hw*hh*4), x, y, s, d, sy, dy;
+    if(hw<2||hh<2) return null;
+    for(y=0;y<hh;y++){ sy=(y*2)*w*4; dy=y*hw*4;
+      for(x=0;x<hw;x++){ s=sy+(x*2)*4; d=dy+x*4; out[d]=data[s];out[d+1]=data[s+1];out[d+2]=data[s+2];out[d+3]=data[s+3]; } }
+    return {data:out,w:hw,h:hh};
+  }
+  // 判分入口：大矩形先「隔行隔列抽一半」再按一半块径判（缝 16→8，不插值不糊边）。
+  // v514b：彻底去掉 canvas 缩放 —— 直接按原生块径 p 判分又准又快（以前 p≠16 每次都要
+  //        把裁片 resize 成 16 网格，200 次穷举直接跑成两分钟）。
+  function scoreAt(data,W,H,r,p,opt){
+    opt=opt||{};
+    var area=r.w*r.h, decArea=opt.decArea||500000;
+    if(area>decArea&&(p%2===0)&&(r.w%2===0)&&(r.h%2===0)&&(r.x%2===0)&&(r.y%2===0)){
+      var sub0=D.crop(data,W,H,r), dn=dec2(sub0,r.w,r.h);
+      if(dn){
+        var s0=scoreRect(dn.data,dn.w,dn.h,{x:0,y:0,w:dn.w,h:dn.h},p/2);
+        if(s0) return {score:s0,rect:r,p:p,dec:true};
+      }
+    }
+    var s=scoreRect(data,W,H,r,p);
+    return s?{score:s,rect:r,p:p}:null;
+  }
+  // 粗框 → 精锁 → 验收
+  // v514b：缝比是「四个边全对才掉到 1」的硬判据（差 1 块就反弹到 9~28），顺序扫描爬不上去，
+  //        必须两轴联合穷举（(dw,dh) 扫一遍、再 (dx,dy) 扫一遍）。
+  //        v514c：基点必须「固定」——上一版让内层循环从 best 出发，扫描会一路走偏，
+  //              实测从 19/21 掉回 13/21；这里锁死 base，只让 best 记录结果。
+  function refine(data,W,H,loc,opt){
+    opt=opt||{};
+    var p=opt.p||loc.p||16, base=loc.rect, area=base.w*base.h;
+    var budget=opt.maxTries||(area>2000000?200:260);
+    var tries=0, best=null;
+    function keyOf(s){
+      if(!s) return 9e9;
+      var k=s.raw/Math.max(1e-6,s.before);
+      if(accept(s,opt)) return -10+k*0.1+(s.bord||0)*0.01;
+      return k;
+    }
+    function tryR(x,y,w,h){
+      if(tries>=budget) return null;
+      if(w<p*3||h<p*3) return null;
+      if(x<0||y<0||x+w>W||y+h>H) return null;
+      var s=scoreAt(data,W,H,{x:x,y:y,w:w,h:h},p,opt);
+      if(!s) return null;
+      tries++;
+      if(opt.trace) opt.trace.push([x,y,w,h,+s.score.raw.toFixed(2),accept(s.score,opt)?1:0]);
+      if(!best||keyOf(s.score)<keyOf(best.score)) best={rect:{x:x,y:y,w:w,h:h},score:s.score,p:s.p};
+      return s;
+    }
+    if(area>500000) opt.decArea=500000;
+    var s0=tryR(base.x,base.y,base.w,base.h);
+    // 固定基点扫描：一条轴改位置/改尺寸各扫一遍（(dx,dy)、(dw,dh) 各自联合穷举）
+    function sweepAt(bb,arr,axis){
+      var i, j, s;
+      for(i=0;i<arr.length;i++){
+        for(j=0;j<arr.length;j++){
+          if(axis==='wh') s=tryR(bb.x,bb.y,bb.w+arr[i]*p,bb.h+arr[j]*p);
+          else s=tryR(bb.x+arr[i]*p,bb.y+arr[j]*p,bb.w,bb.h);
+          if(s&&accept(s.score,opt)&&s.score.raw<=1.02) return true;
+          if(tries>=budget) return false;
+        }
+      }
+      return false;
+    }
+    // 成对轴扫描：x 配 w、y 配 h，一条边挪位置时尺寸同步调整 —— 专门解
+    // 「位置差 1 块 + 尺寸同时差 1 块」这种分开扫永远凑不到的粗框
+    function sweepPair(bb,arr,ax){
+      var i, j, s;
+      for(i=0;i<arr.length;i++){
+        for(j=0;j<arr.length;j++){
+          if(ax==='xw') s=tryR(bb.x+arr[i]*p,bb.y,bb.w+arr[j]*p,bb.h);
+          else s=tryR(bb.x,bb.y+arr[i]*p,bb.w,bb.h+arr[j]*p);
+          if(s&&accept(s.score,opt)&&s.score.raw<=1.02) return true;
+          if(tries>=budget) return false;
+        }
+      }
+      return false;
+    }
+    var P4=[-4,-3,-2,-1,0,1,2,3,4], P2=[-2,-1,0,1,2], P1=[-1,0,1], done=false, k;
+    if(!done) done=sweepAt(base,P4,'xy');
+    if(!done) done=sweepAt(base,P4,'wh');
+    if(!done) done=sweepAt(base,P2,'wh');
+    if(!done) done=sweepAt(base,P2,'xy');
+    if(!done) done=sweepAt(base,P1,'wh');
+    if(!done) done=sweepAt(base,P1,'xy');
+    // 只在「还没找到干净的还原」时才上成对轴补救，避免拖慢已经成功的例子；
+    // 补救阶段单独给预算 —— 前面几遍已经把预算吃光会让它连一个格都扫不到
+    if(!done&&best&&!(accept(best.score,opt)&&best.score.raw<=1.02)){
+      budget=tries+120;
+      // 锚点：已经干净验收的最优框才值得跟；否则钉回原粗框（漂走的错框会把补救也带偏）
+      var anchor=(accept(best.score,opt)&&best.score.raw<=1.02)
+        ?{x:best.rect.x,y:best.rect.y,w:best.rect.w,h:best.rect.h}
+        :{x:base.x,y:base.y,w:base.w,h:base.h};
+      // 锚点跟着当前最优走（每遍扫描之间更新一次，不放进内层循环）：
+      // 粗框常「位置差 1~2 块 + 尺寸同时差 1~2 块」，一轮 xw 只能修一半，需要多轮接力
+      for(k=0;k<4&&!done;k++){
+        var an=best?{x:best.rect.x,y:best.rect.y,w:best.rect.w,h:best.rect.h}
+                   :{x:base.x,y:base.y,w:base.w,h:base.h};
+        done=sweepPair(an,P2,'xw');
+        if(done) break;
+        an=best?{x:best.rect.x,y:best.rect.y,w:best.rect.w,h:best.rect.h}:an;
+        done=sweepPair(an,P2,'yh');
+        if(done) break;
+      }
+      for(k=0;k<2&&!done;k++){
+        var an2=best?{x:best.rect.x,y:best.rect.y,w:best.rect.w,h:best.rect.h}:anchor;
+        done=sweepPair(an2,P1,'xw');
+        if(done) break;
+        an2=best?{x:best.rect.x,y:best.rect.y,w:best.rect.w,h:best.rect.h}:an2;
+        done=sweepPair(an2,P1,'yh');
+      }
+      // 四边组合穷举：粗框最典型的错法是「每条边各差 1 块」，
+      // 而两轴滑动很容易滑进「越缩越平滑」的坑里，这里直接把四条边各取 -1/0/+1 块组合。
+      budget=tries+120;
+      if(!done&&best){
+        var r0=(accept(best.score,opt)&&best.score.raw<=1.02)?best.rect:base;
+        var L=[r0.x-p,r0.x,r0.x+p], R=[r0.x+r0.w-p,r0.x+r0.w,r0.x+r0.w+p];
+        var T=[r0.y-p,r0.y,r0.y+p], B=[r0.y+r0.h-p,r0.y+r0.h,r0.y+r0.h+p];
+        var a,b2,c2,d2,s2;
+        for(a=0;a<3&&!done;a++)for(b2=0;b2<3&&!done;b2++)for(c2=0;c2<3&&!done;c2++)for(d2=0;d2<3&&!done;d2++){
+          var rr4={x:L[a],y:T[c2],w:R[b2]-L[a],h:B[d2]-T[c2]};
+          if(rr4.w<p*3||rr4.h<p*3) continue;
+          s2=tryR(rr4.x,rr4.y,rr4.w,rr4.h);
+          if(s2&&accept(s2.score,opt)&&s2.score.raw<=1.02) done=true;
+        }
+      }
+    }
+    if(!best) return null;
+    var b2={x:best.rect.x,y:best.rect.y,w:best.rect.w,h:best.rect.h}, sc=best.score;
+    var trOut=opt.trace?{tr:opt.trace,tries:tries,bestRaw:sc.raw,acc:accept(sc,opt)}:null;
+    if(!accept(sc,opt)) return {ok:false, rect:b2, score:sc, p:p, reason:'reject', loc:loc, tries:tries, tr:trOut};
+    return {ok:true, rect:b2, p:p, k:sc.after, raw:sc.raw, before:sc.before, after:sc.after, score:sc,
+            loc:loc, tries:tries};
+  }
+  // 救援：粗框认错边时，把四条边分别吸到「图边 / 带边」，再各验一次
+  function rescueEdges(data,W,H,loc,p,opt){
+    if(!loc||!loc.ry||!loc.rx) return null;
+    var ry=loc.ry, rx=loc.rx, r0=loc.rect, lx=rx.a*p, ly=ry.a*p, lw=(rx.b-rx.a+1)*p, lh=(ry.b-ry.a+1)*p;
+    var cands=[
+      {x:0,y:r0.y,w:W,h:r0.h},
+      {x:0,y:ly,w:W,h:lh},
+      {x:r0.x,y:r0.y,w:W-r0.x,h:r0.h},
+      {x:lx,y:r0.y,w:W-lx,h:r0.h},
+      {x:r0.x,y:0,w:r0.w,h:H},
+      {x:r0.x,y:ly,w:r0.w,h:H-ly},
+      {x:r0.x,y:r0.y,w:r0.w,h:H-r0.y},
+      {x:r0.x,y:ly,w:lw,h:lh}
+    ];
+    var i, s, best=null;
+    for(i=0;i<cands.length;i++){
+      var c=cands[i];
+      if(c.w<p*3||c.h<p*3) continue;
+      if(c.x<0||c.y<0||c.w<p||c.h<p) continue;
+      s=scoreAt(data,W,H,c,p,opt);
+      if(!s||!accept(s.score,opt)) continue;
+      if(!best||s.score.raw<best.score.raw) best={rect:c, score:s.score};
+    }
+    if(!best) return null;
+    return {ok:true, rect:best.rect, p:p, k:best.score.after, raw:best.score.raw, before:best.score.before,
+            after:best.score.after, score:best.score, loc:loc, rescue:true};
+  }
+  // 单周期：多候选各精锁一次，取 raw 最小的那个
+  function findP(data,W,H,p,opt){
+    opt=opt||{};
+    var l=D.luma(data,W,H);
+    if(!l) return null;
+    opt.p=p;
+    var cands=locateCands(l,W,H,p,opt);
+    if(!cands.length) return opt.dbg?{ok:false,reason:'noloc',p:p}:null;
+    var cap=(W*H>4000000)?4:(W*H>1200000?5:7);
+    var best=null, tried=[], i;
+    for(i=0;i<cands.length&&i<cap;i++){
+      var res=null;
+      try{ res=refine(data,W,H,cands[i],opt); }catch(eR){}
+      if(res&&res.ok){
+        if(!best||res.raw<best.raw) best=res;
+        tried.push({p:p,from:cands[i].from,ok:true,raw:res.raw});
+      } else {
+        var rv=null;
+        if(i<2){ try{ rv=rescueEdges(data,W,H,cands[i],p,opt); }catch(eRv){} }
+        if(rv&&rv.ok){ if(!best||rv.raw<best.raw) best=rv; }
+        tried.push({p:p,from:cands[i].from,ok:!!(rv&&rv.ok),raw:res?res.score.raw:null});
+      }
+      if(best&&best.raw<=1.0) break;   // 已经很干净，别再多花时间
+    }
+    if(best){ best.p=p; best.cand=tried; return best; }
+    return {ok:false, reason:'reject', cand:tried};
+  }
+  // 周期未知：扫 8..26，按带内/带外对比排序，只验前 N
+  function find(data,W,H,opt){
+    opt=opt||{};
+    var l=D.luma(data,W,H);
+    if(!l) return null;
+    if(opt.p) return findP(data,W,H,opt.p,opt);
+    var p, loc, list=[], cand=[];
+    for(p=8;p<=26;p++){
+      loc=locateProfiles(l,W,H,p,opt,opt.thr||5.0);
+      if(!loc) continue;
+      var q=loc.inY-(loc.outY||0)*1.5;
+      if(loc.ry.len>=2&&loc.rx.len>=2) cand.push({p:p,loc:loc,q:q,score:loc.ry.mean*loc.rx.mean});
+    }
+    if(!cand.length) return opt.dbg?{ok:false,reason:'noloc'}:null;
+    cand.sort(function(a,b){return b.q-a.q;});
+    var keep=[];
+    for(var ci=0;ci<cand.length;ci++){
+      var ok=true;
+      for(var cj=0;cj<keep.length;cj++){
+        var ratio=cand[ci].p/keep[cj].p;
+        if(Math.abs(ratio-1)<0.10) ok=false;
+      }
+      if(ok) keep.push(cand[ci]);
+      if(keep.length>=3) break;
+    }
+    var tried=[], best=null, bestK=9e9;
+    for(var t=0;t<keep.length;t++){
+      var res=findP(data,W,H,keep[t].p,opt);
+      if(res&&res.ok){
+        // 真块径的「还原前缝能」必然强；块径选错（如 bs=8 的图被按 16 判）也会凑出低缝比，
+        // 所以不能先到先得：按 raw/before 打分，缝能弱的解排在后面。
+        var kk=res.raw/Math.max(1e-6,res.before);
+        if(!best||kk<bestK){ best=res; bestK=kk; }
+        tried.push({p:keep[t].p, ok:true, raw:res.raw, before:res.before});
+        // 高置信度（证据强 + 还原干净）才提前收工
+        if(res.raw<=1.0&&res.before>=5.5&&(!res.score||(res.score.bord||0)<=3)) break;
+      } else tried.push({p:keep[t].p, ok:false});
+    }
+    if(best){ best.cand=tried.concat(best.cand||[]); return best; }
+    return {ok:false, reason:'reject', cand:tried};
+  }
+  return {find:find, findP:findP, locate:locate, locateCands:locateCands, refine:refine, scoreRect:scoreRect,
+          scoreAt:scoreAt, soupMap:soupMap, seamRatio:seamRatio, covRun:covRun, otsu:otsu, deblockL:deblockL,
+          accept:accept, denseBox:denseBox};
+}
+var LOC=makeLoc({luma:pk2Luma, crop:cropRect, shuffle:shuffle, resize:pk2LocResize});
 window.pk2Unmix=function(){
   if(!pk2Data){status('pk2_info','请先选择成品图',true);return;}
   var selBs=parseInt(document.getElementById('pk2_bs').value,10)||0;
   var det=detectAll(pk2Data,pk2W,pk2H,selBs||null);
-  if(!det.ok){
-    var why=selBs
-      ? '按你选的 '+selBs+'×'+selBs+' 块径没认出选区 —— 把块径改回「自动」再试，或直接在图上拖框后点「按我框的选区解」。'
-      : ((det.best&&det.best.kind==='rect')
-        ? '看到像矩形选区的痕迹，但没锁准边界 —— 在图上拖个框把块粥那块圈住，点「按我框的选区解」。'
-        : '没自动认出选区（可能不是本工具做的、图被缩放过）。也可以在图上拖框后点「按我框的选区解」。');
-    status('pk2_info',why,true);
-    window.__pk2last={failed:true,best:det.best,rank:det.rank};
+  var pk2Sc=pk2ScaleGuess(pk2Data,pk2W,pk2H);
+  if(!det.ok&&!selBs){
+    status('pk2_info',pk2Sc
+      ? '自动识别没锁准块径（这张像是被缩放过）：正在按缩放图近似还原，要几秒…'
+      : '自动识别没认出选区：正在按块缝找矩形，要几秒…');
+    setTimeout(function(){
+      var ap=null,bsTry=[16,8],bt;
+      for(bt=0;bt<bsTry.length&&!(ap&&ap.ok);bt++){                     // v510：8×8 块径也要试一遍
+        if(bsTry[bt]===8&&pk2Sc) break;                                 // 缩过分辨率的 8×8 网格换算不成立，别耗时间
+        try{ if(!(ap&&ap.ok)&&pk2Sc) ap=pk2ApproxRestore(pk2Data,pk2W,pk2H,bsTry[bt],pk2Cv); }catch(eAp){}
+        if(!(ap&&ap.ok)){ try{ ap=pk2RectNative(pk2Data,pk2W,pk2H,bsTry[bt],pk2Cv); }catch(eRn){} }
+      }
+      if(ap&&ap.ok){ pk2ShowApprox(ap); window.__pk2last=ap; return; }
+      pk2SayFail(false,det);
+    },30);
     return;
   }
+  if(!det.ok){ pk2SayFail(selBs,det); return; }
   var b=det.best,sure=det.conf>1.3;
   var desc=rectDesc(b);
   status('pk2_info','自动识别：'+desc+' · '+b.bs+'px 块'+(sure?'':'（把握一般，解出来若不对就自己框一下）'));
   pk2Restore(b.rect,b.bs,desc);
   window.__pk2last=b;
 };
-// 给主取图用：不碰页面上的画布，直接用像素判分 → 还原出 dataURL
-window.pk2QuickRestore=function(img){
-  var W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
-  if(!W||!H) return null;
-  if(W*H>16777216) return {ok:false,oversize:true};
-  var cv=document.createElement('canvas');cv.width=W;cv.height=H;
-  var cx=cv.getContext('2d',{willReadFrequently:true});
-  cx.drawImage(img,0,0,W,H);
-  var data=new Uint8ClampedArray(cx.getImageData(0,0,W,H).data);
-  var det=detectAll(data,W,H);
-  if(!det.ok){
-    return {ok:false,looksRect:!!(det.best&&det.best.kind==='rect'&&det.rank<0.62),rank:det.rank};
-  }
-  var b=det.best,full=new Uint8ClampedArray(data);
-  shuffle(full,W,H,b.rect,b.bs,-1);
-  cx.putImageData(new ImageData(full,W,H),0,0);
-  return {ok:true,url:cv.toDataURL('image/png'),desc:rectDesc(b),bs:b.bs,rect:b.rect};
-};
+// 局部混淆图的自动解只在「局部混淆图还原工具」里做；主取图不再集成这段（整图块缝检测太卡）。
 // 混淆图（整图像素打散）粗判：用本工具的解混淆逆回去，明显变顺滑就是它
 function pk2RoughL(u32,W,H){
   var d=new Uint8ClampedArray(u32.buffer,0,W*H*4), s=0, n2=0, i, x, y, l, j;
@@ -2901,8 +3814,9 @@ function jointRectTop(P,W,H,box,bs,w,step,n){
   return list;
 }
 // 先用快速判分筛前 n 名，再用稳健判分复选（均值会被白底骗，错一格的解在 90 分位上露馅）
-function pickRob(data,W,H,bs,box,w,step,n){
-  var P=mkFast(data,W,H,bs),list=jointRectTop(P,W,H,box,bs,w,step,n),out=[],i,rob;
+function pickRob(data,W,H,bs,box,w,step,n,P){
+  P=P||mkFast(data,W,H,bs);
+  var list=jointRectTop(P,W,H,box,bs,w,step,n),out=[],i,rob;
   if(!list.length) return null;
   for(i=0;i<list.length;i++){
     rob=scoreRob(data,W,H,list[i].rect,bs);
@@ -2912,8 +3826,9 @@ function pickRob(data,W,H,bs,box,w,step,n){
   return out[0];
 }
 // 四边联合搜索 + 精确均值判分全量筛一遍（就几百个候选，吃得消），前 n 名再用稳健判分定胜负
-function pickRob(data,W,H,bs,box,w,step,n){
-  var P=mkFast(data,W,H,bs),list=jointRectTop(P,W,H,box,bs,w,step,n),out=[],i,rob;
+function pickRob(data,W,H,bs,box,w,step,n,P){
+  P=P||mkFast(data,W,H,bs);
+  var list=jointRectTop(P,W,H,box,bs,w,step,n),out=[],i,rob;
   if(!list.length) return null;
   for(i=0;i<list.length;i++){
     rob=scoreRob(data,W,H,list[i].rect,bs);
@@ -11417,13 +12332,10 @@ function extractOneMem(item){
             .then(urls=>({urls,type:r.type,useJpeg:r.useJpeg,kind:'多小图'}));
           return r;
         }
-        var pk2q=null;
-        try{ if(item.img&&window.pk2QuickRestore) pk2q=window.pk2QuickRestore(item.img); }catch(ePk2){}
-        if(pk2q&&pk2q.ok&&pk2q.url){
-          return {url:pk2q.url,type:'image/png',useJpeg:false,kind:'局部混淆图（'+pk2q.desc+' · '+pk2q.bs+'px 块）'};
-        }
-        if(pk2q&&!pk2q.ok&&pk2q.looksRect) item.__pk2rect=true;
-        if(pk2q&&!pk2q.ok&&pk2q.oversize) item.__pk2big=true;
+        // 主取图不再尝试解局部混淆图：那条路要在整张图上做块缝检测再试各种矩形，
+        // 大图一卡就是一秒以上，比「解出来」更伤体验。混淆图统一到专用还原工具里解。
+        var ww0=item.img&&(item.img.naturalWidth||item.img.width), hh0=item.img&&(item.img.naturalHeight||item.img.height);
+        if(ww0&&hh0&&gpRcTooBig(ww0,hh0)) item.__pk2big=true;
         var pk2h=null;
         try{ if(item.img&&window.pk2HxCheck) pk2h=window.pk2HxCheck(item.img); }catch(ePk2h){}
         if(pk2h&&pk2h.ok) item.__pk2hx=true;
@@ -11682,21 +12594,14 @@ async function doExtract(){
         mmgSetProg('mmgExtractProg',(i+1)/list.length);
         continue;
       }
-      if(list[i]&&list[i].__pk2rect){
-        item.innerHTML='<div class="cap" style="color:#e0c06b">第 '+(i+1)+' 张：看得出是局部混淆图，但自动没锁准那块选区（手框的图，框边本来就不齐）</div>'
-          +'<div style="margin-top:8px;font-size:12px;line-height:1.75;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">点下面的按钮，到「局部混淆图还原工具」里把块粥那块拖个框圈住，再点「按我框的选区解」，工具会自己把框对到块边。</div>'
-          +'<button class="btn" style="width:100%;margin-top:8px" onclick="pk2SendItem('+i+')">去还原工具手框解 →</button>';
-        mmgSetProg('mmgExtractProg',(i+1)/list.length);
-        continue;
-      }
       item.innerHTML='<div class="cap" style="color:#e06c5b">第 '+(i+1)+' 张 ✗ '+err.message
-        +'<br><span style="color:#d8c9a0;font-size:12px;font-weight:400;line-height:1.6">如果是混淆图（像素被整片打散成块粥），点下面的按钮可转到对应工具。</span></div>';
+        +'<br><span style="color:#d8c9a0;font-size:12px;font-weight:400;line-height:1.6">如果是混淆图（像素被整片打散成块粥），点下面的按钮转到对应工具；局部混淆图这类成品主取图不当场解（大图会卡），请到「取图」页的「局部混淆图还原工具」解。</span></div>';
       var pk2row='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">';
       if(err.message==='没有藏东西，不是本工具的成品'){
         pk2row+='<button class="btn btn-ghost" style="flex:1" onclick="sendTo('+i+',\'光棱图\')">当作光棱图显形</button>';
       }
       pk2row+='<button class="btn btn-ghost" style="flex:1" onclick="sendTo('+i+',\'混淆图\')">转到混淆图</button>'
-        +'<button class="btn btn-ghost" style="flex:1" onclick="pk2SendItem('+i+')">转到局部混淆图</button>'
+        +'<button class="btn btn-ghost" style="flex:1" onclick="pk2SendItem('+i+')">带去还原工具解</button>'
         +'</div>';
       item.innerHTML+=pk2row
         +'<div style="margin-top:8px;font-size:12px;line-height:1.7;color:#d8c9a0;border-left:3px solid #e0a34a;padding:6px 10px;background:rgba(224,163,74,.08);white-space:normal">'+mmgErrExplain(err.message)+'</div>';
@@ -13689,7 +14594,7 @@ async function wp2gPick(files){
   if(btn) btn.style.display=(okN? 'block':'none');
   if(opts) opts.style.display=(okN? 'block':'none');
   if(!okN){
-    var why=(!sup? '当前浏览器内核不支持逐帧解码 WebP（要 Chrome / Android WebView 94 以上，请换新一点的浏览器或装 4.47 APP）'
+    var why=(!sup? '当前浏览器内核不支持逐帧解码 WebP（要 Chrome / Android WebView 94 以上，请换新一点的浏览器或装 4.49 APP）'
                 : '没有可用的 WebP：'+bad.slice(0,3).join('、'));
     if(st){ st.style.color='#ff8a8a'; st.textContent=why; }
     return;
